@@ -18,9 +18,11 @@ def main():
     # folder_Gen = 'F:/research/results/UCMerced/x3/'
     # folder_GT = 'F:/research/dataset/SR for remote sensing/AID_dataset/test/HR'
     # folder_Gen = 'F:/research/codes/My-projects/transformer-for-sr/experiment/results/AID/x2/CNN7'
-    folder_GT = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/HR'
-    folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced/x4'
-
+    # folder_GT = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/HR'
+    # folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced_AIDtest/x4'
+    folder_GT = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/HR_x4'
+    folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced_UCMercedtest/x4'
+    img_ext = '.tif'
     crop_border = 4  # same with scale
     suffix = ''  # suffix for Gen images
     test_Y = False  # True: test Y channel only; False: test RGB channels
@@ -37,7 +39,7 @@ def main():
     for i, img_path in enumerate(img_list):
         base_name = os.path.splitext(os.path.basename(img_path))[0]
         im_GT = cv2.imread(img_path) / 255.
-        im_Gen = cv2.imread(os.path.join(folder_Gen, base_name + suffix + '.png')) / 255.
+        im_Gen = cv2.imread(os.path.join(folder_Gen, base_name + suffix + img_ext)) / 255.
 
         if test_Y and im_GT.shape[2] == 3:  # evaluate on Y channel in YCbCr color space
             im_GT_in = bgr2ycbcr(im_GT)

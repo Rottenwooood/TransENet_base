@@ -14,7 +14,7 @@ device = torch.device('cpu' if args.cpu else 'cuda')
 
 def deploy(args, sr_model):
 
-    img_ext = '.png'
+    img_ext = '.tif'
     img_lists = glob.glob(os.path.join(args.dir_data, '*'+img_ext))
 
     if len(img_lists) == 0:
@@ -97,9 +97,19 @@ def deploy(args, sr_model):
 if __name__ == '__main__':
 
     # args parameter setting
-    args.pre_train = '../experiment/FSRCNNx2_AID/model/model_best.pt'
-    args.dir_data = 'F:/research/dataset/SR for remote sensing/AID_dataset/test/LR_x2'
-    args.dir_out = '../experiment/results/AID/x2/FSRCNN'
+    # You can configure these paths via command line arguments or set them here
+    args.pre_train = '/root/autodl-tmp/TransENet/experiment/TRANSENETx4_UCMerced/model/model_best.pt'
+    # args.dir_data = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/LR_x4'
+    args.dir_data = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/LR_x4'
+    args.dir_out = '../experiment/results/UCMerced_UCMercedtest/x4'
+
+    print("Configuration:")
+    print(f"  Model: {args.model}")
+    print(f"  Scale: {args.scale}")
+    print(f"  Data dir: {args.dir_data}")
+    print(f"  Output dir: {args.dir_out}")
+    print(f"  Pre-trained model: {args.pre_train}")
+    print("-" * 50)
 
     checkpoint = utils.checkpoint(args)
     sr_model = model.Model(args, checkpoint)
