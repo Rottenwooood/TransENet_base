@@ -134,7 +134,7 @@ class checkpoint():
             )
         plt.legend()
         plt.xlabel('Epochs')
-        if self.args.test_metric is 'psnr':
+        if self.args.test_metric == 'psnr':
             plt.ylabel('PSNR')
         else:
             plt.ylabel('SSIM')

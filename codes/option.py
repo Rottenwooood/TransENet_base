@@ -1,4 +1,3 @@
-
 import argparse
 import template
 
@@ -22,6 +21,12 @@ parser.add_argument('--dataset', type=str, default='UCMerced',
                     help='train dataset name')
 parser.add_argument('--dir_data', type=str, default='.',
                     help='dataset directory')
+parser.add_argument('--dir_out', type=str, default='./output',
+                    help='output directory')
+parser.add_argument('--data_train', type=str, default='/root/autodl-tmp/TransENet/datasets/TransENet/UCMerced',
+                    help='training dataset directory')
+parser.add_argument('--data_val', type=str, default='/root/autodl-tmp/TransENet/datasets/TransENet/UCMerced',
+                    help='validation dataset directory')
 parser.add_argument('--data_test', type=str, default='.',
                     help='test dataset name')
 parser.add_argument('--image_size', type=int, default=256,
@@ -39,7 +44,9 @@ parser.add_argument('--ext', type=str, default='sep',
                          'sep_reset - first convert img to .npy and read .npy; '
                          'sep - read .npy from disk; '
                          'img - read image from disk; '
-                         'ram - load image into RAM memory')
+                         'ram - load image into RAM memory; '
+                         'pt - load from .pt file')
+
 parser.add_argument('--scale', type=str, default='4',
                     help='super resolution scale')
 parser.add_argument('--noise', type=str, default='.',

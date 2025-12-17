@@ -161,9 +161,9 @@ class Trainer():
                             cropped_hr = hr[:, crop_border:-crop_border, crop_border:-crop_border, :]
                             cropped_sr = sr[:, crop_border:-crop_border, crop_border:-crop_border, :]
 
-                        if self.args.test_metric is 'psnr':
+                        if self.args.test_metric == 'psnr':
                             eval_acc += utils.calculate_psnr(cropped_sr, cropped_hr, self.args.rgb_range)
-                        elif self.args.test_metric is 'ssim':
+                        elif self.args.test_metric == 'ssim':
                             if self.args.rgb_range == 1:
                                 eval_acc += utils.calculate_batch_ssim(cropped_sr * 255, cropped_hr * 255)
                             else:

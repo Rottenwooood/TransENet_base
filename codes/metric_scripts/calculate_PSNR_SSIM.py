@@ -16,10 +16,12 @@ def main():
     # Gen: Generated / Restored / Recovered images
     # folder_GT = 'F:/research/dataset/UCMerced_LandUse/test-x3/HR'
     # folder_Gen = 'F:/research/results/UCMerced/x3/'
-    folder_GT = 'F:/research/dataset/SR for remote sensing/AID_dataset/test/HR'
-    folder_Gen = 'F:/research/codes/My-projects/transformer-for-sr/experiment/results/AID/x2/CNN7'
+    # folder_GT = 'F:/research/dataset/SR for remote sensing/AID_dataset/test/HR'
+    # folder_Gen = 'F:/research/codes/My-projects/transformer-for-sr/experiment/results/AID/x2/CNN7'
+    folder_GT = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/HR'
+    folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced/x4'
 
-    crop_border = 2  # same with scale
+    crop_border = 4  # same with scale
     suffix = ''  # suffix for Gen images
     test_Y = False  # True: test Y channel only; False: test RGB channels
 

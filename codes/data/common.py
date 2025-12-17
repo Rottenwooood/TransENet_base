@@ -55,7 +55,7 @@ def np2Tensor(l, rgb_range):
 
 def add_noise(x, noise='.'):
     """ add lr with noise """
-    if noise is not '.':
+    if noise != '.':
         noise_type = noise[0]
         noise_value = int(noise[1:])
         if noise_type == 'G':
