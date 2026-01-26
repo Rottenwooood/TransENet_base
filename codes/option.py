@@ -173,6 +173,48 @@ parser.add_argument('--symunet_restormer_heads', type=str, default='1,2,4',
 parser.add_argument('--symunet_restormer_middle_heads', type=int, default=8,
                     help='number of attention heads for middle blocks in SymUNet')
 
+# Option for SymUNet Pre-train (预上采样版本)
+parser.add_argument('--symunet_pretrain_width', type=int, default=64,
+                    help='base number of channels for SymUNet-Pretrain')
+parser.add_argument('--symunet_pretrain_middle_blk_num', type=int, default=1,
+                    help='number of middle blocks in SymUNet-Pretrain')
+parser.add_argument('--symunet_pretrain_enc_blk_nums', type=str, default='2,2,2',
+                    help='number of encoder blocks for each stage in SymUNet-Pretrain (comma-separated)')
+parser.add_argument('--symunet_pretrain_dec_blk_nums', type=str, default='2,2,2',
+                    help='number of decoder blocks for each stage in SymUNet-Pretrain (comma-separated)')
+parser.add_argument('--symunet_pretrain_ffn_expansion_factor', type=float, default=2.66,
+                    help='FFN expansion factor for SymUNet-Pretrain')
+parser.add_argument('--symunet_pretrain_bias', action='store_true', default=False,
+                    help='use bias in SymUNet-Pretrain')
+parser.add_argument('--symunet_pretrain_layer_norm_type', type=str, default='WithBias',
+                    choices=('WithBias', 'BiasFree'),
+                    help='Layer normalization type for SymUNet-Pretrain')
+parser.add_argument('--symunet_pretrain_restormer_heads', type=str, default='1,2,4',
+                    help='number of attention heads for each encoder/decoder stage in SymUNet-Pretrain (comma-separated)')
+parser.add_argument('--symunet_pretrain_restormer_middle_heads', type=int, default=8,
+                    help='number of attention heads for middle blocks in SymUNet-Pretrain')
+
+# Option for SymUNet Post-train (后上采样版本)
+parser.add_argument('--symunet_posttrain_width', type=int, default=64,
+                    help='base number of channels for SymUNet-Posttrain')
+parser.add_argument('--symunet_posttrain_middle_blk_num', type=int, default=1,
+                    help='number of middle blocks in SymUNet-Posttrain')
+parser.add_argument('--symunet_posttrain_enc_blk_nums', type=str, default='2,2,2',
+                    help='number of encoder blocks for each stage in SymUNet-Posttrain (comma-separated)')
+parser.add_argument('--symunet_posttrain_dec_blk_nums', type=str, default='2,2,2',
+                    help='number of decoder blocks for each stage in SymUNet-Posttrain (comma-separated)')
+parser.add_argument('--symunet_posttrain_ffn_expansion_factor', type=float, default=2.66,
+                    help='FFN expansion factor for SymUNet-Posttrain')
+parser.add_argument('--symunet_posttrain_bias', action='store_true', default=False,
+                    help='use bias in SymUNet-Posttrain')
+parser.add_argument('--symunet_posttrain_layer_norm_type', type=str, default='WithBias',
+                    choices=('WithBias', 'BiasFree'),
+                    help='Layer normalization type for SymUNet-Posttrain')
+parser.add_argument('--symunet_posttrain_restormer_heads', type=str, default='1,2,4',
+                    help='number of attention heads for each encoder/decoder stage in SymUNet-Posttrain (comma-separated)')
+parser.add_argument('--symunet_posttrain_restormer_middle_heads', type=int, default=8,
+                    help='number of attention heads for middle blocks in SymUNet-Posttrain')
+
 args = parser.parse_args()
 args.scale = list(map(lambda x: int(x), args.scale.split('+')))
 
@@ -180,5 +222,15 @@ args.scale = list(map(lambda x: int(x), args.scale.split('+')))
 args.symunet_enc_blk_nums = list(map(lambda x: int(x), args.symunet_enc_blk_nums.split(',')))
 args.symunet_dec_blk_nums = list(map(lambda x: int(x), args.symunet_dec_blk_nums.split(',')))
 args.symunet_restormer_heads = list(map(lambda x: int(x), args.symunet_restormer_heads.split(',')))
+
+# Parse SymUNet-Pretrain parameters
+args.symunet_pretrain_enc_blk_nums = list(map(lambda x: int(x), args.symunet_pretrain_enc_blk_nums.split(',')))
+args.symunet_pretrain_dec_blk_nums = list(map(lambda x: int(x), args.symunet_pretrain_dec_blk_nums.split(',')))
+args.symunet_pretrain_restormer_heads = list(map(lambda x: int(x), args.symunet_pretrain_restormer_heads.split(',')))
+
+# Parse SymUNet-Posttrain parameters
+args.symunet_posttrain_enc_blk_nums = list(map(lambda x: int(x), args.symunet_posttrain_enc_blk_nums.split(',')))
+args.symunet_posttrain_dec_blk_nums = list(map(lambda x: int(x), args.symunet_posttrain_dec_blk_nums.split(',')))
+args.symunet_posttrain_restormer_heads = list(map(lambda x: int(x), args.symunet_posttrain_restormer_heads.split(',')))
 
 template.set_template(args)
