@@ -1,4 +1,3 @@
-
 import torch.utils.data as data
 
 import os
@@ -56,6 +55,33 @@ class SRData(data.Dataset):
                 lr = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
                 # self.lr_img_files.append(lr)
                 self.lr_img_files[i, :, :, :] = lr
+        elif args.ext == 'pt':
+            print('Read data from .pt file')
+            # Load data from .pt file
+            if os.path.isfile(self.root_dir):
+                print(f'Loading .pt dataset from: {self.root_dir}')
+                loaded_data = torch.load(self.root_dir)
+                # Assume the .pt file contains dictionaries with 'hr' and 'lr' arrays
+                if isinstance(loaded_data, dict):
+                    if 'hr' in loaded_data and 'lr' in loaded_data:
+                        self.hr_data = loaded_data['hr']
+                        self.lr_data = loaded_data['lr']
+                    else:
+                        # Try common key names
+                        keys = list(loaded_data.keys())
+                        if len(keys) >= 2:
+                            self.hr_data = loaded_data[keys[0]]
+                            self.lr_data = loaded_data[keys[1]]
+                        else:
+                            raise ValueError(f"Invalid .pt file format. Expected dict with hr/lr data. Keys: {keys}")
+                else:
+                    # Assume it's a list or tuple of (lr, hr)
+                    if isinstance(loaded_data, (list, tuple)) and len(loaded_data) == 2:
+                        self.lr_data, self.hr_data = loaded_data
+                    else:
+                        raise ValueError("Invalid .pt file format. Expected dict or tuple of (lr, hr)")
+            else:
+                raise FileNotFoundError(f".pt file not found: {self.root_dir}")
         else:
             print('Please define data type')
 
@@ -75,23 +101,39 @@ class SRData(data.Dataset):
         lr_tensor, hr_tensor = common.np2Tensor([lr, hr], self.args.rgb_range)
         return lr_tensor, hr_tensor, filename
 
+    def __len__(self):
+        if self.args.ext == 'pt':
+            return len(self.hr_data)
+        else:
+            return len(self.hr_img_dirs)
+
     def _load_file(self, idx):
         """ load lr and hr image files"""
-        lr_dir = self.lr_img_dirs[idx]
-        hr_dir = self.hr_img_dirs[idx]
-        filename = hr_dir
-        if self.args.ext == 'img':
-            lr = cv2.imread(lr_dir, cv2.IMREAD_COLOR)
-            lr = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
-            hr = cv2.imread(hr_dir, cv2.IMREAD_COLOR)
-            hr = cv2.cvtColor(hr, cv2.COLOR_BGR2RGB)
-        elif self.args.ext.find('sep') >= 0:
-            lr = np.load(lr_dir)
-            hr = np.load(hr_dir)
-        elif self.args.ext == 'ram':
-            lr = self.lr_img_files[idx, :, :, :]
-            hr = self.hr_img_files[idx, :, :, :]
-        filename = os.path.splitext(os.path.split(filename)[-1])[0]
+        if self.args.ext == 'pt':
+            lr = self.lr_data[idx]
+            hr = self.hr_data[idx]
+            # Convert to numpy if needed
+            if isinstance(lr, torch.Tensor):
+                lr = lr.numpy()
+            if isinstance(hr, torch.Tensor):
+                hr = hr.numpy()
+            filename = f'idx_{idx}'
+        else:
+            lr_dir = self.lr_img_dirs[idx]
+            hr_dir = self.hr_img_dirs[idx]
+            filename = hr_dir
+            if self.args.ext == 'img':
+                lr = cv2.imread(lr_dir, cv2.IMREAD_COLOR)
+                lr = cv2.cvtColor(lr, cv2.COLOR_BGR2RGB)
+                hr = cv2.imread(hr_dir, cv2.IMREAD_COLOR)
+                hr = cv2.cvtColor(hr, cv2.COLOR_BGR2RGB)
+            elif self.args.ext.find('sep') >= 0:
+                lr = np.load(lr_dir)
+                hr = np.load(hr_dir)
+            elif self.args.ext == 'ram':
+                lr = self.lr_img_files[idx, :, :, :]
+                hr = self.hr_img_files[idx, :, :, :]
+            filename = os.path.splitext(os.path.split(filename)[-1])[0]
         return lr, hr, filename
 
     def _get_patch(self, lr, hr):
@@ -102,7 +144,3 @@ class SRData(data.Dataset):
             lr, hr = common.augment([lr, hr])
             lr = common.add_noise(lr, self.args.noise)
         return lr, hr
-
-
-
-
