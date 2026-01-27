@@ -37,6 +37,21 @@ class Loss(nn.modules.loss._Loss):
                     args,
                     loss_type
                 )
+            elif loss_type == 'FFT':
+                module = import_module('loss.fft')
+                loss_function = getattr(module, 'FFTLoss')()
+            elif loss_type == 'FFTL1':
+                module = import_module('loss.fft')
+                loss_function = getattr(module, 'FFTL1Loss')()
+            elif loss_type == 'StableFFT':
+                module = import_module('loss.fft')
+                loss_function = getattr(module, 'StableFFTLoss')()
+            elif loss_type == 'Freq':
+                module = import_module('loss.fft')
+                loss_function = getattr(module, 'FreqLoss')()
+            elif loss_type == 'FreqNorm':
+                module = import_module('loss.fft')
+                loss_function = getattr(module, 'FreqNormLoss')()
            
             self.loss.append({
                 'type': loss_type,
