@@ -59,6 +59,7 @@ class Trainer():
 
             if loss.item() < self.args.skip_threshold * self.error_last:
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.01)
                 self.optimizer.step()
             else:
                 print('Skip this batch {}! (Loss: {})'.format(
