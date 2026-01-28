@@ -85,10 +85,10 @@ def main():
             print("─" * 40)
 
             try:
-                args.symunet_pretrain_width = 64
+                args.symunet_pretrain_width = 48
                 args.symunet_pretrain_middle_blk_num = 1
-                args.symunet_pretrain_enc_blk_nums = [2, 2, 2]
-                args.symunet_pretrain_dec_blk_nums = [2, 2, 2]
+                args.symunet_pretrain_enc_blk_nums = [4, 6, 6]
+                args.symunet_pretrain_dec_blk_nums = [6, 6, 4]
                 args.symunet_pretrain_ffn_expansion_factor = 2.66
                 args.symunet_pretrain_bias = False
                 args.symunet_pretrain_layer_norm_type = 'WithBias'
@@ -108,10 +108,10 @@ def main():
             print("─" * 40)
 
             try:
-                args.symunet_posttrain_width = 64
-                args.symunet_posttrain_middle_blk_num = 1
-                args.symunet_posttrain_enc_blk_nums = [2, 2, 2]
-                args.symunet_posttrain_dec_blk_nums = [2, 2, 2]
+                args.symunet_pretrain_width = 48
+                args.symunet_pretrain_middle_blk_num = 1
+                args.symunet_pretrain_enc_blk_nums = [4, 6, 6]
+                args.symunet_pretrain_dec_blk_nums = [6, 6, 4]
                 args.symunet_posttrain_ffn_expansion_factor = 2.66
                 args.symunet_posttrain_bias = False
                 args.symunet_posttrain_layer_norm_type = 'WithBias'
