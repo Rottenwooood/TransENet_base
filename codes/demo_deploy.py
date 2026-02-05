@@ -13,6 +13,22 @@ import psutil
 from thop import profile
 from torch.utils.tensorboard import SummaryWriter
 
+# Additional imports for FLOPs calculation
+PTFLOPS_AVAILABLE = False
+FVCORE_AVAILABLE = False
+
+try:
+    import ptflops
+    PTFLOPS_AVAILABLE = True
+except (ImportError, AttributeError) as e:
+    PTFLOPS_AVAILABLE = False
+
+try:
+    from fvcore.nn import flop_count
+    FVCORE_AVAILABLE = True
+except (ImportError, AttributeError) as e:
+    FVCORE_AVAILABLE = False
+
 device = torch.device('cpu' if args.cpu else 'cuda')
 
 
@@ -41,13 +57,85 @@ def test_model_performance(args, sr_model, sample_input=None):
         else:
             sample_input = torch.randn(1, 3, 256, 256).to(device)
 
+    flops = 0
+    params = 0
+
+    # Method 1: thop (original)
     try:
-        flops, params = profile(sr_model, inputs=(sample_input,), verbose=False)
-        print(f"  FLOPs: {flops:,}")
-        print(f"  FLOPs (G): {flops / 1e9:.2f} G")
-        print(f"  参数量 (M): {params / 1e6:.2f} M")
+        flops_thop, params_thop = profile(sr_model, inputs=(sample_input,), verbose=False)
+        flops += flops_thop
+        params = params_thop
+        print(f"  [thop] FLOPs: {flops_thop:,}")
+        print(f"  [thop] FLOPs (G): {flops_thop / 1e9:.2f} G")
+        print(f"  [thop] 参数量 (M): {params_thop / 1e6:.2f} M")
     except Exception as e:
-        print(f"  FLOPs计算失败: {e}")
+        print(f"  [thop] FLOPs计算失败: {e}")
+
+    # Method 2: ptflops
+    flops_ptflops = None
+    params_ptflops = None
+    if PTFLOPS_AVAILABLE:
+        try:
+            # Get input shape
+            input_shape = (3, sample_input.shape[2], sample_input.shape[3])
+
+            # Use ptflops get_model_complexity_info with positional arguments
+            macs, params_ptflops = ptflops.get_model_complexity_info(
+                sr_model,
+                input_shape,
+                as_strings=False,  # Return numbers instead of strings
+                input_constructor=lambda inputs: torch.randn(1, *input_shape).to(device),
+                verbose=False
+            )
+
+            flops_ptflops = macs
+
+            print(f"  [ptflops] FLOPs: {macs:,}")
+            print(f"  [ptflops] FLOPs (G): {macs / 1e9:.2f} G")
+            print(f"  [ptflops] 参数量 (M): {params_ptflops / 1e6:.2f} M")
+        except Exception as e:
+            print(f"  [ptflops] FLOPs计算失败: {e}")
+            print(f"    错误详情: {str(e)}")
+            flops_ptflops = None
+            params_ptflops = None
+    else:
+        print(f"  [ptflops] 库未安装，跳过计算")
+
+    # Method 3: fvcore
+    total_flops = None
+    if FVCORE_AVAILABLE:
+        try:
+            # fvcore's flop_count returns (total_flops, detailed_stats)
+            result = flop_count(sr_model, (sample_input,))
+            if isinstance(result, tuple):
+                total_flops, flop_dict = result
+            else:
+                # If it's a dict directly
+                flop_dict = result
+                total_flops = sum(flop_dict.values())
+
+            print(f"  [fvcore] FLOPs: {total_flops:,}")
+            print(f"  [fvcore] FLOPs (G): {total_flops / 1e9:.2f} G")
+            print(f"  [fvcore] 详细统计:")
+            if isinstance(flop_dict, dict):
+                for op, count in flop_dict.items():
+                    print(f"    {op}: {count:,}")
+            else:
+                print(f"    {flop_dict}")
+        except Exception as e:
+            print(f"  [fvcore] FLOPs计算失败: {e}")
+            total_flops = None
+    else:
+        print(f"  [fvcore] 库未安装，跳过计算")
+
+    # Comparison summary
+    if PTFLOPS_AVAILABLE or FVCORE_AVAILABLE:
+        print(f"\n  📊 各工具计算结果对比:")
+        print(f"    thop: {flops / 1e9:.2f} G FLOPs")
+        if PTFLOPS_AVAILABLE and flops_ptflops is not None:
+            print(f"    ptflops: {flops_ptflops / 1e9:.2f} G FLOPs")
+        if FVCORE_AVAILABLE and total_flops is not None:
+            print(f"    fvcore: {total_flops / 1e9:.2f} G FLOPs")
 
     # 3. 测试内存占用
     print(f"\n💾 内存占用:")
