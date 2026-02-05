@@ -89,45 +89,201 @@ class ExperimentManager:
         base_config = self.config["base_config"]
         grid = self.config["hyperparameter_grid"]
 
-        # 生成所有参数组合
-        keys = list(grid.keys())
-        values = [grid[key] for key in keys]
+        # 检查并处理成对参数
+        paired_experiments, remaining_grid = self.handle_paired_parameters(grid)
 
-        all_combinations = list(product(*values))
+        # 如果有成对参数，使用成对生成逻辑
+        if paired_experiments:
+            experiments = []
+            for i, (enc_config, dec_config) in enumerate(paired_experiments):
+                # 处理剩余参数
+                if remaining_grid:
+                    keys = list(remaining_grid.keys())
+                    values = [remaining_grid[key] for key in keys]
+                    other_combinations = list(product(*values))
 
-        # 限制实验数量
-        if len(all_combinations) > self.config["max_experiments"]:
-            import random
-            random.seed(42)
-            all_combinations = random.sample(all_combinations, self.config["max_experiments"])
+                    for other_comb in other_combinations:
+                        exp_config = base_config.copy()
+                        exp_name = self.generate_paired_experiment_name(i, enc_config, dec_config, dict(zip(keys, other_comb)))
 
-        experiments = []
+                        # 设置成对参数
+                        exp_config["symunet_pretrain_enc_blk_nums"] = enc_config
+                        exp_config["symunet_pretrain_dec_blk_nums"] = dec_config
 
-        for i, combination in enumerate(all_combinations):
-            exp_config = base_config.copy()
-            exp_name = self.generate_experiment_name(i, dict(zip(keys, combination)))
+                        # 设置其他参数
+                        for key, value in zip(keys, other_comb):
+                            exp_config[key] = value
 
-            # 添加超参数
-            for key, value in zip(keys, combination):
-                exp_config[key] = value
+                        # 添加WandB配置
+                        if self.config["use_wandb"]:
+                            exp_config["use_wandb"] = True
+                            exp_config["wandb_project"] = self.config["wandb_project"]
+                            exp_config["wandb_name"] = exp_name
 
-            # 添加WandB配置
-            if self.config["use_wandb"]:
-                exp_config["use_wandb"] = True
-                exp_config["wandb_project"] = self.config["wandb_project"]
-                exp_config["wandb_name"] = exp_name
+                        # 添加其他配置
+                        exp_config["save_every_n_steps"] = self.config["save_every_n_steps"]
+                        exp_config["save"] = exp_name
 
-            # 添加其他配置
-            exp_config["save_every_n_steps"] = self.config["save_every_n_steps"]
-            exp_config["save"] = exp_name
+                        experiments.append({
+                            "id": len(experiments) + 1,
+                            "name": exp_name,
+                            "config": exp_config
+                        })
+                else:
+                    # 只有成对参数
+                    exp_config = base_config.copy()
+                    exp_name = self.generate_paired_experiment_name(i, enc_config, dec_config, {})
 
-            experiments.append({
-                "id": i + 1,
-                "name": exp_name,
-                "config": exp_config
-            })
+                    # 设置成对参数
+                    exp_config["symunet_pretrain_enc_blk_nums"] = enc_config
+                    exp_config["symunet_pretrain_dec_blk_nums"] = dec_config
+
+                    # 添加WandB配置
+                    if self.config["use_wandb"]:
+                        exp_config["use_wandb"] = True
+                        exp_config["wandb_project"] = self.config["wandb_project"]
+                        exp_config["wandb_name"] = exp_name
+
+                    # 添加其他配置
+                    exp_config["save_every_n_steps"] = self.config["save_every_n_steps"]
+                    exp_config["save"] = exp_name
+
+                    experiments.append({
+                        "id": len(experiments) + 1,
+                        "name": exp_name,
+                        "config": exp_config
+                    })
+        else:
+            # 使用原有的组合逻辑（当没有成对参数时）
+            keys = list(grid.keys())
+            values = [grid[key] for key in keys]
+
+            all_combinations = list(product(*values))
+
+            # 限制实验数量
+            if len(all_combinations) > self.config["max_experiments"]:
+                import random
+                random.seed(42)
+                all_combinations = random.sample(all_combinations, self.config["max_experiments"])
+
+            experiments = []
+            for i, combination in enumerate(all_combinations):
+                exp_config = base_config.copy()
+                exp_name = self.generate_experiment_name(i, dict(zip(keys, combination)))
+
+                # 添加超参数
+                for key, value in zip(keys, combination):
+                    exp_config[key] = value
+
+                # 添加WandB配置
+                if self.config["use_wandb"]:
+                    exp_config["use_wandb"] = True
+                    exp_config["wandb_project"] = self.config["wandb_project"]
+                    exp_config["wandb_name"] = exp_name
+
+                # 添加其他配置
+                exp_config["save_every_n_steps"] = self.config["save_every_n_steps"]
+                exp_config["save"] = exp_name
+
+                experiments.append({
+                    "id": i + 1,
+                    "name": exp_name,
+                    "config": exp_config
+                })
 
         return experiments
+
+    def handle_paired_parameters(self, grid: Dict[str, Any]) -> tuple:
+        """处理成对参数，返回成对配置和剩余参数"""
+        enc_key = None
+        dec_key = None
+
+        # 查找编码器/解码器参数
+        for key in grid.keys():
+            if 'enc_blk_nums' in key:
+                enc_key = key
+            elif 'dec_blk_nums' in key:
+                dec_key = key
+
+        if not (enc_key and dec_key):
+            return [], grid  # 没有找到成对参数，返回空列表和原始grid
+
+        enc_values = grid[enc_key]
+        dec_values = grid[dec_key]
+
+        # 验证成对参数
+        if len(enc_values) != len(dec_values):
+            raise ValueError(
+                f"❌ 编码器和解码器参数数量不匹配！\n"
+                f"   {enc_key}: {len(enc_values)} 个值 -> {enc_values}\n"
+                f"   {dec_key}: {len(dec_values)} 个值 -> {dec_values}\n"
+                f"   解决方案：确保两个参数列表长度相等，并且一一对应配对。"
+            )
+
+        # 检查是否成对配置
+        paired_configs = []
+        for i, (enc_val, dec_val) in enumerate(zip(enc_values, dec_values)):
+            enc_depths = enc_val.split(',')
+            dec_depths = dec_val.split(',')
+
+            if len(enc_depths) != len(dec_depths):
+                raise ValueError(
+                    f"❌ 成对参数第 {i+1} 配置深度不匹配！\n"
+                    f"   编码器: {enc_val} ({len(enc_depths)} 层)\n"
+                    f"   解码器: {dec_val} ({len(dec_depths)} 层)\n"
+                    f"   解决方案：确保编码器和解码器有相同的层数。"
+                )
+
+            # 验证是否为合理的配对
+            is_reasonable_pair = self.is_reasonable_encoder_decoder_pair(enc_val, dec_val)
+            if not is_reasonable_pair:
+                print(f"⚠️ 警告：第 {i+1} 对配置可能不是最佳配对：")
+                print(f"   编码器: {enc_val} -> 解码器: {dec_val}")
+                print(f"   建议使用对称配置，如：")
+                print(f"   编码器: {enc_val} -> 解码器: {'-'.join(reversed(enc_depths))}")
+                print(f"   继续使用当前配置...\n")
+
+            paired_configs.append((enc_val, dec_val))
+
+        # 移除成对参数，创建剩余参数grid
+        remaining_grid = {k: v for k, v in grid.items() if k != enc_key and k != dec_key}
+
+        return paired_configs, remaining_grid
+
+    def is_reasonable_encoder_decoder_pair(self, enc_config: str, dec_config: str) -> bool:
+        """检查编码器-解码器配对是否合理"""
+        enc_depths = [int(x) for x in enc_config.split(',')]
+        dec_depths = [int(x) for x in dec_config.split(',')]
+
+        # 理想情况：解码器应该是编码器的反向
+        expected_dec = list(reversed(enc_depths))
+
+        # 如果完全匹配，认为是合理的
+        return dec_depths == expected_dec
+
+    def generate_paired_experiment_name(self, pair_idx: int, enc_config: str, dec_config: str, other_params: Dict[str, Any]) -> str:
+        """生成成对参数的实验名称"""
+        # 编码器-解码器配置描述
+        pair_desc = f"enc{enc_config.replace(',', '-')}_dec{dec_config.replace(',', '-')}"
+
+        # 添加其他关键参数
+        key_params = []
+        for key, value in other_params.items():
+            if key in ['lr', 'symunet_pretrain_width', 'optimizer']:
+                if isinstance(value, float):
+                    key_params.append(f"{value:.0e}")
+                else:
+                    key_params.append(str(value))
+
+        # 构建完整名称
+        name_parts = [self.config["experiment_prefix"], f"pair{pair_idx+1:02d}", pair_desc]
+        if key_params:
+            name_parts.append("_".join(key_params))
+
+        exp_name = "_".join(name_parts)
+        # 清理特殊字符
+        exp_name = exp_name.replace(".", "p").replace("+", "p").replace("*", "x").replace(" ", "")
+        return exp_name
 
     def generate_experiment_name(self, index: int, params: Dict[str, Any]) -> str:
         """生成实验名称"""
