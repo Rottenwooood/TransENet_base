@@ -274,6 +274,12 @@ def make_optimizer(args, my_model):
             'betas': (args.beta1, args.beta2),
             'eps': args.epsilon
         }
+    elif args.optimizer == 'ADAMW':
+        optimizer_function = optim.AdamW
+        kwargs = {
+            'betas': (args.beta1, args.beta2),
+            'eps': args.epsilon
+        }
     elif args.optimizer == 'RMSprop':
         optimizer_function = optim.RMSprop
         kwargs = {'eps': args.epsilon}
@@ -285,7 +291,14 @@ def make_optimizer(args, my_model):
 
 
 def make_scheduler(args, my_optimizer):
-    if args.decay_type == 'step':
+    if hasattr(args, 'scheduler') and args.scheduler == 'cosine':
+        # Cosine annealing scheduler with restarts
+        scheduler = lrs.CosineAnnealingLR(
+            my_optimizer,
+            T_max=args.cosine_t_max,
+            eta_min=args.cosine_eta_min
+        )
+    elif args.decay_type == 'step':
         scheduler = lrs.StepLR(
             my_optimizer,
             step_size=args.lr_decay,

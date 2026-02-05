@@ -109,8 +109,8 @@ parser.add_argument('--decay_type', type=str, default='step',
 parser.add_argument('--gamma', type=float, default=0.5,
                     help='learning rate decay factor for step decay')
 parser.add_argument('--optimizer', default='ADAM',
-                    choices=('SGD', 'ADAM', 'RMSprop'),
-                    help='optimizer to use (SGD | ADAM | RMSprop)')
+                    choices=('SGD', 'ADAM', 'ADAMW', 'RMSprop'),
+                    help='optimizer to use (SGD | ADAM | ADAMW | RMSprop)')
 parser.add_argument('--momentum', type=float, default=0.9,
                     help='SGD momentum')
 parser.add_argument('--beta1', type=float, default=0.9,
@@ -214,6 +214,27 @@ parser.add_argument('--symunet_posttrain_restormer_heads', type=str, default='1,
                     help='number of attention heads for each encoder/decoder stage in SymUNet-Posttrain (comma-separated)')
 parser.add_argument('--symunet_posttrain_restormer_middle_heads', type=int, default=8,
                     help='number of attention heads for middle blocks in SymUNet-Posttrain')
+
+# WandB monitoring
+parser.add_argument('--use_wandb', action='store_true', default=False,
+                    help='use wandb for experiment tracking')
+parser.add_argument('--wandb_project', type=str, default='SymUNet-SR',
+                    help='wandb project name')
+parser.add_argument('--wandb_entity', type=str, default=None,
+                    help='wandb entity name')
+parser.add_argument('--wandb_name', type=str, default=None,
+                    help='wandb experiment name')
+
+# Enhanced training options
+parser.add_argument('--scheduler', default='step',
+                    choices=('step', 'cosine'),
+                    help='learning rate scheduler (step | cosine)')
+parser.add_argument('--cosine_t_max', type=int, default=300,
+                    help='maximum steps for cosine annealing')
+parser.add_argument('--cosine_eta_min', type=float, default=5e-5,
+                    help='minimum learning rate for cosine annealing')
+parser.add_argument('--save_every_n_steps', type=int, default=50,
+                    help='save checkpoint every n steps')
 
 args = parser.parse_args()
 args.scale = list(map(lambda x: int(x), args.scale.split('+')))

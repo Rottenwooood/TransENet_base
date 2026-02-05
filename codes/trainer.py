@@ -3,6 +3,7 @@ import math
 from decimal import Decimal
 
 import utils
+import wandb_utils
 
 import torch
 import torch.nn as nn
@@ -24,6 +25,13 @@ class Trainer():
         self.optimizer = utils.make_optimizer(args, self.model)
         self.scheduler = utils.make_scheduler(args, self.optimizer)
 
+        # Initialize WandB logger
+        self.wandb_logger = wandb_utils.WandbLogger(args, my_model, my_loss)
+
+        # Training step counter for step-based scheduling
+        self.global_step = 0
+        self.total_steps = args.epochs * len(self.loader_train)
+
         if self.args.resume == 1:
             self.optimizer.load_state_dict(
                 torch.load(os.path.join(ckp.dir, 'optimizer.pt'))
@@ -35,7 +43,14 @@ class Trainer():
     def train(self):
         self.loss.step()
         epoch = self.scheduler.last_epoch + 1
-        learn_rate = self.scheduler.get_last_lr()[0]
+
+        # Get learning rate
+        if hasattr(self.args, 'scheduler') and self.args.scheduler == 'cosine':
+            # For cosine annealing, get current lr from scheduler
+            learn_rate = self.scheduler.get_last_lr()[0]
+        else:
+            # For step scheduler, get lr from optimizer
+            learn_rate = self.optimizer.param_groups[0]['lr']
 
         self.ckp.write_log(
             '[Epoch {}]\tLearning rate: {:.2e}'.format(epoch, Decimal(learn_rate))
@@ -44,8 +59,10 @@ class Trainer():
         self.model.train()
 
         timer_data, timer_model = utils.timer(), utils.timer()
-        # timer_model.tic()
+
         for batch, (lr, hr, file_names) in enumerate(self.loader_train):
+            # Update global step
+            self.global_step += 1
 
             lr, hr = self.prepare([lr, hr])
 
@@ -59,14 +76,31 @@ class Trainer():
 
             if loss.item() < self.args.skip_threshold * self.error_last:
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.01)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)  # Increased from 0.01
                 self.optimizer.step()
+
+                # Step the scheduler based on global step for cosine annealing
+                if hasattr(self.args, 'scheduler') and self.args.scheduler == 'cosine':
+                    self.scheduler.step()
+                    learn_rate = self.scheduler.get_last_lr()[0]
             else:
                 print('Skip this batch {}! (Loss: {})'.format(
                     batch + 1, loss.item()
                 ))
 
             timer_model.hold()
+
+            # Log to WandB
+            self.wandb_logger.log_training_step(
+                step=self.global_step,
+                epoch=epoch,
+                batch_idx=batch,
+                total_batches=len(self.loader_train),
+                loss_dict=self.loss.display_loss(batch),
+                learning_rate=learn_rate,
+                time_data=timer_data.release(),
+                time_model=timer_model.release()
+            )
 
             if (batch + 1) % self.args.print_every == 0:
                 self.ckp.write_log('[{}/{}]\t{}\t{:.1f}+{:.1f}s'.format(
@@ -78,7 +112,10 @@ class Trainer():
 
             timer_data.tic()
 
-        self.scheduler.step()
+        # Step the scheduler for epoch-based scheduling
+        if not (hasattr(self.args, 'scheduler') and self.args.scheduler == 'cosine'):
+            self.scheduler.step()
+
         self.loss.end_log(len(self.loader_train))
         self.error_last = self.loss.log[-1, -1]
 
@@ -191,11 +228,44 @@ class Trainer():
                     )
                 )
 
+                # Log validation metrics to WandB
+                current_psnr = self.ckp.log[-1, idx_scale].item()
+                best_psnr = best[0][idx_scale].item()
+                self.wandb_logger.log_validation(
+                    epoch=epoch,
+                    psnr_value=current_psnr,
+                    best_psnr=best_psnr
+                )
+
         self.ckp.write_log(
             'Total time: {:.2f}s\n'.format(timer_test.toc())
         )
+
+        # Enhanced checkpoint saving
         if not self.args.test_only:
-            self.ckp.save(self, epoch, is_best=(best[1][0] + 1 == epoch))
+            # Regular epoch-based saving
+            is_best = best[1][0] + 1 == epoch
+            self.ckp.save(self, epoch, is_best=is_best)
+
+            # Step-based checkpoint saving for cosine annealing
+            if hasattr(self.args, 'save_every_n_steps') and self.args.save_every_n_steps > 0:
+                if self.global_step % self.args.save_every_n_steps == 0:
+                    # Save step-based checkpoint
+                    checkpoint_path = os.path.join(self.ckp.dir, f'checkpoint_step_{self.global_step}.pt')
+                    torch.save({
+                        'global_step': self.global_step,
+                        'epoch': epoch,
+                        'model_state_dict': self.model.state_dict(),
+                        'optimizer_state_dict': self.optimizer.state_dict(),
+                        'scheduler_state_dict': self.scheduler.state_dict(),
+                        'loss': self.loss.log[-1] if hasattr(self.loss, 'log') else None,
+                    }, checkpoint_path)
+                    print(f"💾 Saved step checkpoint at step {self.global_step}")
+
+            # Save model artifact to WandB
+            if hasattr(self.args, 'use_wandb') and self.args.use_wandb and is_best:
+                model_path = os.path.join(self.ckp.dir, 'model', f'model_epoch_{epoch}.pt')
+                self.wandb_logger.save_model_artifact(model_path)
 
     def prepare(self, l, volatile=False):
         device = torch.device('cpu' if self.args.cpu else 'cuda')
@@ -208,8 +278,14 @@ class Trainer():
     def terminate(self):
         if self.args.test_only:
             self.test()
+            # Finish WandB if in test mode
+            self.wandb_logger.finish()
             return True
         else:
             epoch = self.scheduler.last_epoch + 1
-            return epoch >= self.args.epochs
+            finished = epoch >= self.args.epochs
+            if finished:
+                # Finish WandB when training is complete
+                self.wandb_logger.finish()
+            return finished
 
