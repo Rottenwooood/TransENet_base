@@ -220,7 +220,7 @@ class SymUNet_Posttrain(nn.Module):
                     LayerNorm_type=LayerNorm_type
                 ) for _ in range(num)
             ]))
-            self.downs.append(nn.Conv2d(chan, 2*chan, 2, 2))
+            self.downs.append(Downsample(chan))
             chan *= 2
 
         self.middle_blks = nn.Sequential(*[
@@ -235,7 +235,7 @@ class SymUNet_Posttrain(nn.Module):
 
         # 解码器
         for i, num in enumerate(dec_blk_nums):
-            self.ups.append(nn.Sequential(nn.Conv2d(chan, chan * 2, 1, bias=False), nn.PixelShuffle(2)))
+            self.ups.append(Upsample(chan))
             chan //= 2
 
             stage_idx = len(dec_blk_nums) - 1 - i
