@@ -4,7 +4,7 @@
     "dataset": "UCMerced",
     "scale": 4,
     "epochs": 300,
-    "batch_size": 8,
+    "batch_size": 4,
     "ext": "img",
     "patch_size": 192,
     "resume": 0
@@ -16,13 +16,15 @@
     "loss": [
       "1*L1"
     ],
-    "symunet_pretrain_width": [48],
+    "symunet_pretrain_width": [48,48,32],
     "symunet_pretrain_enc_blk_nums": [
       "4,6",
-      "4,6,6"
+      "4,6,6",
+      "4,6,6"      
     ],
     "symunet_pretrain_dec_blk_nums": [
       "6,4",
+      "6,6,4",
       "6,6,4"
     ]
   },
@@ -31,5 +33,5 @@
   "use_wandb": true,
   "wandb_project": "SymUNet-Batch-Experiments",
   "save_every_n_steps": 50,
-  "run_name_pattern": "{prefix}_lr{lr}_opt{optimizer}_{loss}_sch{scheduler}_w{symunet_pretrain_width}"
+  "run_name_pattern": "{prefix}_lr{lr}_blk{enc_blk_nums}_{dec_blk_nums}_{loss}_sch{scheduler}_w{symunet_pretrain_width}"
 }

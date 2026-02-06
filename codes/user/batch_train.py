@@ -85,95 +85,57 @@ class ExperimentManager:
         }
 
     def generate_experiments(self) -> List[Dict[str, Any]]:
-        """生成实验配置网格"""
+        """生成实验配置网格 - 平行组合模式"""
         base_config = self.config["base_config"]
         grid = self.config["hyperparameter_grid"]
 
         # 检查并处理成对参数
         paired_experiments, remaining_grid = self.handle_paired_parameters(grid)
 
-        # 如果有成对参数，使用成对生成逻辑
+        # 如果有成对参数，合并成对参数和剩余参数
         if paired_experiments:
             experiments = []
-            for i, (enc_config, dec_config) in enumerate(paired_experiments):
-                # 处理剩余参数
-                if remaining_grid:
-                    keys = list(remaining_grid.keys())
-                    values = [remaining_grid[key] for key in keys]
-                    other_combinations = list(product(*values))
 
-                    for other_comb in other_combinations:
-                        exp_config = base_config.copy()
-                        exp_name = self.generate_paired_experiment_name(i, dict(zip(keys, other_comb)))
+            # 确定最大实验数量：成对参数数量和剩余参数最大长度的较大值
+            max_experiments = len(paired_experiments)
+            if remaining_grid:
+                remaining_max = self.get_max_parallel_length(remaining_grid)
+                max_experiments = max(max_experiments, remaining_max)
 
-                        # 设置成对参数
-                        exp_config["symunet_pretrain_enc_blk_nums"] = enc_config
-                        exp_config["symunet_pretrain_dec_blk_nums"] = dec_config
+            # 生成平行组合的实验
+            for exp_idx in range(max_experiments):
+                exp_config = base_config.copy()
 
-                        # 设置其他参数
-                        for key, value in zip(keys, other_comb):
-                            exp_config[key] = value
-
-                        # 添加WandB配置
-                        if self.config["use_wandb"]:
-                            exp_config["use_wandb"] = True
-                            exp_config["wandb_project"] = self.config["wandb_project"]
-                            exp_config["wandb_name"] = exp_name
-
-                        # 添加其他配置
-                        exp_config["save_every_n_steps"] = self.config["save_every_n_steps"]
-                        exp_config["save"] = exp_name
-
-                        experiments.append({
-                            "id": len(experiments) + 1,
-                            "name": exp_name,
-                            "config": exp_config
-                        })
-                else:
-                    # 只有成对参数
-                    exp_config = base_config.copy()
-                    exp_name = self.generate_paired_experiment_name(i, enc_config, dec_config, {})
-
-                    # 设置成对参数
+                # 处理成对参数
+                if exp_idx < len(paired_experiments):
+                    enc_config, dec_config = paired_experiments[exp_idx]
                     exp_config["symunet_pretrain_enc_blk_nums"] = enc_config
                     exp_config["symunet_pretrain_dec_blk_nums"] = dec_config
 
-                    # 添加WandB配置
-                    if self.config["use_wandb"]:
-                        exp_config["use_wandb"] = True
-                        exp_config["wandb_project"] = self.config["wandb_project"]
-                        exp_config["wandb_name"] = exp_name
+                # 处理剩余参数
+                if remaining_grid:
+                    for key, values in remaining_grid.items():
+                        if isinstance(values, list):
+                            if len(values) == 1:
+                                # 单值参数：所有实验都使用同一个值
+                                exp_config[key] = values[0]
+                            else:
+                                # 多值参数：按索引取值
+                                if exp_idx < len(values):
+                                    exp_config[key] = values[exp_idx]
+                                else:
+                                    # 如果索引超出范围，使用最后一个值
+                                    exp_config[key] = values[-1]
+                        else:
+                            # 非列表参数：直接赋值
+                            exp_config[key] = values
 
-                    # 添加其他配置
-                    exp_config["save_every_n_steps"] = self.config["save_every_n_steps"]
-                    exp_config["save"] = exp_name
-
-                    experiments.append({
-                        "id": len(experiments) + 1,
-                        "name": exp_name,
-                        "config": exp_config
-                    })
-        else:
-            # 使用原有的组合逻辑（当没有成对参数时）
-            keys = list(grid.keys())
-            values = [grid[key] for key in keys]
-
-            all_combinations = list(product(*values))
-
-            # 限制实验数量
-            if len(all_combinations) > self.config["max_experiments"]:
-                import random
-                random.seed(42)
-                all_combinations = random.sample(all_combinations, self.config["max_experiments"])
-
-            experiments = []
-            for i, combination in enumerate(all_combinations):
-                exp_config = base_config.copy()
-                exp_name = self.generate_experiment_name(i, dict(zip(keys, combination)))
-
-                # 添加超参数
-                for key, value in zip(keys, combination):
-                    exp_config[key] = value
+                # 生成实验名称
+                if exp_idx < len(paired_experiments):
+                    enc_config, dec_config = paired_experiments[exp_idx]
+                    exp_name = self.generate_paired_experiment_name(exp_idx, enc_config, dec_config, exp_config)
+                else:
+                    exp_name = self.generate_experiment_name(exp_idx, exp_config)
 
                 # 添加WandB配置
                 if self.config["use_wandb"]:
@@ -186,10 +148,72 @@ class ExperimentManager:
                 exp_config["save"] = exp_name
 
                 experiments.append({
-                    "id": i + 1,
+                    "id": exp_idx + 1,
                     "name": exp_name,
                     "config": exp_config
                 })
+        else:
+            # 使用平行组合逻辑（当没有成对参数时）
+            experiments = self.generate_parallel_experiments(grid, base_config)
+
+        return experiments
+
+    def get_max_parallel_length(self, grid: Dict[str, Any]) -> int:
+        """获取平行组合的最大长度"""
+        max_length = 1
+        for key, values in grid.items():
+            if isinstance(values, list):
+                max_length = max(max_length, len(values))
+        return max_length
+
+    def generate_parallel_experiments(self, grid: Dict[str, Any], base_config: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """生成平行组合实验"""
+        # 找出最大参数列表长度
+        max_length = 1
+        for key, values in grid.items():
+            if isinstance(values, list):
+                max_length = max(max_length, len(values))
+
+        experiments = []
+
+        for exp_idx in range(max_length):
+            exp_config = base_config.copy()
+
+            # 为每个参数取值
+            for key, values in grid.items():
+                if isinstance(values, list):
+                    if len(values) == 1:
+                        # 单值参数：所有实验都使用同一个值
+                        exp_config[key] = values[0]
+                    else:
+                        # 多值参数：按索引取值
+                        if exp_idx < len(values):
+                            exp_config[key] = values[exp_idx]
+                        else:
+                            # 如果索引超出范围，使用最后一个值
+                            exp_config[key] = values[-1]
+                else:
+                    # 非列表参数：直接赋值
+                    exp_config[key] = values
+
+            # 生成实验名称
+            exp_name = self.generate_experiment_name(exp_idx, exp_config)
+
+            # 添加WandB配置
+            if self.config["use_wandb"]:
+                exp_config["use_wandb"] = True
+                exp_config["wandb_project"] = self.config["wandb_project"]
+                exp_config["wandb_name"] = exp_name
+
+            # 添加其他配置
+            exp_config["save_every_n_steps"] = self.config["save_every_n_steps"]
+            exp_config["save"] = exp_name
+
+            experiments.append({
+                "id": exp_idx + 1,
+                "name": exp_name,
+                "config": exp_config
+            })
 
         return experiments
 
@@ -261,26 +285,44 @@ class ExperimentManager:
         # 如果完全匹配，认为是合理的
         return dec_depths == expected_dec
 
-    def generate_paired_experiment_name(self, pair_idx: int, other_params: Dict[str, Any]) -> str:
+    def generate_paired_experiment_name(self, pair_idx: int, enc_config: str, dec_config: str, config: Dict[str, Any]) -> str:
         """生成成对参数的实验名称"""
         pattern = self.config["run_name_pattern"]
+
+        # 从配置中提取pattern需要的参数
+        pattern_params = {}
+        for key in ['lr', 'loss','optimizer', 'scheduler', 'symunet_pretrain_width']:
+            if key in config:
+                pattern_params[key] = config[key]
+
+        # 添加成对参数信息
+        pattern_params['enc_blk_nums'] = enc_config.replace(',', '-')
+        pattern_params['dec_blk_nums'] = dec_config.replace(',', '-')
+
         name = pattern.format(
             prefix=self.config["experiment_prefix"],
-            **other_params
+            **pattern_params
         )
         # 清理特殊字符
-        name = name.replace(".", "p").replace("+", "p").replace("*", "x")
-        return f"{pair_idx+1:03d}_{name}"
+        name = name.replace(".", "p").replace("+", "p").replace("*", "x").replace(" ", "")
+        return f"pair{pair_idx+1:02d}_{name}"
         
-    def generate_experiment_name(self, index: int, params: Dict[str, Any]) -> str:
+    def generate_experiment_name(self, index: int, config: Dict[str, Any]) -> str:
         """生成实验名称"""
         pattern = self.config["run_name_pattern"]
+
+        # 从配置中提取pattern需要的参数
+        pattern_params = {}
+        for key in ['lr', 'loss','optimizer', 'scheduler', 'symunet_pretrain_width']:
+            if key in config:
+                pattern_params[key] = config[key]
+
         name = pattern.format(
             prefix=self.config["experiment_prefix"],
-            **params
+            **pattern_params
         )
         # 清理特殊字符
-        name = name.replace(".", "p").replace("+", "p").replace("*", "x")
+        name = name.replace(".", "p").replace("+", "p").replace("*", "x").replace(" ", "")
         return f"{self.config['experiment_prefix']}_{index+1:03d}_{name}"
 
     def run_experiment(self, experiment: Dict[str, Any]) -> Dict[str, Any]:

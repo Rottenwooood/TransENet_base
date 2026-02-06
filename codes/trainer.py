@@ -207,9 +207,11 @@ class Trainer():
                 )
 
                 # Log validation metrics to WandB (only for final scale, epoch-level logging)
+                print(f"DEBUG: WandB check - hasattr: {hasattr(self, 'wandb_logger')}, not None: {self.wandb_logger is not None}, idx_scale: {idx_scale}")
                 if hasattr(self, 'wandb_logger') and self.wandb_logger is not None and idx_scale == 0:
                     current_psnr = self.ckp.log[-1, idx_scale].item()
                     best_psnr = best[0][idx_scale].item()
+                    print(f"DEBUG: Logging to WandB - epoch: {epoch}, psnr: {current_psnr}")
 
                     self.wandb_logger.log_validation(
                         epoch=epoch,
@@ -217,6 +219,9 @@ class Trainer():
                         ssim_value=None,  # 可以后续添加
                         best_psnr=best_psnr
                     )
+                    print(f"DEBUG: WandB log_validation called successfully")
+                else:
+                    print(f"DEBUG: WandB logging skipped")
 
         self.ckp.write_log(
             'Total time: {:.2f}s\n'.format(timer_test.toc())
