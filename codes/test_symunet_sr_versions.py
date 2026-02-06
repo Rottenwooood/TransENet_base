@@ -67,8 +67,8 @@ def main():
     print(f"使用设备: {device}")
 
     # 设置测试参数
-    test_scales = [2, 4, 8]
-    test_sizes = [(32, 32), (48, 48), (64, 64)]
+    test_scales = [4]
+    test_sizes = [(48, 48)]
 
     results = []
 
@@ -87,8 +87,8 @@ def main():
             try:
                 args.symunet_pretrain_width = 48
                 args.symunet_pretrain_middle_blk_num = 1
-                args.symunet_pretrain_enc_blk_nums = [4, 6, 6]
-                args.symunet_pretrain_dec_blk_nums = [6, 6, 4]
+                args.symunet_pretrain_enc_blk_nums = [4, 6]
+                args.symunet_pretrain_dec_blk_nums = [6, 6]
                 args.symunet_pretrain_ffn_expansion_factor = 2.66
                 args.symunet_pretrain_bias = False
                 args.symunet_pretrain_layer_norm_type = 'WithBias'

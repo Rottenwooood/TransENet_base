@@ -186,19 +186,19 @@ class SymUNet_Pretrain(nn.Module):
 
         # 基本参数
         img_channel = args.n_colors
-        width = getattr(args, 'symunet_width', 64)
-        middle_blk_num = getattr(args, 'symunet_middle_blk_num', 1)
-        enc_blk_nums = getattr(args, 'symunet_enc_blk_nums', [2, 2, 2])
-        dec_blk_nums = getattr(args, 'symunet_dec_blk_nums', [2, 2, 2])
+        width = getattr(args, 'symunet_pretrain_width', 64)
+        middle_blk_num = getattr(args, 'symunet_pretrain_middle_blk_num', 1)
+        enc_blk_nums = getattr(args, 'symunet_pretrain_enc_blk_nums', [2, 2, 2])
+        dec_blk_nums = getattr(args, 'symunet_pretrain_dec_blk_nums', [2, 2, 2])
 
         # Transformer 参数
-        ffn_expansion_factor = getattr(args, 'symunet_ffn_expansion_factor', 2.66)
-        bias = getattr(args, 'symunet_bias', False)
-        LayerNorm_type = getattr(args, 'symunet_layer_norm_type', 'WithBias')
+        ffn_expansion_factor = getattr(args, 'symunet_pretrain_ffn_expansion_factor', 2.66)
+        bias = getattr(args, 'symunet_pretrain_bias', False)
+        LayerNorm_type = getattr(args, 'symunet_pretrain_layer_norm_type', 'WithBias')
 
         # Restormer 注意力头数
-        restormer_heads = getattr(args, 'symunet_restormer_heads', [1, 2, 4])
-        restormer_middle_heads = getattr(args, 'symunet_restormer_middle_heads', 8)
+        restormer_heads = getattr(args, 'symunet_pretrain_restormer_heads', [1, 2, 4])
+        restormer_middle_heads = getattr(args, 'symunet_pretrain_restormer_middle_heads', 8)
 
         # 预上采样层：使用bicubic插值将LR放大到HR尺寸
         self.pre_upsample = nn.Upsample(scale_factor=self.scale, mode='bicubic', align_corners=False)
