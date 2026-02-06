@@ -81,7 +81,7 @@ class ExperimentManager:
             "use_wandb": True,
             "wandb_project": "SymUNet-Batch",
             "save_every_n_steps": 50,
-            "run_name_pattern": "{prefix}_lr{lr}_opt{optimizer}_sch{scheduler}_w{width}"
+            "run_name_pattern": "{prefix}_lr{lr}_opt{optimizer}_sch{scheduler}_w{symunet_pretrain_width}"
         }
 
     def generate_experiments(self) -> List[Dict[str, Any]]:
@@ -104,7 +104,7 @@ class ExperimentManager:
 
                     for other_comb in other_combinations:
                         exp_config = base_config.copy()
-                        exp_name = self.generate_paired_experiment_name(i, enc_config, dec_config, dict(zip(keys, other_comb)))
+                        exp_name = self.generate_paired_experiment_name(i, dict(zip(keys, other_comb)))
 
                         # 设置成对参数
                         exp_config["symunet_pretrain_enc_blk_nums"] = enc_config
@@ -261,30 +261,17 @@ class ExperimentManager:
         # 如果完全匹配，认为是合理的
         return dec_depths == expected_dec
 
-    def generate_paired_experiment_name(self, pair_idx: int, enc_config: str, dec_config: str, other_params: Dict[str, Any]) -> str:
+    def generate_paired_experiment_name(self, pair_idx: int, other_params: Dict[str, Any]) -> str:
         """生成成对参数的实验名称"""
-        # 编码器-解码器配置描述
-        pair_desc = f"enc{enc_config.replace(',', '-')}_dec{dec_config.replace(',', '-')}"
-
-        # 添加其他关键参数
-        key_params = []
-        for key, value in other_params.items():
-            if key in ['lr', 'symunet_pretrain_width', 'optimizer']:
-                if isinstance(value, float):
-                    key_params.append(f"{value:.0e}")
-                else:
-                    key_params.append(str(value))
-
-        # 构建完整名称
-        name_parts = [self.config["experiment_prefix"], f"pair{pair_idx+1:02d}", pair_desc]
-        if key_params:
-            name_parts.append("_".join(key_params))
-
-        exp_name = "_".join(name_parts)
+        pattern = self.config["run_name_pattern"]
+        name = pattern.format(
+            prefix=self.config["experiment_prefix"],
+            **other_params
+        )
         # 清理特殊字符
-        exp_name = exp_name.replace(".", "p").replace("+", "p").replace("*", "x").replace(" ", "")
-        return exp_name
-
+        name = name.replace(".", "p").replace("+", "p").replace("*", "x")
+        return f"{pair_idx+1:03d}_{name}"
+        
     def generate_experiment_name(self, index: int, params: Dict[str, Any]) -> str:
         """生成实验名称"""
         pattern = self.config["run_name_pattern"]

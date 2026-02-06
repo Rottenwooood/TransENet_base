@@ -23,9 +23,9 @@ parser.add_argument('--dir_data', type=str, default='.',
                     help='dataset directory')
 parser.add_argument('--dir_out', type=str, default='./output',
                     help='output directory')
-parser.add_argument('--data_train', type=str, default='/root/autodl-tmp/TransENet/datasets/TransENet/UCMerced',
+parser.add_argument('--data_train', type=str, default='/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/train',
                     help='training dataset directory')
-parser.add_argument('--data_val', type=str, default='/root/autodl-tmp/TransENet/datasets/TransENet/UCMerced',
+parser.add_argument('--data_val', type=str, default='/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/val',
                     help='validation dataset directory')
 parser.add_argument('--data_test', type=str, default='.',
                     help='test dataset name')
