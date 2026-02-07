@@ -89,20 +89,13 @@ def deploy_and_evaluate(args, checkpoint_dir, checkpoint_name, output_dir, gt_di
     print(f"{'='*60}")
 
     # 设置device
-    device = torch.device('cuda')
-
+    device = torch.device('cpu' if args.cpu else 'cuda')
+    checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
+    args.pre_train = checkpoint_path
     # 加载模型
     checkpoint = utils.checkpoint(args)
     sr_model = model.Model(args, checkpoint)
     sr_model.eval()
-
-    # 加载checkpoint
-    checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
-    if os.path.exists(checkpoint_path):
-        print(f"加载checkpoint: {checkpoint_path}")
-    else:
-        print(f"错误: checkpoint文件不存在: {checkpoint_path}")
-        return 0.0
 
     # 确保输出目录存在
     os.makedirs(output_dir, exist_ok=True)
