@@ -11,11 +11,11 @@
 import os
 import sys
 import glob
-import argparse
 import numpy as np
 import cv2
 import math
 import time
+import torch
 from pathlib import Path
 
 # 添加当前目录到路径
@@ -89,7 +89,7 @@ def deploy_and_evaluate(args, checkpoint_dir, checkpoint_name, output_dir, gt_di
     print(f"{'='*60}")
 
     # 设置device
-    device = torch.device('cpu' if args.cpu else 'cuda')
+    device = torch.device('cuda')
 
     # 加载模型
     checkpoint = utils.checkpoint(args)
@@ -100,16 +100,9 @@ def deploy_and_evaluate(args, checkpoint_dir, checkpoint_name, output_dir, gt_di
     checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
     if os.path.exists(checkpoint_path):
         print(f"加载checkpoint: {checkpoint_path}")
-        state_dict = torch.load(checkpoint_path, map_location=device)
-        if 'model_state_dict' in state_dict:
-            sr_model.load_state_dict(state_dict['model_state_dict'])
-        else:
-            sr_model.load_state_dict(state_dict)
     else:
         print(f"错误: checkpoint文件不存在: {checkpoint_path}")
         return 0.0
-
-    sr_model = sr_model.to(device)
 
     # 确保输出目录存在
     os.makedirs(output_dir, exist_ok=True)
@@ -179,13 +172,12 @@ def deploy_and_evaluate(args, checkpoint_dir, checkpoint_name, output_dir, gt_di
             # 转换为numpy
             sr_np = np.array(sr.cpu().detach())
             sr_np = sr_np[0, :].transpose([1, 2, 0])
-            lr_original = lr_np * args.rgb_range / 255.
+            lr_np = lr_np * args.rgb_range / 255.
 
-            # 后投影
-            if args.back_projection_iters > 0:
-                for _ in range(args.back_projection_iters):
-                    sr_np = utils.back_projection(sr_np, lr_original, down_kernel='cubic',
-                                               up_kernel='cubic', sf=args.scale[0], range=args.rgb_range)
+            # Again back projection for the final fused result
+            for bp_iter in range(args.back_projection_iters):
+                sr_np = utils.back_projection(sr_np, lr_np, down_kernel='cubic',
+                                           up_kernel='cubic', sf=args.scale[0], range=args.rgb_range)
 
             # 量化
             if args.rgb_range == 1:
@@ -256,49 +248,8 @@ def deploy_and_evaluate(args, checkpoint_dir, checkpoint_name, output_dir, gt_di
 
 
 def main():
-    parser = argparse.ArgumentParser(description='批量deploy并计算PSNR')
-
-    # 模型相关参数
-    parser.add_argument('--model', type=str, default='SYMUNET_PRETRAIN',
-                        help='模型名称')
-    parser.add_argument('--dataset', type=str, default='UCMerced',
-                        help='数据集名称')
-    parser.add_argument('--scale', type=int, nargs='+', default=[4],
-                        help='超分辨率倍数')
-    parser.add_argument('--patch_size', type=int, default=192,
-                        help='训练patch大小')
-
-    # 数据相关参数
-    parser.add_argument('--dir_data', type=str, required=True,
-                        help='LR图像目录')
-    parser.add_argument('--dir_out_base', type=str, required=True,
-                        help='输出目录基础路径')
-
-    # Ground Truth目录
-    parser.add_argument('--dir_gt', type=str, required=True,
-                        help='Ground Truth图像目录')
-
-    # Pre-train模型列表 (逗号分隔)
-    parser.add_argument('--pre_train_list', type=str, required=True,
-                        help='预训练模型路径列表 (逗号分隔)')
-
-    # Checkpoint列表 (逗号分隔)
-    parser.add_argument('--checkpoint_list', type=str, required=True,
-                        help='checkpoint文件名列表 (逗号分隔，如: checkpoint_step_17850.pt,checkpoint_step_23800.pt,checkpoint_step_29750.pt)')
-
-    # 其他参数
-    parser.add_argument('--test_block', action='store_true',
-                        help='是否使用分块测试')
-    parser.add_argument('--cubic_input', action='store_true',
-                        help='是否使用cubic输入')
-    parser.add_argument('--back_projection_iters', type=int, default=0,
-                        help='后投影迭代次数')
-    parser.add_argument('--rgb_range', type=int, default=255,
-                        help='RGB值范围')
-    parser.add_argument('--cpu', action='store_true',
-                        help='使用CPU')
-
-    args = parser.parse_args()
+    # 解析参数（从option.py继承）
+    from option import args
 
     print("="*60)
     print("批量Deploy和PSNR计算")
@@ -417,5 +368,4 @@ def main():
 
 
 if __name__ == '__main__':
-    import torch
     main()

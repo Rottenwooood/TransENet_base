@@ -326,6 +326,57 @@ def deploy(args, sr_model):
             final_sr = final_sr.astype(np.uint8)
             final_sr = cv2.cvtColor(final_sr, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(args.dir_out, os.path.split(img_lists[i])[-1]), final_sr)
+    #    # 计算PSNR
+    # folder_GT = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/HR_x4'
+    # folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced_UCMercedtest/x4'
+    # img_ext = '.tif'
+    # crop_border = 4  # same with scale
+    # suffix = ''  # suffix for Gen images
+    # test_Y = False  # True: test Y channel only; False: test RGB channels
+
+    # PSNR_all = []
+    # SSIM_all = []
+    # print(f"\n计算PSNR...")
+
+    # # 获取GT图像列表
+    # gt_lists = sorted(glob.glob(os.path.join(folder_GT, '/*')))
+    # for i, gt_path in enumerate(gt_lists):
+    #     base_name = os.path.splitext(os.path.basename(gt_path))[0]
+    #     gen_path = os.path.join(folder_Gen, base_name + img_ext)
+
+    #     if not os.path.exists(gen_path):
+    #         print(f"警告: 生成图像不存在: {gen_path}")
+    #         continue
+
+    #     # 读取图像
+    #     im_GT = cv2.imread(gt_path) / 255.
+    #     im_Gen = cv2.imread(gen_path) / 255.
+
+    #     # 裁剪边界
+    #     if crop_border == 0:
+    #         cropped_GT = im_GT
+    #         cropped_Gen = im_Gen
+    #     else:
+    #         if im_GT.ndim == 3:
+    #             cropped_GT = im_GT[crop_border:-crop_border, crop_border:-crop_border, :]
+    #             cropped_Gen = im_Gen[crop_border:-crop_border, crop_border:-crop_border, :]
+    #         elif im_GT.ndim == 2:
+    #             cropped_GT = im_GT[crop_border:-crop_border, crop_border:-crop_border]
+    #             cropped_Gen = im_Gen[crop_border:-crop_border, crop_border:-crop_border]
+
+    #     # 计算PSNR和SSIM
+    #     PSNR = calculate_rgb_psnr(cropped_GT * 255, cropped_Gen * 255)
+    #     SSIM = calculate_ssim(cropped_GT * 255, cropped_Gen * 255)
+
+    #     PSNR_all.append(PSNR)
+    #     SSIM_all.append(SSIM)
+
+    #     print(f"  {base_name:30s} - PSNR: {PSNR:.4f} dB, SSIM: {SSIM:.4f}")
+
+    # avg_psnr = sum(PSNR_all) / len(PSNR_all)
+    # avg_ssim = sum(SSIM_all) / len(SSIM_all)
+
+    # print(f"\n平均结果: PSNR: {avg_psnr:.4f} dB, SSIM: {avg_ssim:.4f}")
 
 
 
@@ -333,10 +384,11 @@ if __name__ == '__main__':
 
     # args parameter setting
     # You can configure these paths via command line arguments or set them here
-    args.pre_train = '/root/autodl-tmp/TransENet/experiment/symunet_batch_pair02_enc4-6-6_dec6-6-4_ADAMW_2e-04_48/checkpoint_step_17850.pt'
+    args.pre_train = '/root/autodl-tmp/TransENet/experiment/test_dir/pair01_symunet_batch_lr0p0002_blk4-6_6-4_1xL1_schstep_w48/model/model_best.pt'
+    
     # args.dir_data = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/LR_x4'
     args.dir_data = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/LR_x4'
-    args.dir_out = '../experiment/results/46fft1/x4'
+    args.dir_out = '../experiment/results/466L1W32/x4'
 
     print("Configuration:")
     print(f"  Model: {args.model}")

@@ -16,16 +16,12 @@
     "loss": [
       "1*L1"
     ],
-    "symunet_pretrain_width": [48,48,32],
+    "symunet_pretrain_width": [32],
     "symunet_pretrain_enc_blk_nums": [
-      "4,6",
-      "4,6,6",
-      "4,6,6"      
+      "4,6"   
     ],
     "symunet_pretrain_dec_blk_nums": [
-      "6,4",
-      "6,6,4",
-      "6,6,4"
+      "6,4"
     ]
   },
   "experiment_prefix": "symunet_batch",

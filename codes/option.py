@@ -236,6 +236,22 @@ parser.add_argument('--cosine_eta_min', type=float, default=5e-5,
 parser.add_argument('--save_every_n_steps', type=int, default=50,
                     help='save checkpoint every n steps')
 
+# # 添加批量deploy特有的参数
+# # Pre-train模型列表 (逗号分隔)
+# parser.add_argument('--pre_train_list', type=str, required=True,
+#                     help='预训练模型路径列表 (逗号分隔)')
+
+# # Checkpoint列表 (逗号分隔)
+# parser.add_argument('--checkpoint_list', type=str, required=True,
+#                     help='checkpoint文件名列表 (逗号分隔，如: checkpoint_step_17850.pt,checkpoint_step_23800.pt,checkpoint_step_29750.pt)')
+
+# # Ground Truth目录
+# parser.add_argument('--dir_gt', type=str, required=True,
+#                     help='Ground Truth图像目录')
+
+# # 输出目录基础路径 (覆盖option.py中的默认值)
+# parser.add_argument('--dir_out_base', type=str, required=True,
+#                     help='输出目录基础路径')
 args = parser.parse_args()
 args.scale = list(map(lambda x: int(x), args.scale.split('+')))
 

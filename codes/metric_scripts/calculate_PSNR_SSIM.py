@@ -21,7 +21,7 @@ def main():
     # folder_GT = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/HR'
     # folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced_AIDtest/x4'
     folder_GT = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/HR_x4'
-    folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced_UCMercedtest/x4'
+    folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/466L1W32/x4'
     img_ext = '.tif'
     crop_border = 4  # same with scale
     suffix = ''  # suffix for Gen images

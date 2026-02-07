@@ -74,13 +74,16 @@ python quick_batch_deploy.py \
 ```bash
 python batch_deploy_psnr.py \
     --model SYMUNET_PRETRAIN \
+    --symunet_pretrain_width 48 \
+    --symunet_pretrain_enc_blk_nums 4,6 \
+    --symunet_pretrain_dec_blk_nums 6,4 \
     --dataset UCMerced \
     --scale 4 \
-    --dir_data /data/UCMerced/test/LR_x4 \
-    --dir_out_base /experiment/psnr_results \
-    --dir_gt /data/UCMerced/test/HR_x4 \
-    --pre_train_list /experiment/symunet_pretrain/model/model_best.pt \
-    --checkpoint_list "checkpoint_step_17850.pt,checkpoint_step_23800.pt,checkpoint_step_29750.pt"
+    --dir_data /root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/LR_x4 \
+    --dir_out_base /root/autodl-tmp/TransENet/experiment/psnr_results \
+    --dir_gt /root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test//HR_x4 \
+    --pre_train_list /root/autodl-tmp/TransENet/experiment/test_dir/pair02_symunet_batch_lr0p0002_blk4-6-6_6-6-4_1xL1_schstep_w48/model/model_best.pt \
+    --checkpoint_list "model_latest.pt,model_best.pt"
 ```
 
 ## 输出结果
