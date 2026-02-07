@@ -262,6 +262,14 @@ class SymUNet_Posttrain(nn.Module):
 
         self.padder_size = (2 ** len(self.encoders)) * 4
 
+        # 初始化最终上采样层的卷积权重，让初始输出接近0
+        # 强制模型先学习输出接近bicubic插值的结果
+        for m in self.final_upsample.modules():
+            if isinstance(m, nn.Conv2d):
+                m.weight.data.normal_(0, 0.001)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+
     def forward(self, inp):
         B, C, H, W = inp.shape
 
