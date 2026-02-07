@@ -1,12 +1,12 @@
 {
   "base_config": {
-    "model": "SYMUNET_PRETRAIN",
+    "model": "SYMUNET_POSTTRAIN",
     "dataset": "UCMerced",
     "scale": 4,
     "epochs": 300,
-    "batch_size": 4,
+    "batch_size": 8,
     "ext": "img",
-    "patch_size": 192,
+    "patch_size": 256,
     "resume": 0
   },
   "hyperparameter_grid": {
@@ -16,18 +16,20 @@
     "loss": [
       "1*L1"
     ],
-    "symunet_pretrain_width": [32],
-    "symunet_pretrain_enc_blk_nums": [
-      "4,6"   
+    "symunet_posttrain_width": [48],
+    "symunet_posttrain_enc_blk_nums": [
+      "4,6,6",
+      "4,6" 
     ],
-    "symunet_pretrain_dec_blk_nums": [
+    "symunet_posttrain_dec_blk_nums": [
+      "6,6,4",
       "6,4"
     ]
   },
-  "experiment_prefix": "symunet_batch",
+  "experiment_prefix": "symunet_post",
   "max_experiments": 20,
   "use_wandb": true,
   "wandb_project": "SymUNet-Batch-Experiments",
   "save_every_n_steps": 50,
-  "run_name_pattern": "{prefix}_lr{lr}_blk{enc_blk_nums}_{dec_blk_nums}_{loss}_sch{scheduler}_w{symunet_pretrain_width}"
+  "run_name_pattern": "{prefix}_lr{lr}_blk{enc_blk_nums}_{dec_blk_nums}_{loss}_sch{scheduler}_w{symunet_posttrain_width}"
 }

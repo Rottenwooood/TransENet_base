@@ -109,8 +109,8 @@ class ExperimentManager:
                 # 处理成对参数
                 if exp_idx < len(paired_experiments):
                     enc_config, dec_config = paired_experiments[exp_idx]
-                    exp_config["symunet_pretrain_enc_blk_nums"] = enc_config
-                    exp_config["symunet_pretrain_dec_blk_nums"] = dec_config
+                    exp_config["symunet_posttrain_enc_blk_nums"] = enc_config
+                    exp_config["symunet_posttrain_dec_blk_nums"] = dec_config
 
                 # 处理剩余参数
                 if remaining_grid:
@@ -291,7 +291,7 @@ class ExperimentManager:
 
         # 从配置中提取pattern需要的参数
         pattern_params = {}
-        for key in ['lr', 'loss','optimizer', 'scheduler', 'symunet_pretrain_width']:
+        for key in ['lr', 'loss','optimizer', 'scheduler', 'symunet_posttrain_width']:
             if key in config:
                 pattern_params[key] = config[key]
 
@@ -313,7 +313,7 @@ class ExperimentManager:
 
         # 从配置中提取pattern需要的参数
         pattern_params = {}
-        for key in ['lr', 'loss','optimizer', 'scheduler', 'symunet_pretrain_width']:
+        for key in ['lr', 'loss','optimizer', 'scheduler', 'symunet_posttrain_width']:
             if key in config:
                 pattern_params[key] = config[key]
 
@@ -582,7 +582,7 @@ def main():
         for exp in experiments:
             print(f"   {exp['id']}: {exp['name']}")
             for key, value in exp['config'].items():
-                if key in ['optimizer', 'scheduler', 'lr', 'symunet_pretrain_width']:
+                if key in ['optimizer', 'scheduler', 'lr', 'symunet_posttrain_width']:
                     print(f"      {key}: {value}")
         return
 
