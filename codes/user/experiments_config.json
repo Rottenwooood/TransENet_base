@@ -22,7 +22,11 @@
       "4,6" 
     ],
     "symunet_posttrain_dec_blk_nums": [
+<<<<<<< HEAD
       "6,6,4",
+=======
+      "6,4,4",
+>>>>>>> origin/master
       "6,4"
     ]
   },
