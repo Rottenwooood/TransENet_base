@@ -4,7 +4,7 @@
     "dataset": "UCMerced",
     "scale": 4,
     "epochs": 300,
-    "batch_size": 4,
+    "batch_size": 8,
     "ext": "img",
     "patch_size": 192,
     "resume": 0
@@ -24,7 +24,7 @@
       "6,4"
     ]
   },
-  "experiment_prefix": "symunet_batch",
+  "experiment_prefix": "NAF_symunet_batch",
   "max_experiments": 20,
   "use_wandb": true,
   "wandb_project": "SymUNet-Batch-Experiments",
