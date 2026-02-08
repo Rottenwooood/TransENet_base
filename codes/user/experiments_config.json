@@ -3,11 +3,12 @@
     "model": "SYMUNET_POSTTRAIN",
     "dataset": "UCMerced",
     "scale": 4,
-    "epochs": 300,
+    "epochs": 500,
     "batch_size": 8,
     "ext": "img",
-    "patch_size": 256,
-    "resume": 0
+    "patch_size": 192,
+    "resume": 1,
+    "pre_train": "/root/autodl-tmp/TransENet/experiment/pair01_symunet_post_lr0p0002_blk4-6_6-4_1xL1_schstep_w48/model/model_latest.pt"
   },
   "hyperparameter_grid": {
     "optimizer": ["ADAMW"],
@@ -18,11 +19,9 @@
     ],
     "symunet_posttrain_width": [48],
     "symunet_posttrain_enc_blk_nums": [
-      "4,6,6",
       "4,6" 
     ],
     "symunet_posttrain_dec_blk_nums": [
-      "6,6,4",
       "6,4"
     ]
   },
