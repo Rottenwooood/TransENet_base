@@ -3,6 +3,17 @@ from importlib import import_module
 
 import torch
 import torch.nn as nn
+import pkgutil
+import importlib
+
+# Automatically import all modules in this package to trigger registry decorators
+pkg_dir = os.path.dirname(__file__)
+for _, name, _ in pkgutil.iter_modules([pkg_dir]):
+    if not name.startswith('__'):
+        try:
+            importlib.import_module(f'.{name}', __package__)
+        except Exception as e:
+            print(f"Warning: Failed to import {name}: {e}")
 
 
 class Model(nn.Module):
@@ -20,8 +31,10 @@ class Model(nn.Module):
         self.n_GPUs = args.n_GPUs
         self.save_models = args.save_models
 
-        module = import_module('model.' + args.model.lower())
-        self.model = module.make_model(args).to(self.device)
+        from utils.registry import ARCH_REGISTRY
+        # module = import_module('model.' + args.model.lower())
+        # self.model = module.make_model(args).to(self.device)
+        self.model = ARCH_REGISTRY.build(args.model, args=args).to(self.device)
         if args.precision == 'half': self.model.half()
 
         if not args.cpu and args.n_GPUs > 1:

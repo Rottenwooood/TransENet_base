@@ -6,6 +6,9 @@ import torch.nn.functional as F
 import torchvision.models as models
 from torch.autograd import Variable
 
+from utils.registry import LOSS_REGISTRY
+
+@LOSS_REGISTRY.register("VGG")
 class VGG(nn.Module):
     def __init__(self, conv_index, rgb_range=1):
         super(VGG, self).__init__()

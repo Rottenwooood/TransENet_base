@@ -189,7 +189,7 @@ def deploy_and_evaluate(args, checkpoint_dir, checkpoint_name, output_dir, gt_di
     print(f"部署完成，耗时: {deploy_time:.2f}s")
 
     # 计算PSNR
-    print(f"\n计算PSNR...")
+    print(f"\n计算PSNR (Y Channel)...")
     PSNR_all = []
     SSIM_all = []
 
@@ -207,35 +207,77 @@ def deploy_and_evaluate(args, checkpoint_dir, checkpoint_name, output_dir, gt_di
             print(f"警告: 生成图像不存在: {gen_path}")
             continue
 
-        # 读取图像
-        im_GT = cv2.imread(gt_path) / 255.
-        im_Gen = cv2.imread(gen_path) / 255.
+        # 读取图像 (BGR uint8)
+        im_GT = cv2.imread(gt_path)
+        im_Gen = cv2.imread(gen_path)
+
+        # 转换为Y通道 (float32, [0, 1] range implicit in bgr2ycbcr output if we divide)
+        # utils.bgr2ycbcr handles uint8 -> float conversion and returns float [0,1] or [16/255...] range?
+        # Let's check utils.py again. 
+        # utils.bgr2ycbcr returns float. 
+        # If input uint8, it does NOT divide by 255 automatically before dot product? 
+        # wait, utils.py says: "if in_img_type != np.uint8: img *= 255." 
+        # "rlt = np.dot(img, ...) / 255.0 + 16.0"
+        # "if only_y: rlt = ... / 255.0 + 16.0" 
+        # This looks like it returns [16..235] range if we don't divide by 255, 
+        # BUT it divides by 255. 
+        # Actually, standard MATLAB rgb2ycbcr (Y) returns [16/255, 235/255] range for float, or [16, 235] for uint8.
+        # utils.py seems to return float in [0, 255] range if input is uint8? No. 
+        # Let's stick to standard practice: Convert to Y (float), then calculate PSNR.
+        
+        # We will use our own robust Y conversion here to be safe and explicit, 
+        # OR trust utils.bgr2ycbcr if we verified it.
+        # utils.bgr2ycbcr: return rlt.astype(in_img_type). 
+        # If input uint8, returns uint8.
+        
+        # Standard SR evaluation:
+        # 1. Convert to Y (float)
+        # 2. Shave border
+        # 3. Calculate PSNR
+        
+        # Use utils.bgr2ycbcr
+        im_GT_y = utils.bgr2ycbcr(im_GT, only_y=True)  # uint8 if input is uint8
+        im_Gen_y = utils.bgr2ycbcr(im_Gen, only_y=True) # uint8
+
+        # Convert to float for calculation
+        im_GT_y = im_GT_y.astype(np.float64) / 255.0
+        im_Gen_y = im_Gen_y.astype(np.float64) / 255.0
 
         # 裁剪边界
         if crop_border == 0:
-            cropped_GT = im_GT
-            cropped_Gen = im_Gen
+            cropped_GT = im_GT_y
+            cropped_Gen = im_Gen_y
         else:
-            if im_GT.ndim == 3:
-                cropped_GT = im_GT[crop_border:-crop_border, crop_border:-crop_border, :]
-                cropped_Gen = im_Gen[crop_border:-crop_border, crop_border:-crop_border, :]
-            elif im_GT.ndim == 2:
-                cropped_GT = im_GT[crop_border:-crop_border, crop_border:-crop_border]
-                cropped_Gen = im_Gen[crop_border:-crop_border, crop_border:-crop_border]
+            cropped_GT = im_GT_y[crop_border:-crop_border, crop_border:-crop_border]
+            cropped_Gen = im_Gen_y[crop_border:-crop_border, crop_border:-crop_border]
 
-        # 计算PSNR和SSIM
-        PSNR = calculate_rgb_psnr(cropped_GT * 255, cropped_Gen * 255)
+        # 计算PSNR (on Y channel)
+        # calculate_psnr usually expects [0, 255] range or we adjust formula.
+        # Our `calculate_psnr` function:
+        # return 20 * math.log10(255.0 / math.sqrt(mse)) if inputs are 0-255?
+        # The local `calculate_psnr` function in this file (lines 29-37):
+        # return 20 * math.log10(255.0 / math.sqrt(mse))
+        # It assumes inputs are in [0, 255] range (mse of 0-255 values).
+        
+        # So we should pass [0, 255] range float.
+        PSNR = calculate_psnr(cropped_GT * 255, cropped_Gen * 255)
+        
+        # SSIM
+        # calculate_ssim in this file (lines 49-70) also uses 255 based constants.
         SSIM = calculate_ssim(cropped_GT * 255, cropped_Gen * 255)
 
         PSNR_all.append(PSNR)
         SSIM_all.append(SSIM)
 
-        print(f"  {base_name:30s} - PSNR: {PSNR:.4f} dB, SSIM: {SSIM:.4f}")
+        print(f"  {base_name:30s} - PSNR (Y): {PSNR:.4f} dB, SSIM (Y): {SSIM:.4f}")
+
+    if len(PSNR_all) == 0:
+        return 0.0
 
     avg_psnr = sum(PSNR_all) / len(PSNR_all)
     avg_ssim = sum(SSIM_all) / len(SSIM_all)
 
-    print(f"\n平均结果: PSNR: {avg_psnr:.4f} dB, SSIM: {avg_ssim:.4f}")
+    print(f"\n平均结果 (Y Channel): PSNR: {avg_psnr:.4f} dB, SSIM: {avg_ssim:.4f}")
 
     return avg_psnr
 

@@ -10,6 +10,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from utils.registry import LOSS_REGISTRY
 
 class Loss(nn.modules.loss._Loss):
     def __init__(self, args, ckp):
@@ -37,21 +38,19 @@ class Loss(nn.modules.loss._Loss):
                     args,
                     loss_type
                 )
-            elif loss_type == 'FFT':
-                module = import_module('loss.fft')
-                loss_function = getattr(module, 'FFTLoss')()
+            elif loss_type in LOSS_REGISTRY:
+                 # from utils.registry import LOSS_REGISTRY
+                 loss_function = LOSS_REGISTRY.build(loss_type)
+            elif loss_type == 'FFT': # Falback/Legacy aliases if not registered with exact name
+                loss_function = LOSS_REGISTRY.build('FFTLoss')
             elif loss_type == 'FFTL1':
-                module = import_module('loss.fft')
-                loss_function = getattr(module, 'FFTL1Loss')()
+                loss_function = LOSS_REGISTRY.build('FFTL1Loss')
             elif loss_type == 'StableFFT':
-                module = import_module('loss.fft')
-                loss_function = getattr(module, 'StableFFTLoss')()
+                loss_function = LOSS_REGISTRY.build('StableFFT')
             elif loss_type == 'Freq':
-                module = import_module('loss.fft')
-                loss_function = getattr(module, 'FreqLoss')()
+                loss_function = LOSS_REGISTRY.build('FreqLoss')
             elif loss_type == 'FreqNorm':
-                module = import_module('loss.fft')
-                loss_function = getattr(module, 'FreqNormLoss')()
+                 loss_function = LOSS_REGISTRY.build('FreqNormLoss')
            
             self.loss.append({
                 'type': loss_type,

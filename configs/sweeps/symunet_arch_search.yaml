@@ -1,0 +1,39 @@
+program: codes/train_enhanced.py
+method: bayes
+metric:
+  name: val/psnr
+  goal: maximize
+parameters:
+  # Learning Rate
+  lr:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 1e-3
+  
+  # FFT Loss Weight
+  loss:
+    values:
+      - "1*L1+0.005*StableFFT"
+      - "1*L1+0.01*StableFFT"
+      - "1*L1+0.05*StableFFT"
+
+  # Architecture Search
+  symunet_pretrain_width:
+    values: [32, 48, 64]
+    
+  symunet_pretrain_enc_blk_nums:
+    values: 
+      - "2,2,2"
+      - "4,4,4"
+      - "4,6,6"
+      
+  symunet_pretrain_dec_blk_nums:
+    values:
+      - "2,2,2"
+      - "4,4,4"
+      - "6,6,4"
+
+early_terminate:
+  type: hyperband
+  min_iter: 10
+  eta: 3

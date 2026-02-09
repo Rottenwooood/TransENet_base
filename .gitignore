@@ -2,3 +2,4 @@ datasets/
 experiment/
 *.pyc
 codes/wandb
+_PROJECT_CONTEXT.md

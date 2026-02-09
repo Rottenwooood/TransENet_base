@@ -1,0 +1,108 @@
+# Base Configuration for SymUNet Experiments
+# Mirrors defaults in codes/option.py
+
+# Hardware
+cpu: false
+n_GPUs: 1
+seed: 1
+n_threads: 4
+
+# Data
+dataset: "UCMerced"
+dir_data: "."
+dir_out: "./output"
+data_train: "/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/train"
+data_val: "/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/val"
+data_test: "."
+image_size: 256
+n_colors: 3
+patch_size: 192
+cubic_input: false
+rgb_range: 1
+ext: "sep"
+scale: 4
+noise: "."
+chop: false
+
+# Model (Generic)
+model: "SymUNet_Pretrain" # Default model
+act: "relu"
+pre_train: "."
+extend: "."
+n_feats: 64
+n_basic_modules: 10
+res_scale: 1.0
+shift_mean: true
+precision: "single"
+
+# Training
+reset: false
+epochs: 500
+batch_size: 16
+split_batch: 1
+self_ensemble: false
+test_only: false
+gan_k: 1
+test_metric: "psnr"
+
+# Optimization
+lr: 1.0e-4
+lr_decay: 200
+decay_type: "step"
+gamma: 0.5
+optimizer: "ADAM"
+momentum: 0.9
+beta1: 0.9
+beta2: 0.999
+epsilon: 1.0e-8
+weight_decay: 0.0
+
+# Loss
+loss: "1*L1"
+skip_threshold: 1000000.0
+
+# Logging
+save: "test"
+load: "."
+resume: 0
+print_model: true
+save_models: false
+print_every: 10
+save_results: false
+use_wandb: false
+wandb_project: "SymUNet-SR"
+
+# TransENet specific
+back_projection_iters: 10
+en_depth: 8
+de_depth: 1
+
+# SymUNet specific
+symunet_width: 64
+symunet_middle_blk_num: 1
+symunet_enc_blk_nums: [2, 2, 2]
+symunet_dec_blk_nums: [2, 2, 2]
+symunet_ffn_expansion_factor: 2.66
+symunet_bias: false
+symunet_layer_norm_type: "WithBias"
+symunet_restormer_heads: [1, 2, 4]
+symunet_restormer_middle_heads: 8
+
+# SymUNet Pretrain specific
+symunet_pretrain_width: 32
+symunet_pretrain_middle_blk_num: 1
+symunet_pretrain_enc_blk_nums: [4, 6]
+symunet_pretrain_dec_blk_nums: [6, 4]
+symunet_pretrain_ffn_expansion_factor: 2.66
+symunet_pretrain_bias: false
+symunet_pretrain_layer_norm_type: "WithBias"
+symunet_pretrain_restormer_heads: [1, 2, 4]
+symunet_pretrain_restormer_middle_heads: 8
+symunet_pretrain_dw_expand: 2
+symunet_pretrain_dropout: 0.0
+
+# Enhanced Training
+scheduler: "step"
+cosine_t_max: 300
+cosine_eta_min: 5.0e-5
+save_every_n_steps: 50

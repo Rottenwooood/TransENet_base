@@ -1,0 +1,9 @@
+base_config: "../base.yaml"
+group_id: "test_experiment"
+
+fixed_overrides:
+  epochs: 10
+  
+search_space:
+  symunet_width: [32, 64]
+  lr: [1.0e-4, 2.0e-4]
