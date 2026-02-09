@@ -1,0 +1,8 @@
+model: "SymUNet_Pretrain"
+epochs: 0 # Dry run
+batch_size: 1
+gpu: false
+cpu: true
+dir_data: "codes/data" # Dummy path
+data_train: "codes/data" # Dummy
+data_test: "codes/data" # Dummy

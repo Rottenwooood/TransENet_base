@@ -12,6 +12,9 @@ import torch.nn.functional as F
 import numpy as np
 
 
+from utils.registry import LOSS_REGISTRY
+
+@LOSS_REGISTRY.register()
 class FFTLoss(nn.Module):
     """L1 loss in frequency domain with FFT.
 
@@ -64,6 +67,7 @@ class FFTLoss(nn.Module):
         return self.loss_weight * loss
 
 
+@LOSS_REGISTRY.register()
 class FFTL1Loss(nn.Module):
     """Pure FFT L1 loss without complex representation.
 
@@ -102,6 +106,7 @@ class FFTL1Loss(nn.Module):
         return self.loss_weight * loss
 
 
+@LOSS_REGISTRY.register("StableFFT")
 class StableFFTLoss(nn.Module):
     """
     A stable L1 loss in the frequency domain, combined with a spatial L1 loss.
@@ -156,6 +161,7 @@ class StableFFTLoss(nn.Module):
         return self.loss_weight * combined_loss
 
 
+@LOSS_REGISTRY.register()
 class FreqLoss(nn.Module):
     """Combined frequency and spatial L1 loss.
 
@@ -189,6 +195,7 @@ class FreqLoss(nn.Module):
         return self.loss_weight * loss
 
 
+@LOSS_REGISTRY.register()
 class FreqNormLoss(nn.Module):
     """Frequency loss with ortho normalization.
 

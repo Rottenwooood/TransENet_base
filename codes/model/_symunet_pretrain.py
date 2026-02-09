@@ -11,8 +11,38 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 MIN_NUM_PATCHES = 12
 
 
+from utils.registry import ARCH_REGISTRY
+
+@ARCH_REGISTRY.register("SymUNet_Pretrain")
 def make_model(args, parent=False):
-    return SymUNet_Pretrain(args)
+    # Adapter: Extract args here to keep the class clean
+    width = getattr(args, 'symunet_pretrain_width', 64)
+    enc_blk_nums = getattr(args, 'symunet_pretrain_enc_blk_nums', [2, 2, 2])
+    dec_blk_nums = getattr(args, 'symunet_pretrain_dec_blk_nums', [2, 2, 2])
+    
+    # Check if we are using the 'restormer' style heads config
+    # Note: older versions might not have this, default to [1,2,4]
+    heads = getattr(args, 'symunet_pretrain_restormer_heads', [1, 2, 4])
+    middle_heads = getattr(args, 'symunet_pretrain_restormer_middle_heads', 8)
+    
+    ffn_expansion = getattr(args, 'symunet_pretrain_ffn_expansion_factor', 2.66)
+    bias = getattr(args, 'symunet_pretrain_bias', False)
+    ln_type = getattr(args, 'symunet_pretrain_layer_norm_type', 'WithBias')
+    middle_blk_num = getattr(args, 'symunet_pretrain_middle_blk_num', 1)
+    
+    return SymUNet_Pretrain(
+        img_channel=args.n_colors,
+        width=width,
+        enc_blk_nums=enc_blk_nums, 
+        dec_blk_nums=dec_blk_nums,
+        middle_blk_num=middle_blk_num,
+        heads=heads,
+        middle_heads=middle_heads,
+        ffn_expansion=ffn_expansion,
+        bias=bias,
+        ln_type=ln_type,
+        scale=args.scale[0]
+    )
 
 
 class BiasFree_LayerNorm(nn.Module):
@@ -172,33 +202,47 @@ class Upsample(nn.Module):
         return self.body(x)
 
 
+from utils.registry import ARCH_REGISTRY
+
+
 class SymUNet_Pretrain(nn.Module):
     """
     预上采样版本SymUNet
     - 在最开始将LR图像通过bicubic插值放大到目标尺寸
     - 然后在HR空间进行特征提取和重建
     """
-    def __init__(self, args, conv=common.default_conv):
+    def __init__(self, 
+                 img_channel=3,
+                 width=64,
+                 enc_blk_nums=[2, 2, 2],
+                 dec_blk_nums=[2, 2, 2],
+                 middle_blk_num=1,
+                 heads=[1, 2, 4],
+                 middle_heads=8,
+                 ffn_expansion=2.66,
+                 bias=False,
+                 ln_type='WithBias',
+                 scale=4,
+                 conv=common.default_conv):
         super(SymUNet_Pretrain, self).__init__()
 
-        self.args = args
-        self.scale = args.scale[0]
+        self.scale = scale
 
-        # 基本参数
-        img_channel = args.n_colors
-        width = getattr(args, 'symunet_pretrain_width', 64)
-        middle_blk_num = getattr(args, 'symunet_pretrain_middle_blk_num', 1)
-        enc_blk_nums = getattr(args, 'symunet_pretrain_enc_blk_nums', [2, 2, 2])
-        dec_blk_nums = getattr(args, 'symunet_pretrain_dec_blk_nums', [2, 2, 2])
+        # Use passed arguments instead of global args
+        img_channel = img_channel
+        width = width
+        middle_blk_num = middle_blk_num
+        enc_blk_nums = enc_blk_nums
+        dec_blk_nums = dec_blk_nums
 
-        # Transformer 参数
-        ffn_expansion_factor = getattr(args, 'symunet_pretrain_ffn_expansion_factor', 2.66)
-        bias = getattr(args, 'symunet_pretrain_bias', False)
-        LayerNorm_type = getattr(args, 'symunet_pretrain_layer_norm_type', 'WithBias')
+        # Transformer arguments
+        ffn_expansion_factor = ffn_expansion
+        bias = bias
+        LayerNorm_type = ln_type
 
-        # Restormer 注意力头数
-        restormer_heads = getattr(args, 'symunet_pretrain_restormer_heads', [1, 2, 4])
-        restormer_middle_heads = getattr(args, 'symunet_pretrain_restormer_middle_heads', 8)
+        # Restormer heads
+        restormer_heads = heads
+        restormer_middle_heads = middle_heads
 
         # 预上采样层：使用bicubic插值将LR放大到HR尺寸
         self.pre_upsample = nn.Upsample(scale_factor=self.scale, mode='bicubic', align_corners=False)
@@ -325,7 +369,16 @@ class SymUNet_Pretrain(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain(args)
+    from option import args
+    # Mock args for testing
+    class MockArgs:
+        n_colors = 3
+        scale = [4]
+    
+    # Direct instantiation (Best Practice)
+    model = SymUNet_Pretrain(width=32, scale=4)
+    # OR via Adapter
+    # model = make_model(args)
     model.eval()
     # 输入LR图像，尺寸为48x48，输出HR图像为192x192 (scale=4)
     input_lr = torch.rand(1, 3, 48, 48)

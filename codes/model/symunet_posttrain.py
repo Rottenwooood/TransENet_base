@@ -172,6 +172,9 @@ class Upsample(nn.Module):
         return self.body(x)
 
 
+from utils.registry import ARCH_REGISTRY
+
+@ARCH_REGISTRY.register("SymUNet_Posttrain")
 class SymUNet_Posttrain(nn.Module):
     """
     后上采样版本SymUNet (简化版)

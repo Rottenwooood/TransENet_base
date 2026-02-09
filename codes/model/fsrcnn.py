@@ -9,6 +9,9 @@ import torch.nn as nn
 def make_model(args, parent=False):
     return FSRCNN(args)
 
+from utils.registry import ARCH_REGISTRY
+
+@ARCH_REGISTRY.register("FSRCNN")
 class FSRCNN(nn.Module):
     def __init__(self, args,  conv=common.default_conv, d=56, s=12 * 3, m=8):
         super(FSRCNN, self).__init__()

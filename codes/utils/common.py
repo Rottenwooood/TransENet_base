@@ -70,6 +70,9 @@ class checkpoint():
 
         if args.save == '.':
             args.save = now
+        
+        if hasattr(args, 'dir_out'):
+            self.dir = os.path.join(args.dir_out, args.save)
         else:
             self.dir = '../experiment/' + args.save
 
@@ -326,6 +329,15 @@ def back_projection(y_sr, y_lr, down_kernel, up_kernel, sf=None, range=1):
                      output_shape=y_sr.shape,
                      kernel=up_kernel)
     return np.clip(y_sr, 0, range)
+
+
+def set_random_seed(seed):
+    import random
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 
 

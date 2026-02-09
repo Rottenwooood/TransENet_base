@@ -8,6 +8,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 
+from utils.registry import LOSS_REGISTRY
+
+@LOSS_REGISTRY.register("Adversarial")
 class Adversarial(nn.Module):
     def __init__(self, args, gan_type):
         super(Adversarial, self).__init__()

@@ -8,6 +8,9 @@ def make_model(args, parent=False):
     return VDSR(args)
 
 
+from utils.registry import ARCH_REGISTRY
+
+@ARCH_REGISTRY.register("VDSR")
 class VDSR(nn.Module):
     def __init__(self, args, conv=common.default_conv):
         super(VDSR, self).__init__()

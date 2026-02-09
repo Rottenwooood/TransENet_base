@@ -267,6 +267,9 @@ class Upsample(nn.Module):
         return self.body(x)
 
 
+from utils.registry import ARCH_REGISTRY
+
+@ARCH_REGISTRY.register("CSymUNet_Pretrain")
 class SymUNet_Pretrain(nn.Module):
     """
     预上采样版本SymUNet

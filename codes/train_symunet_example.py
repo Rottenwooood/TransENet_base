@@ -7,13 +7,13 @@ SymUNet Training Integration Example
 import os
 import torch
 import torch.nn as nn
-from model.symunet import make_model
+from model._symunet import make_model
 from model import Model
 import option
 import utils
 
 # 设置模型为SYMUNET
-option.parser.set_defaults(model='SYMUNET')
+option.parser.set_defaults(model='_SYMUNET')
 args = option.parser.parse_args()
 
 # 修复SymUNet参数解析
@@ -121,7 +121,7 @@ def main():
     print("\n" + "=" * 60)
     print("Training Integration Example Completed! ✓")
     print(f"\nTo train with SymUNet, use:")
-    print(f"   python train.py --model SYMUNET [other options]")
+    print(f"   python demo_train.py --model _SYMUNET [other options]")
 
 if __name__ == "__main__":
     main()

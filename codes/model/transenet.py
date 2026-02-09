@@ -50,6 +50,9 @@ class BasicModule(nn.Module):
         return out
 
 
+from utils.registry import ARCH_REGISTRY
+
+@ARCH_REGISTRY.register("TransENet")
 class TransENet(nn.Module):
 
     def __init__(self, args, conv=common.default_conv):
