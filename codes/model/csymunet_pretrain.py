@@ -15,6 +15,72 @@ def make_model(args, parent=False):
     return SymUNet_Pretrain(args)
 
 
+class FeedForward(nn.Module):
+    def __init__(self, dim, ffn_expansion_factor, bias):
+        super(FeedForward, self).__init__()
+
+        hidden_features = int(dim*ffn_expansion_factor)
+
+        self.project_in = nn.Conv2d(dim, hidden_features*2, kernel_size=1, bias=bias)
+        self.dwconv = nn.Conv2d(hidden_features*2, hidden_features*2, kernel_size=3, stride=1, padding=1, groups=hidden_features*2, bias=bias)
+        self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
+
+    def forward(self, x):
+        x = self.project_in(x)
+        x1, x2 = self.dwconv(x).chunk(2, dim=1)
+        x = F.gelu(x1) * x2
+        x = self.project_out(x)
+        return x
+
+
+class Attention(nn.Module):
+    def __init__(self, dim, num_heads, bias):
+        super(Attention, self).__init__()
+        self.num_heads = num_heads
+        self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
+
+        self.qkv = nn.Conv2d(dim, dim*3, kernel_size=1, bias=bias)
+        self.qkv_dwconv = nn.Conv2d(dim*3, dim*3, kernel_size=3, stride=1, padding=1, groups=dim*3, bias=bias)
+        self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
+
+    def forward(self, x):
+        b, c, h, w = x.shape
+
+        qkv = self.qkv_dwconv(self.qkv(x))
+        q, k, v = qkv.chunk(3, dim=1)
+
+        q = rearrange(q, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
+        k = rearrange(k, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
+        v = rearrange(v, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
+
+        q = torch.nn.functional.normalize(q, dim=-1)
+        k = torch.nn.functional.normalize(k, dim=-1)
+
+        attn = (q @ k.transpose(-2, -1)) * self.temperature
+        attn = attn.softmax(dim=-1)
+
+        out = (attn @ v)
+
+        out = rearrange(out, 'b head c (h w) -> b (head c) h w', head=self.num_heads, h=h, w=w)
+
+        out = self.project_out(out)
+        return out
+
+
+class TransformerBlock(nn.Module):
+    def __init__(self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type):
+        super(TransformerBlock, self).__init__()
+
+        self.norm1 = LayerNorm(dim, LayerNorm_type)
+        self.attn = Attention(dim, num_heads, bias)
+        self.norm2 = LayerNorm(dim, LayerNorm_type)
+        self.ffn = FeedForward(dim, ffn_expansion_factor, bias)
+
+    def forward(self, x):
+        x_out = x + self.attn(self.norm1(x))
+        x_out = x_out + self.ffn(self.norm2(x_out))
+        return x_out
+
 class SimpleGate(nn.Module):
     def forward(self, x):
         x1, x2 = x.chunk(2, dim=1)
@@ -215,14 +281,23 @@ class SymUNet_Pretrain(nn.Module):
 
         # 基本参数
         img_channel = args.n_colors
-        width = getattr(args, 'symunet_pretrain_width', 64)
+        width = getattr(args, 'symunet_pretrain_width', 32)
         middle_blk_num = getattr(args, 'symunet_pretrain_middle_blk_num', 1)
-        enc_blk_nums = getattr(args, 'symunet_pretrain_enc_blk_nums', [2, 2, 2])
-        dec_blk_nums = getattr(args, 'symunet_pretrain_dec_blk_nums', [2, 2, 2])
+        enc_blk_nums = getattr(args, 'symunet_pretrain_enc_blk_nums', [4,6])
+        dec_blk_nums = getattr(args, 'symunet_pretrain_dec_blk_nums', [6,4])
 
+        # Transformer 参数
+        ffn_expansion_factor = getattr(args, 'symunet_pretrain_ffn_expansion_factor', 2.66)
+        bias = getattr(args, 'symunet_pretrain_bias', False)
+        LayerNorm_type = getattr(args, 'symunet_pretrain_layer_norm_type', 'WithBias')
+
+        # Restormer 注意力头数
+        restormer_heads = getattr(args, 'symunet_pretrain_restormer_heads', [1, 2, 4])
+        restormer_middle_heads = getattr(args, 'symunet_pretrain_restormer_middle_heads', 8)
+        
         # NAFNet 参数
         DW_Expand = getattr(args, 'symunet_pretrain_dw_expand', 2)
-        FFN_Expand = 2
+        FFN_Expand = 4
         drop_out_rate = getattr(args, 'symunet_pretrain_dropout', 0.)
 
         # 预上采样层：使用bicubic插值将LR放大到HR尺寸
@@ -250,11 +325,12 @@ class SymUNet_Pretrain(nn.Module):
             chan *= 2
 
         self.middle_blks = nn.Sequential(*[
-            NAFBlock(
-                c=chan,
-                DW_Expand=DW_Expand,
-                FFN_Expand=FFN_Expand,
-                drop_out_rate=drop_out_rate
+            TransformerBlock(
+                dim=chan,
+                num_heads=restormer_middle_heads,
+                ffn_expansion_factor=ffn_expansion_factor,
+                bias=bias,
+                LayerNorm_type=LayerNorm_type
             ) for _ in range(middle_blk_num)
         ])
 

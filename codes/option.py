@@ -174,13 +174,13 @@ parser.add_argument('--de_depth', type=int, default=1,
 #                     help='number of attention heads for middle blocks in SymUNet')
 
 # Option for SymUNet Pre-train (预上采样版本)
-parser.add_argument('--symunet_pretrain_width', type=int, default=64,
+parser.add_argument('--symunet_pretrain_width', type=int, default=32,
                     help='base number of channels for SymUNet-Pretrain')
 parser.add_argument('--symunet_pretrain_middle_blk_num', type=int, default=1,
                     help='number of middle blocks in SymUNet-Pretrain')
-parser.add_argument('--symunet_pretrain_enc_blk_nums', type=str, default='2,2,2',
+parser.add_argument('--symunet_pretrain_enc_blk_nums', type=str, default='4,6',
                     help='number of encoder blocks for each stage in SymUNet-Pretrain (comma-separated)')
-parser.add_argument('--symunet_pretrain_dec_blk_nums', type=str, default='2,2,2',
+parser.add_argument('--symunet_pretrain_dec_blk_nums', type=str, default='6,4',
                     help='number of decoder blocks for each stage in SymUNet-Pretrain (comma-separated)')
 parser.add_argument('--symunet_pretrain_ffn_expansion_factor', type=float, default=2.66,
                     help='FFN expansion factor for SymUNet-Pretrain')

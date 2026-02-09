@@ -76,9 +76,9 @@ if __name__ == '__main__':
 
     # Model-specific parameters
     model_prefix = args.model.lower()
-    width = getattr(args, f'{model_prefix}_width', 64)
-    enc_blks = getattr(args, f'{model_prefix}_enc_blk_nums', [2, 2, 2])
-    dec_blks = getattr(args, f'{model_prefix}_dec_blk_nums', [2, 2, 2])
+    width = getattr(args, f'{model_prefix}_width', 32)
+    enc_blks = getattr(args, f'{model_prefix}_enc_blk_nums', [4,6])
+    dec_blks = getattr(args, f'{model_prefix}_dec_blk_nums', [6,4])
     heads = getattr(args, f'{model_prefix}_restormer_heads', [1, 2, 4])
     middle_heads = getattr(args, f'{model_prefix}_restormer_middle_heads', 8)
 

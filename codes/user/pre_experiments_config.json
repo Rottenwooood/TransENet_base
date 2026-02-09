@@ -1,18 +1,18 @@
 {
   "base_config": {
-    "model": "SYMUNET_PRETRAIN",
     "dataset": "UCMerced",
     "scale": 4,
-    "epochs": 300,
+    "epochs": 500,
     "batch_size": 8,
     "ext": "img",
     "patch_size": 192,
     "resume": 0
   },
   "hyperparameter_grid": {
+    "model": ["CSYMUNET_PRETRAIN","ASYMUNET_PRETRAIN","BSYMUNET_PRETRAIN"],
     "optimizer": ["ADAMW"],
     "scheduler": ["step"],
-    "lr": [2e-4],
+    "lr": [4e-4],
     "loss": [
       "1*L1"
     ],
@@ -24,10 +24,10 @@
       "6,4"
     ]
   },
-  "experiment_prefix": "NAF_symunet_batch",
+  "experiment_prefix": "fix_NAF_symunet",
   "max_experiments": 20,
   "use_wandb": true,
   "wandb_project": "SymUNet-Batch-Experiments",
   "save_every_n_steps": 50,
-  "run_name_pattern": "{prefix}_lr{lr}_blk{enc_blk_nums}_{dec_blk_nums}_{loss}_sch{scheduler}_w{symunet_pretrain_width}"
+  "run_name_pattern": "{prefix}_blk46_w{symunet_pretrain_width}"
 }
