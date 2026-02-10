@@ -145,8 +145,8 @@ class NAFBlock(nn.Module):
         # SimpleGate
         self.sg = SimpleGate()
 
-        ffn_channel = FFN_Expand * c # 32*2 = 64
-        # print(ffn_channel,FFN_Expand,c)
+        ffn_channel = int(FFN_Expand * c) # 32*2 = 64 32*5.32 = 170
+        print(ffn_channel,FFN_Expand,c)
         self.conv4 = nn.Conv2d(in_channels=c, out_channels=ffn_channel, kernel_size=1, padding=0, stride=1, groups=1, bias=True)
         self.conv5 = nn.Conv2d(in_channels=ffn_channel // 2, out_channels=c, kernel_size=1, padding=0, stride=1, groups=1, bias=True)
 
@@ -297,7 +297,7 @@ class SymUNet_Pretrain(nn.Module):
         
         # NAFNet 参数
         DW_Expand = getattr(args, 'symunet_pretrain_dw_expand', 2)
-        FFN_Expand = 4
+        FFN_Expand = 5.32
         drop_out_rate = getattr(args, 'symunet_pretrain_dropout', 0.)
 
         # 预上采样层：使用bicubic插值将LR放大到HR尺寸
