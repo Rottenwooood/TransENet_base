@@ -9,9 +9,9 @@
     "resume": 0
   },
   "hyperparameter_grid": {
-    "model": ["CSYMUNET_PRETRAIN","ASYMUNET_PRETRAIN","BSYMUNET_PRETRAIN"],
+    "model": ["CSYMUNET_PRETRAIN","_SYMUNET_PRETRAIN"],
     "optimizer": ["ADAMW"],
-    "scheduler": ["step"],
+    "scheduler": ["cosine"],
     "lr": [4e-4],
     "loss": [
       "1*L1"
@@ -24,10 +24,10 @@
       "6,4"
     ]
   },
-  "experiment_prefix": "fix_NAF_symunet",
+  "experiment_prefix": "210_symunet",
   "max_experiments": 20,
   "use_wandb": true,
   "wandb_project": "SymUNet-Batch-Experiments",
-  "save_every_n_steps": 50,
+  "save_every_n_steps": 100,
   "run_name_pattern": "{prefix}_blk46_w{symunet_pretrain_width}"
 }
