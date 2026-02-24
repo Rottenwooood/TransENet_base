@@ -251,6 +251,8 @@ class SymUNet_Posttrain(nn.Module):
                 ) for _ in range(num)
             ]))
 
+        self.before_upsample_conv = nn.Conv2d(chan, chan, 3, 1, 1, bias=True)
+
         # 最终上采样层：使用PixelShuffle
         self.final_upsample = nn.Sequential(
             nn.Conv2d(chan, img_channel * (self.scale * self.scale), 3, 1, 1, bias=True),
@@ -292,7 +294,8 @@ class SymUNet_Posttrain(nn.Module):
             x = up(x)
             x = x + enc_skip
             x = decoder_blocks(x)
-
+        
+        x = self.before_upsample_conv(x)
         # 最终上采样到HR尺寸
         x = self.final_upsample(x)
 

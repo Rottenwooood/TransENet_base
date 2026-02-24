@@ -1,6 +1,6 @@
 {
   "base_config": {
-    "model": "SYMUNET_POSTTRAIN_FIRST_FIX3",
+    "model": "SYMUNET_POSTTRAIN_BOTH",
     "dataset": "UCMerced",
     "scale": 4,
     "epochs": 500,
@@ -12,7 +12,7 @@
   "hyperparameter_grid": {
     "optimizer": ["ADAMW"],
     "scheduler": ["step"],
-    "lr": [4e-4],
+    "lr": [2e-4],
     "loss": [
       "1*L1"
     ],
@@ -24,7 +24,7 @@
       "6,4"
     ]
   },
-  "experiment_prefix": "symunet_post_first_enh_final_up_2lr",
+  "experiment_prefix": "symunet_post_both",
   "max_experiments": 20,
   "use_wandb": true,
   "wandb_project": "SymUNet-Batch-Experiments",

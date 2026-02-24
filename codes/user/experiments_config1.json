@@ -1,6 +1,6 @@
 {
   "base_config": {
-    "model": "SYMUNET_POSTTRAIN_FIRST_FIX3",
+    "model": "SYMUNET_POSTTRAIN_BEFORE",
     "dataset": "UCMerced",
     "scale": 4,
     "epochs": 500,
@@ -24,7 +24,7 @@
       "6,4"
     ]
   },
-  "experiment_prefix": "symunet_post_first_enh_final_up_2lr",
+  "experiment_prefix": "symunet_post_before_2lr",
   "max_experiments": 20,
   "use_wandb": true,
   "wandb_project": "SymUNet-Batch-Experiments",

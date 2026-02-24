@@ -251,8 +251,6 @@ class SymUNet_Posttrain(nn.Module):
                 ) for _ in range(num)
             ]))
 
-        self.before_upsample_conv = nn.Conv2d(chan, chan, 3, 1, 1, bias=True)
-
         # 最终上采样层：使用PixelShuffle
         self.final_upsample = nn.Sequential(
             nn.Conv2d(chan, img_channel * (self.scale * self.scale), 3, 1, 1, bias=True),
@@ -268,7 +266,7 @@ class SymUNet_Posttrain(nn.Module):
         # 强制模型先学习输出接近bicubic插值的结果
         for m in self.final_upsample.modules():
             if isinstance(m, nn.Conv2d):
-                m.weight.data.normal_(0, 0.001)
+                m.weight.data.normal_(0, 0.01)
                 if m.bias is not None:
                     m.bias.data.zero_()
 
@@ -298,7 +296,6 @@ class SymUNet_Posttrain(nn.Module):
 
         x = x + x_first  # 最后加上输入层的输出作为残差连接
         
-        x = self.before_upsample_conv(x)
         # 最终上采样到HR尺寸
         x = self.final_upsample(x)
 

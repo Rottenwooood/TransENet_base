@@ -131,10 +131,10 @@ class ExperimentManager:
                             exp_config[key] = values
 
                 # 生成实验名称
-                if exp_idx < len(paired_experiments):
-                    enc_config, dec_config = paired_experiments[exp_idx]
-                    exp_name = self.generate_paired_experiment_name(exp_idx, enc_config, dec_config, exp_config)
-                else:
+                # if exp_idx < len(paired_experiments):
+                #     enc_config, dec_config = paired_experiments[exp_idx]
+                #     exp_name = self.generate_paired_experiment_name(exp_idx, enc_config, dec_config, exp_config)
+                # else:
                     exp_name = self.generate_experiment_name(exp_idx, exp_config)
 
                 # 添加WandB配置

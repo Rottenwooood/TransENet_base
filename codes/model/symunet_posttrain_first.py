@@ -275,8 +275,9 @@ class SymUNet_Posttrain(nn.Module):
 
         # 检查图像尺寸
         inp_padded = self.check_image_size(inp)
-        x = self.intro(inp_padded)
+        x_first = self.intro(inp_padded)
 
+        x = x_first
         encs = []
 
         # 编码器
@@ -293,6 +294,8 @@ class SymUNet_Posttrain(nn.Module):
             x = x + enc_skip
             x = decoder_blocks(x)
 
+        x = x + x_first  # 最后加上输入层的输出作为残差连接
+        
         # 最终上采样到HR尺寸
         x = self.final_upsample(x)
 

@@ -384,11 +384,11 @@ if __name__ == '__main__':
 
     # args parameter setting
     # You can configure these paths via command line arguments or set them here
-    args.pre_train = '/root/autodl-tmp/TransENet/experiment/pair01_symunet_batch_lr0p0002_blk4-6-6_6-6-4_1xL1_schstep_w48/model/model_latest.pt'
+    args.pre_train = '/root/autodl-tmp/TransENet/experiment/symunet_post_first_2lr_001_symunet_post_first_2lr_blk46_1xL1_schstep_w48/model/model_latest.pt'
     
     # args.dir_data = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/LR_x4'
-    args.dir_data = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/LR_t'
-    args.dir_out = '../experiment/results/post466L1W48P64L/x4'
+    args.dir_data = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/LR_x4'
+    args.dir_out = '../experiment/results/post46W48P48Fi2LR/x4'
 
     print("Configuration:")
     print(f"  Model: {args.model}")

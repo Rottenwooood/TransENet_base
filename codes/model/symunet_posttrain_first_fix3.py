@@ -251,13 +251,21 @@ class SymUNet_Posttrain(nn.Module):
                 ) for _ in range(num)
             ]))
 
-        self.before_upsample_conv = nn.Conv2d(chan, chan, 3, 1, 1, bias=True)
-
         # 最终上采样层：使用PixelShuffle
-        self.final_upsample = nn.Sequential(
-            nn.Conv2d(chan, img_channel * (self.scale * self.scale), 3, 1, 1, bias=True),
-            nn.PixelShuffle(self.scale)
-        )
+        if self.scale == 4:
+            self.final_upsample = nn.Sequential(
+                nn.Conv2d(chan, chan * 4, 3, 1, 1), # 第一级放大 x2
+                nn.PixelShuffle(2),
+                nn.LeakyReLU(0.2, inplace=True),    # 激活
+                nn.Conv2d(chan, img_channel * 4, 3, 1, 1), # 第二级放大 x2 并输出
+                nn.PixelShuffle(2)
+            )
+        else:
+            # 其他 scale 保持原样
+            self.final_upsample = nn.Sequential(
+                nn.Conv2d(chan, img_channel * (self.scale * self.scale), 3, 1, 1),
+                nn.PixelShuffle(self.scale)
+            )
 
         # LR图像的bicubic插值上采样（作为残差连接）
         self.lr_upsample = nn.Upsample(scale_factor=self.scale, mode='bicubic', align_corners=False)
@@ -298,7 +306,6 @@ class SymUNet_Posttrain(nn.Module):
 
         x = x + x_first  # 最后加上输入层的输出作为残差连接
         
-        x = self.before_upsample_conv(x)
         # 最终上采样到HR尺寸
         x = self.final_upsample(x)
 
