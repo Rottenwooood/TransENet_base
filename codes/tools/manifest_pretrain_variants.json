@@ -1,0 +1,109 @@
+[
+    {
+        "id": "pretrain_cg_x4_ucmerced",
+        "args": {
+            "model": "CSYMMUNET_PRETRAIN_CG",
+            "dataset": "UCMerced",
+            "scale": 4,
+            "patch_size": 192,
+            "ext": "img",
+            "save": "CSYMMUNET_PRETRAIN_CG_x4_UCMerced",
+            "symunet_pretrain_width": 32,
+            "symunet_pretrain_enc_blk_nums": "4,6",
+            "symunet_pretrain_dec_blk_nums": "6,4",
+            "symunet_pretrain_middle_blk_num": 1,
+            "epochs": 500,
+            "batch_size": 4,
+            "lr": 0.0001,
+            "n_colors": 3,
+            "precision": "half",
+            "chop": true
+        }
+    },
+    {
+        "id": "pretrain_lpu_x4_ucmerced",
+        "args": {
+            "model": "CSYMMUNET_PRETRAIN_LPU",
+            "dataset": "UCMerced",
+            "scale": 4,
+            "patch_size": 192,
+            "ext": "img",
+            "save": "CSYMMUNET_PRETRAIN_LPU_x4_UCMerced",
+            "symunet_pretrain_width": 32,
+            "symunet_pretrain_enc_blk_nums": "4,6",
+            "symunet_pretrain_dec_blk_nums": "6,4",
+            "symunet_pretrain_middle_blk_num": 1,
+            "epochs": 500,
+            "batch_size": 4,
+            "lr": 0.0001,
+            "n_colors": 3,
+            "precision": "half",
+            "chop": true
+        }
+    },
+    {
+        "id": "pretrain_lk7_x4_ucmerced",
+        "args": {
+            "model": "CSYMMUNET_PRETRAIN_LargeKernel",
+            "dataset": "UCMerced",
+            "scale": 4,
+            "patch_size": 192,
+            "ext": "img",
+            "save": "CSYMMUNET_PRETRAIN_LK7_x4_UCMerced",
+            "symunet_pretrain_width": 32,
+            "symunet_pretrain_enc_blk_nums": "4,6",
+            "symunet_pretrain_dec_blk_nums": "6,4",
+            "symunet_pretrain_middle_blk_num": 1,
+            "symunet_pretrain_large_kernel_size": 7,
+            "epochs": 500,
+            "batch_size": 4,
+            "lr": 0.0001,
+            "n_colors": 3,
+            "precision": "half",
+            "chop": true
+        }
+    },
+    {
+        "id": "pretrain_lk11_x4_ucmerced",
+        "args": {
+            "model": "CSYMMUNET_PRETRAIN_LargeKernel",
+            "dataset": "UCMerced",
+            "scale": 4,
+            "patch_size": 192,
+            "ext": "img",
+            "save": "CSYMMUNET_PRETRAIN_LK11_x4_UCMerced",
+            "symunet_pretrain_width": 32,
+            "symunet_pretrain_enc_blk_nums": "4,6",
+            "symunet_pretrain_dec_blk_nums": "6,4",
+            "symunet_pretrain_middle_blk_num": 1,
+            "symunet_pretrain_large_kernel_size": 11,
+            "epochs": 500,
+            "batch_size": 4,
+            "lr": 0.0001,
+            "n_colors": 3,
+            "precision": "half",
+            "chop": true
+        }
+    },
+    {
+        "id": "pretrain_dwconv_x4_ucmerced",
+        "args": {
+            "model": "CSYMMUNET_PRETRAIN_DWConv",
+            "dataset": "UCMerced",
+            "scale": 4,
+            "patch_size": 192,
+            "ext": "img",
+            "save": "CSYMMUNET_PRETRAIN_DWConv_x4_UCMerced",
+            "symunet_pretrain_width": 32,
+            "symunet_pretrain_enc_blk_nums": "4,6",
+            "symunet_pretrain_dec_blk_nums": "6,4",
+            "symunet_pretrain_middle_blk_num": 1,
+            "epochs": 500,
+            "batch_size": 4,
+            "lr": 0.0001,
+            "n_colors": 3,
+            "precision": "half",
+            "chop": true
+        }
+    }
+]
