@@ -127,7 +127,7 @@ class LayerNormFunction(torch.autograd.Function):
             dim=0), None
 
 
-# ========== CascadedGaze Block 依赖模块 ==========
+# ========== CGBlock 依赖模块 (移除 UpsampleWithFlops，已用 F.interpolate 替代) ==========
 class depthwise_separable_conv(nn.Module):
     def __init__(self, nin, nout, kernel_size=3, padding=0, stride=1, bias=False):
         super(depthwise_separable_conv, self).__init__()
@@ -138,16 +138,6 @@ class depthwise_separable_conv(nn.Module):
         x = self.depthwise(x)
         x = self.pointwise(x)
         return x
-
-
-class UpsampleWithFlops(nn.Upsample):
-    def __init__(self, size=None, scale_factor=None, mode='nearest', align_corners=None):
-        super(UpsampleWithFlops, self).__init__(size, scale_factor, mode, align_corners)
-        self.__flops__ = 0
-
-    def forward(self, input):
-        self.__flops__ += input.numel()
-        return super(UpsampleWithFlops, self).forward(input)
 
 
 class GlobalContextExtractor(nn.Module):
@@ -224,9 +214,6 @@ class CGBlock(nn.Module):
     def forward(self, inp):
         x = inp
         b,c,h,w = x.shape
-        # Nearest neighbor upsampling as part of the range fusion process
-        self.upsample = UpsampleWithFlops(size=(h,w), mode='nearest')
-
 
         x = self.norm1(x)
         x = self.conv1(x)
@@ -238,10 +225,19 @@ class CGBlock(nn.Module):
         x_1 , x_2 = x.chunk(2, dim=1)
         if self.GCE_Conv == 3:
             x1, x2, x3 = self.GCE(x_1 + x_2)
-            x = torch.cat([x, self.upsample(x1), self.upsample(x2), self.upsample(x3)], dim = 1)
+            x = torch.cat([
+                x,
+                F.interpolate(x1, size=(h, w), mode='nearest'),
+                F.interpolate(x2, size=(h, w), mode='nearest'),
+                F.interpolate(x3, size=(h, w), mode='nearest')
+            ], dim=1)
         else:
             x1, x2 = self.GCE(x_1 + x_2)
-            x = torch.cat([x, self.upsample(x1), self.upsample(x2)], dim = 1)
+            x = torch.cat([
+                x,
+                F.interpolate(x1, size=(h, w), mode='nearest'),
+                F.interpolate(x2, size=(h, w), mode='nearest')
+            ], dim=1)
         x = self.sca(x) * x
         x = self.project_out(x)
 
@@ -375,7 +371,10 @@ class SymUNet_Pretrain_CG(nn.Module):
         DW_Expand = getattr(args, 'symunet_pretrain_dw_expand', 2)
         FFN_Expand = 4
         drop_out_rate = getattr(args, 'symunet_pretrain_dropout', 0.)
-        # CGBlock 特有的 GCE_Conv 参数 (2 或 3)
+        # CGBlock 特有的 GCE_Conv 参数
+        # 支持两种模式:
+        # 1. 单值: 所有层使用相同的 GCE_Conv (2 或 3)
+        # 2. 列表: 每层使用不同的 GCE_Conv (如 [3,3,2,2])
         gce_conv = getattr(args, 'symunet_pretrain_gce_conv', 2)
 
         # 预上采样层：使用bicubic插值将LR放大到HR尺寸
@@ -389,13 +388,20 @@ class SymUNet_Pretrain_CG(nn.Module):
         self.ups = nn.ModuleList()
         self.downs = nn.ModuleList()
 
+        # 确保 gce_conv 是列表，长度与 encoder 层级数匹配
+        if isinstance(gce_conv, int):
+            gce_conv = [gce_conv] * len(enc_blk_nums)
+        elif isinstance(gce_conv, str):
+            gce_conv = [int(x) for x in gce_conv.split(',')]
+
         chan = width
         for i, num in enumerate(enc_blk_nums):
-            # 使用 CGBlock 替代 NAFBlock
+            # 使用 CGBlock 替代 NAFBlock，每层使用对应的 GCE_Conv
+            layer_gce_conv = gce_conv[i] if i < len(gce_conv) else gce_conv[-1]
             self.encoders.append(nn.Sequential(*[
                 CGBlock(
                     c=chan,
-                    GCE_Conv=gce_conv,
+                    GCE_Conv=layer_gce_conv,
                     DW_Expand=DW_Expand,
                     FFN_Expand=FFN_Expand,
                     drop_out_rate=drop_out_rate
@@ -414,15 +420,18 @@ class SymUNet_Pretrain_CG(nn.Module):
             ) for _ in range(middle_blk_num)
         ])
 
+        # decoder 部分的 gce_conv 需要反转，与 encoder 对称
+        gce_conv_dec = gce_conv[::-1]
         for i, num in enumerate(dec_blk_nums):
             self.ups.append(Upsample(chan))
             chan //= 2
 
-            # 使用 CGBlock 替代 NAFBlock
+            # 使用 CGBlock 替代 NAFBlock，每层使用对应的 GCE_Conv
+            layer_gce_conv = gce_conv_dec[i] if i < len(gce_conv_dec) else gce_conv_dec[-1]
             self.decoders.append(nn.Sequential(*[
                 CGBlock(
                     c=chan,
-                    GCE_Conv=gce_conv,
+                    GCE_Conv=layer_gce_conv,
                     DW_Expand=DW_Expand,
                     FFN_Expand=FFN_Expand,
                     drop_out_rate=drop_out_rate
