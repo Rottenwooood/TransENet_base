@@ -1,6 +1,6 @@
 {
   "base_config": {
-    "model": "SYMUNET_PRETRAIN",
+    "model": "CSYMUNET_PRETRAIN_CG",
     "dataset": "UCMerced",
     "scale": 4,
     "epochs": 300,
@@ -18,16 +18,16 @@
     ],
     "symunet_pretrain_width": [32],
     "symunet_pretrain_enc_blk_nums": [
-      "4,6"   
+      "4,6"
     ],
     "symunet_pretrain_dec_blk_nums": [
       "6,4"
     ]
   },
-  "experiment_prefix": "symunet_batch",
+  "experiment_prefix": "cg_pretrain",
   "max_experiments": 20,
   "use_wandb": true,
-  "wandb_project": "SymUNet-Batch-Experiments",
+  "wandb_project": "SymUNet-Pretrain-Variants",
   "save_every_n_steps": 50,
-  "run_name_pattern": "{prefix}_lr{lr}_blk{enc_blk_nums}_{dec_blk_nums}_sch{scheduler}_w{symunet_pretrain_width}"
+  "run_name_pattern": "{prefix}_gce2_w{symunet_pretrain_width}"
 }

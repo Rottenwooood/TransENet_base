@@ -481,10 +481,10 @@ class ExperimentManager:
         for exp in self.all_experiments:
             print(f"   {exp['id']}: {exp['name']}")
 
-        # 询问用户确认
-        if not self.confirm_execution():
-            print("❌ Experiment execution cancelled")
-            return
+        # # 询问用户确认
+        # if not self.confirm_execution():
+        #     print("❌ Experiment execution cancelled")
+        #     return
 
         # 执行实验
         results = []
