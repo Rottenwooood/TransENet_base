@@ -1,0 +1,34 @@
+{
+  "base_config": {
+    "model": "CSYMMUNET_PRETRAIN_LargeKernel",
+    "dataset": "UCMerced",
+    "scale": 4,
+    "epochs": 300,
+    "batch_size": 4,
+    "ext": "img",
+    "patch_size": 192,
+    "resume": 0
+  },
+  "hyperparameter_grid": {
+    "optimizer": ["ADAMW"],
+    "scheduler": ["step"],
+    "lr": [2e-4],
+    "loss": [
+      "1*L1"
+    ],
+    "symunet_pretrain_width": [32],
+    "symunet_pretrain_enc_blk_nums": [
+      "4,6"
+    ],
+    "symunet_pretrain_dec_blk_nums": [
+      "6,4"
+    ],
+    "symunet_pretrain_large_kernel_size": [7, 11]
+  },
+  "experiment_prefix": "lk_pretrain",
+  "max_experiments": 20,
+  "use_wandb": true,
+  "wandb_project": "SymUNet-Pretrain-Variants",
+  "save_every_n_steps": 50,
+  "run_name_pattern": "{prefix}_k{symunet_pretrain_large_kernel_size}_w{symunet_pretrain_width}_e{epochs}"
+}

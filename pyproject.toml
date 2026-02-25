@@ -1,34 +1,7 @@
 [project]
 name = "transenet-base"
 version = "0.1.0"
-description = "TransENet Base Project"
-authors = [
-    {name = "User",email = "user@example.com"}
-]
+description = "Add your description here"
 readme = "README.md"
-requires-python = "^3.10"
-dependencies = [
-    "torch (>=1.9.0)",
-    "torchvision (>=0.10.0)",
-    "opencv-python (>=4.0.0)",
-    "matplotlib (>=3.0.0)",
-    "scikit-image (>=0.16.0)",
-    "scipy (>=1.3.0)",
-    "numpy (>=1.16.0)",
-    "einops (>=0.3.0)",
-    "tqdm (>=4.0.0)",
-    "scikit-learn (>=0.23.0)",
-    "wandb (>=0.13.0)",
-    "pandas (>=1.3.0,<3.0.0)",
-    "seaborn (>=0.11.0)"
-]
-
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[dependency-groups]
-dev = [
-    "pytest (>=9.0.2,<10.0.0)"
-]
+requires-python = ">=3.12"
+dependencies = []
