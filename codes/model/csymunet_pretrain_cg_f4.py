@@ -183,7 +183,7 @@ class CGBlock(nn.Module):
             self.sca = nn.Sequential(
                 nn.AdaptiveAvgPool2d(1),
                 nn.Conv2d(in_channels=int(self.dw_channel*2.5), out_channels=int(self.dw_channel*2.5), kernel_size=1, padding=0, stride=1,
-                        groups=4, bias=True))
+                        groups=1, bias=True))
         else:
             self.GCE = GlobalContextExtractor(c=c, kernel_sizes=[3, 3], strides=[2, 3])
 
@@ -192,7 +192,7 @@ class CGBlock(nn.Module):
             self.sca = nn.Sequential(
                 nn.AdaptiveAvgPool2d(1),
                 nn.Conv2d(in_channels=self.dw_channel*2, out_channels=self.dw_channel*2, kernel_size=1, padding=0, stride=1,
-                        groups=4, bias=True))
+                        groups=1, bias=True))
 
 
         # SimpleGate
@@ -226,7 +226,6 @@ class CGBlock(nn.Module):
         if self.GCE_Conv == 3:
             x1, x2, x3 = self.GCE(x_1 + x_2)
             x = torch.cat([
-                x,
                 F.interpolate(x1, size=(h, w), mode='nearest'),
                 F.interpolate(x2, size=(h, w), mode='nearest'),
                 F.interpolate(x3, size=(h, w), mode='nearest')
@@ -234,7 +233,6 @@ class CGBlock(nn.Module):
         else:
             x1, x2 = self.GCE(x_1 + x_2)
             x = torch.cat([
-                x,
                 F.interpolate(x1, size=(h, w), mode='nearest'),
                 F.interpolate(x2, size=(h, w), mode='nearest')
             ], dim=1)

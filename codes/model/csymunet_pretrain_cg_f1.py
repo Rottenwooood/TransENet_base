@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numbers
 from einops import rearrange
 from model import common
-from utils.registry import ARCH_REGISTRY
+# from utils.registry import ARCH_REGISTRY
 
 # 设置设备
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -337,7 +337,7 @@ class Upsample(nn.Module):
         return self.body(x)
 
 
-@ARCH_REGISTRY.register("CSymUNet_Pretrain_CG")
+# @ARCH_REGISTRY.register("CSymUNet_Pretrain_CG")
 class SymUNet_Pretrain_CG(nn.Module):
     """
     预上采样版本SymUNet - CGBlock变种
