@@ -175,27 +175,25 @@ class CGBlock(nn.Module):
                                bias=True)
 
 
+        # SimpleGate 用于空间分支（把原始 x 从 2c → c）
+        self.sg_spatial = SimpleGate()
+
         if self.GCE_Conv == 3:
             self.GCE = GlobalContextExtractor(c=c, kernel_sizes=[3, 3, 5], strides=[2, 3, 4])
-
-            self.project_out = nn.Conv2d(int(self.dw_channel*2.5), c, kernel_size=1)
-
-            self.sca = nn.Sequential(
-                nn.AdaptiveAvgPool2d(1),
-                nn.Conv2d(in_channels=int(self.dw_channel*2.5), out_channels=int(self.dw_channel*2.5), kernel_size=1, padding=0, stride=1,
-                        groups=1, bias=True))
+            # 只拼 GCE 输出：3 × c = 3c
+            self.project_gce = nn.Conv2d(c * 3, c, kernel_size=1)
         else:
             self.GCE = GlobalContextExtractor(c=c, kernel_sizes=[3, 3], strides=[2, 3])
+            # 只拼 GCE 输出：2 × c = 2c
+            self.project_gce = nn.Conv2d(c * 2, c, kernel_size=1)
 
-            self.project_out = nn.Conv2d(self.dw_channel*2, c, kernel_size=1)
+        # sca 统一作用在 c 通道
+        self.sca = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(in_channels=c, out_channels=c,
+                    kernel_size=1, padding=0, stride=1, groups=1, bias=True))
 
-            self.sca = nn.Sequential(
-                nn.AdaptiveAvgPool2d(1),
-                nn.Conv2d(in_channels=self.dw_channel*2, out_channels=self.dw_channel*2, kernel_size=1, padding=0, stride=1,
-                        groups=1, bias=True))
-
-
-        # SimpleGate
+        # 注意：不再需要 self.project_out
         self.sg = SimpleGate()
 
         ffn_channel = FFN_Expand * c
@@ -221,24 +219,32 @@ class CGBlock(nn.Module):
         x = F.gelu(x)
 
 
-        # Global Context Extractor + Range fusion
-        x_1 , x_2 = x.chunk(2, dim=1)
+        # ---- 替换 GCE + Range fusion 整段 ----
+
+        # 原始 x 通过 SimpleGate: 2c → c（局部特征）
+        x_local = self.sg_spatial(x)  # (B, c, H, W)
+
+        # Global Context Extractor（全局特征）
+        x_1, x_2 = x.chunk(2, dim=1)
         if self.GCE_Conv == 3:
             x1, x2, x3 = self.GCE(x_1 + x_2)
-            x = torch.cat([
+            x_global = torch.cat([
                 F.interpolate(x1, size=(h, w), mode='nearest'),
                 F.interpolate(x2, size=(h, w), mode='nearest'),
                 F.interpolate(x3, size=(h, w), mode='nearest')
-            ], dim=1)
+            ], dim=1)  # (B, 3c, H, W)
         else:
             x1, x2 = self.GCE(x_1 + x_2)
-            x = torch.cat([
+            x_global = torch.cat([
                 F.interpolate(x1, size=(h, w), mode='nearest'),
                 F.interpolate(x2, size=(h, w), mode='nearest')
-            ], dim=1)
-        x = self.sca(x) * x
-        x = self.project_out(x)
+            ], dim=1)  # (B, 2c, H, W)
 
+        x_global = self.project_gce(x_global)  # 2c/3c → c
+
+        # 融合局部+全局，sca 作用于 c 通道
+        x = (x_local + x_global) * self.sca(x_local + x_global)  # (B, c, H, W)
+        
 
         x = self.dropout1(x)
         #channel-mixing

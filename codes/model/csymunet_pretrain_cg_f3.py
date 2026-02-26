@@ -177,24 +177,23 @@ class CGBlock(nn.Module):
 
         if self.GCE_Conv == 3:
             self.GCE = GlobalContextExtractor(c=c, kernel_sizes=[3, 3, 5], strides=[2, 3, 4])
-
-            self.project_out = nn.Conv2d(int(self.dw_channel*2.5), c, kernel_size=1)
-
+            # project_out 不变：int(dw_channel*2.5) → c
+            self.project_out = nn.Conv2d(int(self.dw_channel * 2.5), c, kernel_size=1)
+            # sca 改为作用在 c 通道上（原来是 int(dw_channel*2.5)）
             self.sca = nn.Sequential(
                 nn.AdaptiveAvgPool2d(1),
-                nn.Conv2d(in_channels=int(self.dw_channel*2.5), out_channels=int(self.dw_channel*2.5), kernel_size=1, padding=0, stride=1,
-                        groups=1, bias=True))
+                nn.Conv2d(in_channels=c, out_channels=c,
+                          kernel_size=1, padding=0, stride=1, groups=1, bias=True))
         else:
             self.GCE = GlobalContextExtractor(c=c, kernel_sizes=[3, 3], strides=[2, 3])
-
-            self.project_out = nn.Conv2d(self.dw_channel*2, c, kernel_size=1)
-
+            # project_out 不变：dw_channel*2 → c
+            self.project_out = nn.Conv2d(self.dw_channel * 2, c, kernel_size=1)
+            # sca 改为作用在 c 通道上（原来是 dw_channel*2）
             self.sca = nn.Sequential(
                 nn.AdaptiveAvgPool2d(1),
-                nn.Conv2d(in_channels=self.dw_channel*2, out_channels=self.dw_channel*2, kernel_size=1, padding=0, stride=1,
-                        groups=1, bias=True))
-
-
+                nn.Conv2d(in_channels=c, out_channels=c,
+                          kernel_size=1, padding=0, stride=1, groups=1, bias=True))
+        
         # SimpleGate
         self.sg = SimpleGate()
 
