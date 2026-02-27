@@ -13,7 +13,58 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_DWConv(args)
+    return SymUNet_Pretrain_Base_MSCS(args)
+
+
+# ============== MSDWConv (Multi-Scale Depthwise Conv) ==============
+class MSDWConv(nn.Module):
+    """Multi-Scale Depthwise Convolution from MAT"""
+    def __init__(self, dim, dw_sizes=(1, 3, 5, 7)):
+        super().__init__()
+        self.dw_sizes = dw_sizes
+        self.channels = []
+        self.proj = nn.ModuleList()
+        for i in range(len(dw_sizes)):
+            if i == 0:
+                channels = dim - dim // len(dw_sizes) * (len(dw_sizes) - 1)
+            else:
+                channels = dim // len(dw_sizes)
+            conv = nn.Conv2d(channels, channels, kernel_size=dw_sizes[i], padding=dw_sizes[i] // 2, groups=channels)
+            self.channels.append(channels)
+            self.proj.append(conv)
+
+    def forward(self, x):
+        x = torch.split(x, split_size_or_sections=self.channels, dim=1)
+        out = []
+        for i, feat in enumerate(x):
+            out.append(self.proj[i](feat))
+        x = torch.cat(out, dim=1)
+        return x
+
+
+# ============== MSConvStar (Multi-Scale Conv Star) ==============
+class MSConvStar(nn.Module):
+    """Multi-Scale Conv Star from MAT - Replaces FFN in NAFBlock"""
+    def __init__(self, dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7]):
+        super().__init__()
+        self.dim = dim
+        hidden_dim = int(dim * mlp_ratio)
+        self.fc1 = nn.Conv2d(dim, hidden_dim, 1)
+        self.dwconv = MSDWConv(dim=hidden_dim, dw_sizes=dw_sizes)
+        self.fc2 = nn.Conv2d(hidden_dim // 2, dim, 1)
+        self.num_head = len(dw_sizes)
+        self.act = nn.GELU()
+
+        assert hidden_dim // self.num_head % 2 == 0
+
+    def forward(self, x):
+        # Input x is (B, C, H, W), keep it as is
+        x = self.fc1(x)
+        x = x + self.dwconv(x)
+        x1, x2 = x.chunk(2, dim=1)
+        x = self.act(x1) * x2
+        x = self.fc2(x)
+        return x
 
 
 class FeedForward(nn.Module):
@@ -127,7 +178,11 @@ class LayerNormFunction(torch.autograd.Function):
             dim=0), None
 
 
+# ============== NAFBlock with MSConvStar (replaces FFN) ==============
 class NAFBlock(nn.Module):
+    """
+    NAFBlock with MSConvStar - retains original Token Mixing, replaces FFN with MSConvStar
+    """
     def __init__(self, c, DW_Expand=2, FFN_Expand=2, drop_out_rate=0.):
         super().__init__()
         dw_channel = c * DW_Expand
@@ -146,9 +201,8 @@ class NAFBlock(nn.Module):
         # SimpleGate
         self.sg = SimpleGate()
 
-        ffn_channel = FFN_Expand * c # 32*2 = 64
-        self.conv4 = nn.Conv2d(in_channels=c, out_channels=ffn_channel, kernel_size=1, padding=0, stride=1, groups=1, bias=True)
-        self.conv5 = nn.Conv2d(in_channels=ffn_channel // 2, out_channels=c, kernel_size=1, padding=0, stride=1, groups=1, bias=True)
+        # Replace original FFN with MSConvStar
+        self.msconvstar = MSConvStar(dim=c, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
         self.norm1 = LayerNorm2d(c)
         self.norm2 = LayerNorm2d(c)
@@ -174,9 +228,8 @@ class NAFBlock(nn.Module):
 
         y = inp + x * self.beta
 
-        x = self.conv4(self.norm2(y))
-        x = self.sg(x)
-        x = self.conv5(x)
+        # Use MSConvStar instead of original FFN
+        x = self.msconvstar(self.norm2(y))
 
         x = self.dropout2(x)
 
@@ -304,14 +357,15 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-@ARCH_REGISTRY.register("CSymUNet_Pretrain_DWConv")
-class SymUNet_Pretrain_DWConv(nn.Module):
+@ARCH_REGISTRY.register("CSymUNet_Pretrain_Base_MSCS")
+class SymUNet_Pretrain_Base_MSCS(nn.Module):
     """
-    预上采样版本SymUNet - DWConv变种
-    - up/down的卷积改为深度可分离卷积上采样，并保持对称
+    预上采样版本SymUNet - Base_MSCS变种
+    - 保留 NAFBlock 的 Token Mixing 逻辑
+    - 将 FFN 替换为 MSConvStar
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_DWConv, self).__init__()
+        super(SymUNet_Pretrain_Base_MSCS, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -459,7 +513,7 @@ class SymUNet_Pretrain_DWConv(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_DWConv(args)
+    model = SymUNet_Pretrain_Base_MSCS(args)
     model.eval()
     # 输入LR图像，尺寸为48x48，输出HR图像为192x192 (scale=4)
     input_lr = torch.rand(1, 3, 48, 48)
