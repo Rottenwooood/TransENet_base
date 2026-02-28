@@ -152,7 +152,7 @@ class LayerNormFunction(torch.autograd.Function):
 class S1_SingleDilatedBlock(nn.Module):
     """
     S1 Series Block (串联架构):
-    x = LAB(x) -> LayerNorm -> SingleDilatedDWConv(x) -> LayerNorm -> MSConvStar(x)
+    x = LAB(x) -> LayerNorm -> SingleDilatedDWConv(x) -> LayerNorm -> MSConvStar(x) -> Conv -> +shortcut
     使用 5x5 DWConv (dilation=3, padding=6)
     """
     def __init__(self, c, drop_out_rate=0.):
@@ -169,12 +169,18 @@ class S1_SingleDilatedBlock(nn.Module):
         self.norm1 = LayerNorm2d(c)
         self.norm2 = LayerNorm2d(c)
 
+        # Conv + residual (like RMAG)
+        self.conv = nn.Conv2d(c, c, 3, 1, 1)
+
         self.dropout = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
 
         self.beta = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
         self.gamma = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
 
     def forward(self, x):
+        # 保存残差连接
+        shortcut = x
+
         # LAB -> SingleDilatedDWConv -> MSConvStar (串联)
         x = self.lab(x)
 
@@ -183,6 +189,10 @@ class S1_SingleDilatedBlock(nn.Module):
 
         x = self.norm2(x)
         x = x + self.msconvstar(x) * self.gamma
+
+        # Conv + residual (like RMAG)
+        x = self.conv(x)
+        x = x + shortcut
 
         return x
 
