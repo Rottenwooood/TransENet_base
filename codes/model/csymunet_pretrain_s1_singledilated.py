@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numbers
 from einops import rearrange
 from model import common
-from utils.registry import ARCH_REGISTRY
+#from utils.registry import ARCH_REGISTRY
 
 # 设置设备
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -13,7 +13,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S1_MRDilated(args)
+    return SymUNet_Pretrain_S1_SingleDilated(args)
 
 
 # ============== Channel Attention ==============
@@ -32,8 +32,9 @@ class ChannelAttention(nn.Module):
         return x * self.attention(x)
 
 
-# ============== LAB ==============
+# ============== LAB (Local Aggregation Block) ==============
 class LAB(nn.Module):
+    """Local Aggregation Block from MAT"""
     def __init__(self, dim, local_dwconv=3, expanded_ratio=1., squeeze_factor=4):
         super().__init__()
         hidden_dim = int(dim * expanded_ratio)
@@ -50,6 +51,7 @@ class LAB(nn.Module):
 
 # ============== MSDWConv ==============
 class MSDWConv(nn.Module):
+    """Multi-Scale Depthwise Convolution from MAT"""
     def __init__(self, dim, dw_sizes=(1, 3, 5, 7)):
         super().__init__()
         self.dw_sizes = dw_sizes
@@ -75,6 +77,7 @@ class MSDWConv(nn.Module):
 
 # ============== MSConvStar ==============
 class MSConvStar(nn.Module):
+    """Multi-Scale Conv Star from MAT - Replaces FFN"""
     def __init__(self, dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7]):
         super().__init__()
         self.dim = dim
@@ -84,6 +87,7 @@ class MSConvStar(nn.Module):
         self.fc2 = nn.Conv2d(hidden_dim // 2, dim, 1)
         self.num_head = len(dw_sizes)
         self.act = nn.GELU()
+
         assert hidden_dim // self.num_head % 2 == 0
 
     def forward(self, x):
@@ -96,59 +100,16 @@ class MSConvStar(nn.Module):
         return x
 
 
-# ============== MRDilated DWConv ==============
-class MRDilatedDWConv(nn.Module):
-    """
-    Multi-Range Dilated DWConv:
-    - 输入通道切 3 组（处理不能被 3 整除的情况，余数给最后一组）
-    - 组1: 5x5 DWConv(d=1, p=2)
-    - 组2: 5x5 DWConv(d=2, p=4)
-    - 组3: 5x5 DWConv(d=3, p=6)
-    - 输出后 Concat，过 1x1 Conv 融合
-    """
+# ============== SingleDilated DWConv ==============
+class SingleDilatedDWConv(nn.Module):
+    """5x5 DWConv with dilation=3, padding=6"""
     def __init__(self, dim):
         super().__init__()
-        self.dim = dim
-        # Split channels into 3 groups
-        channels_per_group = dim // 3
-        remainder = dim % 3
-
-        # Calculate channel splits
-        self.channel_splits = []
-        for i in range(3):
-            if i == 2:
-                # Last group gets the remainder
-                ch = channels_per_group + remainder
-            else:
-                ch = channels_per_group
-            self.channel_splits.append(ch)
-
-        # Group 1: 5x5 DWConv (dilation=1, padding=2)
-        self.dwconv1 = nn.Conv2d(self.channel_splits[0], self.channel_splits[0],
-                                  kernel_size=5, padding=2, groups=self.channel_splits[0], dilation=1)
-
-        # Group 2: 5x5 DWConv (dilation=2, padding=4)
-        self.dwconv2 = nn.Conv2d(self.channel_splits[1], self.channel_splits[1],
-                                  kernel_size=5, padding=4, groups=self.channel_splits[1], dilation=2)
-
-        # Group 3: 5x5 DWConv (dilation=3, padding=6)
-        self.dwconv3 = nn.Conv2d(self.channel_splits[2], self.channel_splits[2],
-                                  kernel_size=5, padding=6, groups=self.channel_splits[2], dilation=3)
-
-        # Fusion 1x1 Conv
-        self.fusion = nn.Conv2d(dim, dim, 1)
+        # 5x5 DWConv with dilation=3, padding=6
+        self.dwconv = nn.Conv2d(dim, dim, kernel_size=5, padding=6, groups=dim, dilation=3)
 
     def forward(self, x):
-        x_split = torch.split(x, self.channel_splits, dim=1)
-
-        out1 = self.dwconv1(x_split[0])
-        out2 = self.dwconv2(x_split[1])
-        out3 = self.dwconv3(x_split[2])
-
-        out = torch.cat([out1, out2, out3], dim=1)
-        out = self.fusion(out)
-
-        return out
+        return self.dwconv(x)
 
 
 # ============== LayerNorm2d ==============
@@ -187,16 +148,22 @@ class LayerNormFunction(torch.autograd.Function):
         return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
 
 
-# ============== S1_MRDilated Block ==============
-class S1_MRDilatedBlock(nn.Module):
+# ============== S1_SingleDilated Block ==============
+class S1_SingleDilatedBlock(nn.Module):
     """
     S1 Series Block (串联架构):
-    x = LAB(x) -> LayerNorm -> MRDilatedDWConv(x) -> LayerNorm -> MSConvStar(x) -> Conv -> +shortcut
+    x = LAB(x) -> LayerNorm -> SingleDilatedDWConv(x) -> LayerNorm -> MSConvStar(x) -> Conv -> +shortcut
+    使用 5x5 DWConv (dilation=3, padding=6)
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
+        # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
-        self.global_op = MRDilatedDWConv(dim=c)
+
+        # SingleDilatedDWConv for global/dilated spatial modeling
+        self.global_op = SingleDilatedDWConv(dim=c)
+
+        # MSConvStar for channel mixing
         self.msconvstar = MSConvStar(dim=c, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
         self.norm1 = LayerNorm2d(c)
@@ -214,9 +181,12 @@ class S1_MRDilatedBlock(nn.Module):
         # 保存残差连接
         shortcut = x
 
+        # LAB -> SingleDilatedDWConv -> MSConvStar (串联)
         x = self.lab(x)
+
         x = self.norm1(x)
         x = x + self.global_op(x) * self.beta
+
         x = self.norm2(x)
         x = x + self.msconvstar(x) * self.gamma
 
@@ -227,7 +197,7 @@ class S1_MRDilatedBlock(nn.Module):
         return x
 
 
-# ============== FeedForward & Attention ==============
+# ============== FeedForward & Attention for TransformerBlock ==============
 class FeedForward(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
         super(FeedForward, self).__init__()
@@ -278,6 +248,7 @@ class Attention(nn.Module):
 class TransformerBlock(nn.Module):
     def __init__(self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type):
         super(TransformerBlock, self).__init__()
+
         self.norm1 = LayerNorm(dim, LayerNorm_type)
         self.attn = Attention(dim, num_heads, bias)
         self.norm2 = LayerNorm(dim, LayerNorm_type)
@@ -344,6 +315,7 @@ class OverlapPatchEmbed(nn.Module):
         return x
 
 
+# ========== Downsample/Upsample ==========
 class DownsampleDW(nn.Module):
     def __init__(self, n_feat):
         super(DownsampleDW, self).__init__()
@@ -372,16 +344,16 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_MRDilated")
-class SymUNet_Pretrain_S1_MRDilated(nn.Module):
+#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_SingleDilated")
+class SymUNet_Pretrain_S1_SingleDilated(nn.Module):
     """
-    S1_MRDilated: 串联架构
-    - 使用 LAB
-    - 使用 MRDilatedDWConv (多范围空洞卷积: d=1,2,3)
+    S1_SingleDilated: 串联架构
+    - 使用 LAB (Local Aggregation Block)
+    - 使用 SingleDilatedDWConv (5x5 DWConv, dilation=3, padding=6)
     - 使用 MSConvStar
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S1_MRDilated, self).__init__()
+        super(SymUNet_Pretrain_S1_SingleDilated, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -414,7 +386,7 @@ class SymUNet_Pretrain_S1_MRDilated(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                S1_MRDilatedBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_SingleDilatedBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
             self.downs.append(DownsampleDW(chan))
             chan *= 2
@@ -434,7 +406,7 @@ class SymUNet_Pretrain_S1_MRDilated(nn.Module):
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                S1_MRDilatedBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_SingleDilatedBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4
@@ -503,7 +475,7 @@ class SymUNet_Pretrain_S1_MRDilated(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_S1_MRDilated(args)
+    model = SymUNet_Pretrain_S1_SingleDilated(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)

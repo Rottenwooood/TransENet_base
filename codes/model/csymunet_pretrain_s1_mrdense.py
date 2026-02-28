@@ -4,14 +4,14 @@ import torch.nn.functional as F
 import numbers
 from einops import rearrange
 from model import common
-from utils.registry import ARCH_REGISTRY
+#from utils.registry import ARCH_REGISTRY
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S1_SingleDense(args)
+    return SymUNet_Pretrain_S1_MRDense(args)
 
 
 # ============== Channel Attention ==============
@@ -94,15 +94,56 @@ class MSConvStar(nn.Module):
         return x
 
 
-# ============== SingleDense DWConv ==============
-class SingleDenseDWConv(nn.Module):
-    """11x11 DWConv with padding=5"""
+# ============== MRDense DWConv ==============
+class MRDenseDWConv(nn.Module):
+    """
+    Multi-Range Dense DWConv:
+    - 输入通道切 3 组（处理不能被 3 整除的情况，余数给最后一组）
+    - 组1: 5x5 DWConv(p=2)
+    - 组2: 7x7 DWConv(p=3)
+    - 组3: 11x11 DWConv(p=5)
+    - 输出后 Concat，过 1x1 Conv 融合
+    """
     def __init__(self, dim):
         super().__init__()
-        self.dwconv = nn.Conv2d(dim, dim, kernel_size=11, padding=5, groups=dim)
+        self.dim = dim
+        channels_per_group = dim // 3
+        remainder = dim % 3
+
+        self.channel_splits = []
+        for i in range(3):
+            if i == 2:
+                ch = channels_per_group + remainder
+            else:
+                ch = channels_per_group
+            self.channel_splits.append(ch)
+
+        # Group 1: 5x5 DWConv (padding=2)
+        self.dwconv1 = nn.Conv2d(self.channel_splits[0], self.channel_splits[0],
+                                  kernel_size=5, padding=2, groups=self.channel_splits[0])
+
+        # Group 2: 7x7 DWConv (padding=3)
+        self.dwconv2 = nn.Conv2d(self.channel_splits[1], self.channel_splits[1],
+                                  kernel_size=7, padding=3, groups=self.channel_splits[1])
+
+        # Group 3: 11x11 DWConv (padding=5)
+        self.dwconv3 = nn.Conv2d(self.channel_splits[2], self.channel_splits[2],
+                                  kernel_size=11, padding=5, groups=self.channel_splits[2])
+
+        # Fusion 1x1 Conv
+        self.fusion = nn.Conv2d(dim, dim, 1)
 
     def forward(self, x):
-        return self.dwconv(x)
+        x_split = torch.split(x, self.channel_splits, dim=1)
+
+        out1 = self.dwconv1(x_split[0])
+        out2 = self.dwconv2(x_split[1])
+        out3 = self.dwconv3(x_split[2])
+
+        out = torch.cat([out1, out2, out3], dim=1)
+        out = self.fusion(out)
+
+        return out
 
 
 # ============== LayerNorm2d ==============
@@ -141,17 +182,16 @@ class LayerNormFunction(torch.autograd.Function):
         return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
 
 
-# ============== S1_SingleDense Block ==============
-class S1_SingleDenseBlock(nn.Module):
+# ============== S1_MRDense Block ==============
+class S1_MRDenseBlock(nn.Module):
     """
     S1 Series Block (串联架构):
-    x = LAB(x) -> LayerNorm -> SingleDenseDWConv(x) -> LayerNorm -> MSConvStar(x) -> Conv -> +shortcut
-    使用 11x11 DWConv (padding=5)
+    x = LAB(x) -> LayerNorm -> MRDenseDWConv(x) -> LayerNorm -> MSConvStar(x) -> Conv -> +shortcut
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
-        self.global_op = SingleDenseDWConv(dim=c)
+        self.global_op = MRDenseDWConv(dim=c)
         self.msconvstar = MSConvStar(dim=c, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
         self.norm1 = LayerNorm2d(c)
@@ -327,16 +367,16 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_SingleDense")
-class SymUNet_Pretrain_S1_SingleDense(nn.Module):
+#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_MRDense")
+class SymUNet_Pretrain_S1_MRDense(nn.Module):
     """
-    S1_SingleDense: 串联架构
+    S1_MRDense: 串联架构
     - 使用 LAB
-    - 使用 SingleDenseDWConv (11x11 DWConv, padding=5)
+    - 使用 MRDenseDWConv (多范围密集卷积: 5x5, 7x7, 11x11)
     - 使用 MSConvStar
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S1_SingleDense, self).__init__()
+        super(SymUNet_Pretrain_S1_MRDense, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -369,7 +409,7 @@ class SymUNet_Pretrain_S1_SingleDense(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                S1_SingleDenseBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_MRDenseBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
             self.downs.append(DownsampleDW(chan))
             chan *= 2
@@ -389,7 +429,7 @@ class SymUNet_Pretrain_S1_SingleDense(nn.Module):
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                S1_SingleDenseBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_MRDenseBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4
@@ -458,7 +498,7 @@ class SymUNet_Pretrain_S1_SingleDense(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_S1_SingleDense(args)
+    model = SymUNet_Pretrain_S1_MRDense(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)

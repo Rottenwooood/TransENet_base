@@ -21,7 +21,7 @@ except ImportError:
     print("Warning: NATTEN is not installed. NeighborhoodAttention2D will not work.")
 
 from model import common
-from utils.registry import ARCH_REGISTRY
+#from utils.registry import ARCH_REGISTRY
 
 
 def make_model(args, parent=False):
@@ -348,7 +348,7 @@ class PixelShuffleBlock(nn.Module):
 
 # ============== Main MAT Model ==============
 
-@ARCH_REGISTRY.register("MAT")
+#@ARCH_REGISTRY.register("MAT")
 class MAT(nn.Module):
     """
     Multi-scale Adaptive Transformer (MAT) for Image Super-Resolution

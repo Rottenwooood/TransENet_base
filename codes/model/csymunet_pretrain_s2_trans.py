@@ -4,21 +4,50 @@ import torch.nn.functional as F
 import numbers
 from einops import rearrange
 from model import common
-from utils.registry import ARCH_REGISTRY
+#from utils.registry import ARCH_REGISTRY
 
-# 设置设备
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_Base_MSCS(args)
+    return SymUNet_Pretrain_S2_Trans(args)
 
 
-# ============== MSDWConv (Multi-Scale Depthwise Conv) ==============
+# ============== Channel Attention ==============
+class ChannelAttention(nn.Module):
+    def __init__(self, dim, squeeze_factor=16):
+        super().__init__()
+        self.attention = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(dim, dim // squeeze_factor, 1),
+            nn.SiLU(),
+            nn.Conv2d(dim // squeeze_factor, dim, 1),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        return x * self.attention(x)
+
+
+# ============== LAB ==============
+class LAB(nn.Module):
+    def __init__(self, dim, local_dwconv=3, expanded_ratio=1., squeeze_factor=4):
+        super().__init__()
+        hidden_dim = int(dim * expanded_ratio)
+        self.net = nn.Sequential(
+            nn.Conv2d(dim, hidden_dim, 1), nn.GELU(),
+            nn.Conv2d(hidden_dim, hidden_dim, local_dwconv, padding=local_dwconv // 2, groups=hidden_dim), nn.GELU(),
+            ChannelAttention(dim=hidden_dim, squeeze_factor=squeeze_factor), nn.Conv2d(hidden_dim, dim, 1))
+
+    def forward(self, x):
+        u = x.clone()
+        x = self.net(x)
+        return u + x
+
+
+# ============== MSDWConv ==============
 class MSDWConv(nn.Module):
-    """Multi-Scale Depthwise Convolution from MAT"""
     def __init__(self, dim, dw_sizes=(1, 3, 5, 7)):
         super().__init__()
         self.dw_sizes = dw_sizes
@@ -42,9 +71,8 @@ class MSDWConv(nn.Module):
         return x
 
 
-# ============== MSConvStar (Multi-Scale Conv Star) ==============
+# ============== MSConvStar ==============
 class MSConvStar(nn.Module):
-    """Multi-Scale Conv Star from MAT - Replaces FFN in NAFBlock"""
     def __init__(self, dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7]):
         super().__init__()
         self.dim = dim
@@ -54,11 +82,10 @@ class MSConvStar(nn.Module):
         self.fc2 = nn.Conv2d(hidden_dim // 2, dim, 1)
         self.num_head = len(dw_sizes)
         self.act = nn.GELU()
-
         assert hidden_dim // self.num_head % 2 == 0
 
     def forward(self, x):
-        # Input x is (B, C, H, W), keep it as is
+        # x is (B, C, H, W) format
         x = self.fc1(x)
         x = x + self.dwconv(x)
         x1, x2 = x.chunk(2, dim=1)
@@ -67,12 +94,124 @@ class MSConvStar(nn.Module):
         return x
 
 
+# ============== SMA (Simplified MAB for S2) ==============
+class SMA(nn.Module):
+    """Simplified Multi-head Attention Block for S2"""
+    def __init__(self, dim, num_head=None):
+        super().__init__()
+        self.dim = dim
+        # Auto compute num_head if not provided or invalid
+        if num_head is None or dim % num_head != 0:
+            for n in range(8, 0, -1):
+                if dim % n == 0:
+                    num_head = n
+                    break
+            else:
+                num_head = 1
+        self.num_head = num_head
+        self.head_dim = dim // num_head
+        self.scale = self.head_dim ** -0.5
+
+        self.qkv = nn.Linear(dim, dim * 3, bias=True)
+        self.proj = nn.Linear(dim, dim)
+
+    def forward(self, x):
+        B, H, W, C = x.shape
+        qkv = self.qkv(x).reshape(B, H, W, 3, self.num_head, self.head_dim).permute(3, 0, 4, 1, 2, 5)
+        q, k, v = qkv[0], qkv[1], qkv[2]
+
+        attn = (q @ k.transpose(-2, -1)) * self.scale
+        attn = attn.softmax(dim=-1)
+
+        out = (attn @ v).transpose(1, 2).reshape(B, H, W, C)
+        out = self.proj(out)
+        return out
+
+
+# ============== LayerNorm2d ==============
+class LayerNorm2d(nn.Module):
+    def __init__(self, channels, eps=1e-6):
+        super(LayerNorm2d, self).__init__()
+        self.register_parameter('weight', nn.Parameter(torch.ones(channels)))
+        self.register_parameter('bias', nn.Parameter(torch.zeros(channels)))
+        self.eps = eps
+
+    def forward(self, x):
+        return LayerNormFunction.apply(x, self.weight, self.bias, self.eps)
+
+
+class LayerNormFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x, weight, bias, eps):
+        ctx.eps = eps
+        N, C, H, W = x.size()
+        mu = x.mean(1, keepdim=True)
+        var = (x - mu).pow(2).mean(1, keepdim=True)
+        y = (x - mu) / (var + eps).sqrt()
+        ctx.save_for_backward(y, var, weight)
+        y = weight.view(1, C, 1, 1) * y + bias.view(1, C, 1, 1)
+        return y
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        eps = ctx.eps
+        N, C, H, W = grad_output.size()
+        y, var, weight = ctx.saved_variables
+        g = grad_output * weight.view(1, C, 1, 1)
+        mean_g = g.mean(dim=1, keepdim=True)
+        mean_gy = (g * y).mean(dim=1, keepdim=True)
+        gx = 1. / torch.sqrt(var + eps) * (g - y * mean_gy - mean_g)
+        return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
+
+
+# ============== S2_Trans Block (并联门控架构) ==============
+class S2_TransBlock(nn.Module):
+    """
+    S2 Series Block (并联门控架构):
+    Token Mixing: x -> LayerNorm -> 1x1 Conv升维2C -> 劈两半 -> 分支A:3x3DWConv, 分支B:SMA -> 门控融合 -> SCA -> 降维 -> 残差
+    Channel Mixing: MSConvStar
+    """
+    def __init__(self, c, drop_out_rate=0.):
+        super().__init__()
+        self.norm1 = LayerNorm2d(c)
+        self.expand_conv = nn.Conv2d(c, c * 2, 1)
+        self.branch_a = nn.Conv2d(c, c, kernel_size=3, padding=1, groups=c)
+        # SMA receives c channels (half after chunk)
+        self.branch_b = SMA(dim=c, num_head=None)
+        self.sca = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            nn.Conv2d(c, c // 4, 1),
+            nn.GELU(),
+            nn.Conv2d(c // 4, c, 1),
+        )
+        self.reduce_conv = nn.Conv2d(c, c, 1)
+        self.norm2 = LayerNorm2d(c)
+        self.msconvstar = MSConvStar(dim=c, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
+        self.beta = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
+        self.gamma = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
+
+    def forward(self, x):
+        identity = x
+        x = self.norm1(x)
+        x = self.expand_conv(x)
+        x1, x2 = x.chunk(2, dim=1)
+        x1 = self.branch_a(x1)
+        x2 = x2.permute(0, 2, 3, 1).contiguous()
+        x2 = self.branch_b(x2)
+        x2 = x2.permute(0, 3, 1, 2).contiguous()
+        out = x1 * x2
+        out = out * self.sca(out)
+        out = self.reduce_conv(out)
+        x = identity + out * self.beta
+        x = x + self.msconvstar(self.norm2(x)) * self.gamma
+        return x
+
+
+# ============== FeedForward & Attention ==============
 class FeedForward(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
         super(FeedForward, self).__init__()
-
         hidden_features = int(dim*ffn_expansion_factor)
-
         self.project_in = nn.Conv2d(dim, hidden_features*2, kernel_size=1, bias=bias)
         self.dwconv = nn.Conv2d(hidden_features*2, hidden_features*2, kernel_size=3, stride=1, padding=1, groups=hidden_features*2, bias=bias)
         self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
@@ -97,7 +236,6 @@ class Attention(nn.Module):
 
     def forward(self, x):
         b, c, h, w = x.shape
-
         qkv = self.qkv_dwconv(self.qkv(x))
         q, k, v = qkv.chunk(3, dim=1)
 
@@ -112,9 +250,7 @@ class Attention(nn.Module):
         attn = attn.softmax(dim=-1)
 
         out = (attn @ v)
-
         out = rearrange(out, 'b head c (h w) -> b (head c) h w', head=self.num_heads, h=h, w=w)
-
         out = self.project_out(out)
         return out
 
@@ -122,7 +258,6 @@ class Attention(nn.Module):
 class TransformerBlock(nn.Module):
     def __init__(self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type):
         super(TransformerBlock, self).__init__()
-
         self.norm1 = LayerNorm(dim, LayerNorm_type)
         self.attn = Attention(dim, num_heads, bias)
         self.norm2 = LayerNorm(dim, LayerNorm_type)
@@ -133,108 +268,6 @@ class TransformerBlock(nn.Module):
         x_out = x_out + self.ffn(self.norm2(x_out))
         return x_out
 
-class SimpleGate(nn.Module):
-    def forward(self, x):
-        x1, x2 = x.chunk(2, dim=1)
-        return x1 * x2
-
-
-class LayerNorm2d(nn.Module):
-    def __init__(self, channels, eps=1e-6):
-        super(LayerNorm2d, self).__init__()
-        self.register_parameter('weight', nn.Parameter(torch.ones(channels)))
-        self.register_parameter('bias', nn.Parameter(torch.zeros(channels)))
-        self.eps = eps
-
-    def forward(self, x):
-        return LayerNormFunction.apply(x, self.weight, self.bias, self.eps)
-
-
-class LayerNormFunction(torch.autograd.Function):
-
-    @staticmethod
-    def forward(ctx, x, weight, bias, eps):
-        ctx.eps = eps
-        N, C, H, W = x.size()
-        mu = x.mean(1, keepdim=True)
-        var = (x - mu).pow(2).mean(1, keepdim=True)
-        y = (x - mu) / (var + eps).sqrt()
-        ctx.save_for_backward(y, var, weight)
-        y = weight.view(1, C, 1, 1) * y + bias.view(1, C, 1, 1)
-        return y
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        eps = ctx.eps
-
-        N, C, H, W = grad_output.size()
-        y, var, weight = ctx.saved_variables
-        g = grad_output * weight.view(1, C, 1, 1)
-        mean_g = g.mean(dim=1, keepdim=True)
-
-        mean_gy = (g * y).mean(dim=1, keepdim=True)
-        gx = 1. / torch.sqrt(var + eps) * (g - y * mean_gy - mean_g)
-        return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(
-            dim=0), None
-
-
-# ============== NAFBlock with MSConvStar (replaces FFN) ==============
-class NAFBlock(nn.Module):
-    """
-    NAFBlock with MSConvStar - retains original Token Mixing, replaces FFN with MSConvStar
-    """
-    def __init__(self, c, DW_Expand=2, FFN_Expand=2, drop_out_rate=0.):
-        super().__init__()
-        dw_channel = c * DW_Expand
-        self.conv1 = nn.Conv2d(in_channels=c, out_channels=dw_channel, kernel_size=1, padding=0, stride=1, groups=1, bias=True)
-        self.conv2 = nn.Conv2d(in_channels=dw_channel, out_channels=dw_channel, kernel_size=3, padding=1, stride=1, groups=dw_channel,
-                               bias=True)
-        self.conv3 = nn.Conv2d(in_channels=dw_channel // 2, out_channels=c, kernel_size=1, padding=0, stride=1, groups=1, bias=True)
-
-        # Simplified Channel Attention
-        self.sca = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(in_channels=dw_channel // 2, out_channels=dw_channel // 2, kernel_size=1, padding=0, stride=1,
-                      groups=1, bias=True),
-        )
-
-        # SimpleGate
-        self.sg = SimpleGate()
-
-        # Replace original FFN with MSConvStar
-        self.msconvstar = MSConvStar(dim=c, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
-
-        self.norm1 = LayerNorm2d(c)
-        self.norm2 = LayerNorm2d(c)
-
-        self.dropout1 = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
-        self.dropout2 = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
-
-        self.beta = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
-        self.gamma = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
-
-    def forward(self, inp):
-        x = inp
-
-        x = self.norm1(x)
-
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.sg(x)
-        x = x * self.sca(x)
-        x = self.conv3(x)
-
-        x = self.dropout1(x)
-
-        y = inp + x * self.beta
-
-        # Use MSConvStar instead of original FFN
-        x = self.msconvstar(self.norm2(y))
-
-        x = self.dropout2(x)
-
-        return y + x * self.gamma
-
 
 class BiasFree_LayerNorm(nn.Module):
     def __init__(self, normalized_shape):
@@ -242,9 +275,7 @@ class BiasFree_LayerNorm(nn.Module):
         if isinstance(normalized_shape, numbers.Integral):
             normalized_shape = (normalized_shape,)
         normalized_shape = torch.Size(normalized_shape)
-
         assert len(normalized_shape) == 1
-
         self.weight = nn.Parameter(torch.ones(normalized_shape))
         self.normalized_shape = normalized_shape
 
@@ -259,9 +290,7 @@ class WithBias_LayerNorm(nn.Module):
         if isinstance(normalized_shape, numbers.Integral):
             normalized_shape = (normalized_shape,)
         normalized_shape = torch.Size(normalized_shape)
-
         assert len(normalized_shape) == 1
-
         self.weight = nn.Parameter(torch.ones(normalized_shape))
         self.bias = nn.Parameter(torch.zeros(normalized_shape))
         self.normalized_shape = normalized_shape
@@ -275,7 +304,7 @@ class WithBias_LayerNorm(nn.Module):
 class LayerNorm(nn.Module):
     def __init__(self, dim, LayerNorm_type):
         super(LayerNorm, self).__init__()
-        if LayerNorm_type =='BiasFree':
+        if LayerNorm_type == 'BiasFree':
             self.body = BiasFree_LayerNorm(dim)
         else:
             self.body = WithBias_LayerNorm(dim)
@@ -285,12 +314,9 @@ class LayerNorm(nn.Module):
         return rearrange(self.body(rearrange(x, 'b c h w -> b (h w) c')), 'b (h w) c -> b c h w', h=h, w=w)
 
 
-
-
 class OverlapPatchEmbed(nn.Module):
     def __init__(self, in_c=3, embed_dim=48, bias=False):
         super(OverlapPatchEmbed, self).__init__()
-
         self.proj = nn.Conv2d(in_c, embed_dim, kernel_size=3, stride=1, padding=1, bias=bias)
 
     def forward(self, x):
@@ -298,29 +324,13 @@ class OverlapPatchEmbed(nn.Module):
         return x
 
 
-# ========== Depthwise Separable Conv Upsample/Downsample ==========
 class DownsampleDW(nn.Module):
-    """
-    深度可分离卷积下采样
-    - 使用 3x3 深度可分离卷积替代原来的 3x3 标准卷积
-    - 保持 PixelUnshuffle(2) 实现空间下采样
-    - 输出通道: 2 * n_feat (与原始一致)
-    """
     def __init__(self, n_feat):
         super(DownsampleDW, self).__init__()
-
-        # 原始: Conv(n_feat, n_feat//2) + PixelUnshuffle(2) = 输出 2*n_feat 通道
-        # 标准深度可分离卷积: 先 DW (3x3) 提取空间特征，再 PW (1x1) 调整通道
-
         self.body = nn.Sequential(
-            # [第1步] Depthwise Conv: n_feat -> n_feat (空间特征提取，通道数不变)
             nn.Conv2d(in_channels=n_feat, out_channels=n_feat, kernel_size=3,
                       stride=1, padding=1, groups=n_feat, bias=False),
-
-            # [第2步] Pointwise Conv: n_feat -> n_feat//2 (为 PixelUnshuffle 做准备)
             nn.Conv2d(in_channels=n_feat, out_channels=n_feat // 2, kernel_size=1, bias=False),
-
-            # [第3步] PixelUnshuffle: 空间缩小2倍，通道扩大4倍 (n_feat//2 * 4 = 2*n_feat)
             nn.PixelUnshuffle(2)
         )
 
@@ -329,27 +339,12 @@ class DownsampleDW(nn.Module):
 
 
 class UpsampleDW(nn.Module):
-    """
-    深度可分离卷积上采样
-    - 使用 3x3 深度可分离卷积替代原来的 3x3 标准卷积
-    - 保持 PixelShuffle(2) 实现空间上采样
-    - 输出通道: n_feat // 2 (与原始一致)
-    """
     def __init__(self, n_feat):
         super(UpsampleDW, self).__init__()
-
-        # 原始: Conv(n_feat, n_feat*2) + PixelShuffle(2) = 输出 n_feat//2 通道
-        # 标准深度可分离卷积: 先 DW (3x3) 提取空间特征，再 PW (1x1) 调整通道
-
         self.body = nn.Sequential(
-            # [第1步] Depthwise Conv: n_feat -> n_feat (空间特征提取，通道数不变)
             nn.Conv2d(in_channels=n_feat, out_channels=n_feat, kernel_size=3,
                       stride=1, padding=1, groups=n_feat, bias=False),
-
-            # [第2步] Pointwise Conv: n_feat -> n_feat*2 (为 PixelShuffle 做准备)
             nn.Conv2d(in_channels=n_feat, out_channels=n_feat * 2, kernel_size=1, bias=False),
-
-            # [第3步] PixelShuffle: 空间扩大2倍，通道缩小4倍 (n_feat*2 / 4 = n_feat//2)
             nn.PixelShuffle(2)
         )
 
@@ -357,41 +352,30 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-@ARCH_REGISTRY.register("CSymUNet_Pretrain_Base_MSCS")
-class SymUNet_Pretrain_Base_MSCS(nn.Module):
-    """
-    预上采样版本SymUNet - Base_MSCS变种
-    - 保留 NAFBlock 的 Token Mixing 逻辑
-    - 将 FFN 替换为 MSConvStar
-    """
+#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S2_Trans")
+class SymUNet_Pretrain_S2_Trans(nn.Module):
+    """S2_Trans: 并联门控架构 (Token Mixing: 3x3DWConv + SMA, Channel Mixing: MSConvStar)"""
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_Base_MSCS, self).__init__()
+        super(SymUNet_Pretrain_S2_Trans, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
 
-        # 基本参数
         img_channel = args.n_colors
         width = getattr(args, 'symunet_pretrain_width', 32)
         middle_blk_num = getattr(args, 'symunet_pretrain_middle_blk_num', 1)
         enc_blk_nums = getattr(args, 'symunet_pretrain_enc_blk_nums', [4,6])
         dec_blk_nums = getattr(args, 'symunet_pretrain_dec_blk_nums', [6,4])
 
-        # Transformer 参数
         ffn_expansion_factor = getattr(args, 'symunet_pretrain_ffn_expansion_factor', 2.66)
         bias = getattr(args, 'symunet_pretrain_bias', False)
         LayerNorm_type = getattr(args, 'symunet_pretrain_layer_norm_type', 'WithBias')
 
-        # Restormer 注意力头数
         restormer_heads = getattr(args, 'symunet_pretrain_restormer_heads', [1, 2, 4])
         restormer_middle_heads = getattr(args, 'symunet_pretrain_restormer_middle_heads', 8)
 
-        # NAFNet 参数
-        DW_Expand = getattr(args, 'symunet_pretrain_dw_expand', 2)
-        FFN_Expand = 4
         drop_out_rate = getattr(args, 'symunet_pretrain_dropout', 0.)
 
-        # 预上采样层：使用bicubic插值将LR放大到HR尺寸
         self.pre_upsample = nn.Upsample(scale_factor=self.scale, mode='bicubic', align_corners=False)
 
         self.intro = nn.Conv2d(img_channel, width, 3, 1, 1, bias=True)
@@ -405,14 +389,8 @@ class SymUNet_Pretrain_Base_MSCS(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                NAFBlock(
-                    c=chan,
-                    DW_Expand=DW_Expand,
-                    FFN_Expand=FFN_Expand,
-                    drop_out_rate=drop_out_rate
-                ) for _ in range(num)
+                S2_TransBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
-            # 使用深度可分离卷积下采样
             self.downs.append(DownsampleDW(chan))
             chan *= 2
 
@@ -427,33 +405,22 @@ class SymUNet_Pretrain_Base_MSCS(nn.Module):
         ])
 
         for i, num in enumerate(dec_blk_nums):
-            # 使用深度可分离卷积上采样
             self.ups.append(UpsampleDW(chan))
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                NAFBlock(
-                    c=chan,
-                    DW_Expand=DW_Expand,
-                    FFN_Expand=FFN_Expand,
-                    drop_out_rate=drop_out_rate
-                ) for _ in range(num)
+                S2_TransBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4
 
     def forward(self, inp):
         B, C, H, W = inp.shape
-
-        # 预上采样：将LR图像放大到HR尺寸
         inp_upsampled = self.pre_upsample(inp)
-
-        # 检查图像尺寸是否适配网络
         inp_padded = self.check_image_size(inp_upsampled)
         x = self.intro(inp_padded)
 
         encs = []
-
         for encoder, down in zip(self.encoders, self.downs):
             x = encoder(x)
             encs.append(x)
@@ -467,10 +434,8 @@ class SymUNet_Pretrain_Base_MSCS(nn.Module):
             x = decoder_blocks(x)
 
         x = self.ending(x)
-        # 残差连接：加上预上采样的输入
         x = x + inp_padded
 
-        # 裁剪到原始HR尺寸
         H_target = H * self.scale
         W_target = W * self.scale
         final_image_output = x[:, :, :H_target, :W_target]
@@ -513,9 +478,8 @@ class SymUNet_Pretrain_Base_MSCS(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_Base_MSCS(args)
+    model = SymUNet_Pretrain_S2_Trans(args)
     model.eval()
-    # 输入LR图像，尺寸为48x48，输出HR图像为192x192 (scale=4)
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)
     print(f"输入LR尺寸: {input_lr.size()}")

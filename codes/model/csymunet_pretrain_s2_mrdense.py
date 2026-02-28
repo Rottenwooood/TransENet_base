@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numbers
 from einops import rearrange
 from model import common
-from utils.registry import ARCH_REGISTRY
+#from utils.registry import ARCH_REGISTRY
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 MIN_NUM_PATCHES = 12
@@ -370,7 +370,7 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-@ARCH_REGISTRY.register("CSymUNet_Pretrain_S2_MRDense")
+#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S2_MRDense")
 class SymUNet_Pretrain_S2_MRDense(nn.Module):
     """S2_MRDense: 并联门控架构 (Token Mixing: 3x3DWConv + MRDenseDWConv, Channel Mixing: MSConvStar)"""
     def __init__(self, args, conv=common.default_conv):

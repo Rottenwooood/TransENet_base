@@ -4,14 +4,14 @@ import torch.nn.functional as F
 import numbers
 from einops import rearrange
 from model import common
-from utils.registry import ARCH_REGISTRY
+#from utils.registry import ARCH_REGISTRY
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S2_SingleDense(args)
+    return SymUNet_Pretrain_S2_SingleDilated(args)
 
 
 # ============== Channel Attention ==============
@@ -130,11 +130,11 @@ class LayerNormFunction(torch.autograd.Function):
         return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
 
 
-# ============== S2_SingleDense Block (并联门控架构) ==============
-class S2_SingleDenseBlock(nn.Module):
+# ============== S2_SingleDilated Block (并联门控架构) ==============
+class S2_SingleDilatedBlock(nn.Module):
     """
     S2 Series Block (并联门控架构):
-    Token Mixing: x -> LayerNorm -> 1x1 Conv升维2C -> 劈两半 -> 分支A:3x3DWConv, 分支B:11x11DWConv(p=5) -> 门控融合 -> SCA -> 降维 -> 残差
+    Token Mixing: x -> LayerNorm -> 1x1 Conv升维2C -> 劈两半 -> 分支A:3x3DWConv, 分支B:5x5DWConv(d=3) -> 门控融合 -> SCA -> 降维 -> 残差
     Channel Mixing: MSConvStar
     """
     def __init__(self, c, drop_out_rate=0.):
@@ -143,8 +143,8 @@ class S2_SingleDenseBlock(nn.Module):
         self.expand_conv = nn.Conv2d(c, c * 2, 1)
         # 分支A: 3x3 DWConv
         self.branch_a = nn.Conv2d(c, c, kernel_size=3, padding=1, groups=c)
-        # 分支B: 11x11 DWConv (padding=5)
-        self.branch_b = nn.Conv2d(c, c, kernel_size=11, padding=5, groups=c)
+        # 分支B: 5x5 DWConv (dilation=3, padding=6)
+        self.branch_b = nn.Conv2d(c, c, kernel_size=5, padding=6, groups=c, dilation=3)
         # SCA (Spatial-Channels Attention)
         self.sca = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
@@ -318,11 +318,11 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-@ARCH_REGISTRY.register("CSymUNet_Pretrain_S2_SingleDense")
-class SymUNet_Pretrain_S2_SingleDense(nn.Module):
-    """S2_SingleDense: 并联门控架构 (Token Mixing: 3x3DWConv + 11x11DWConv, Channel Mixing: MSConvStar)"""
+#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S2_SingleDilated")
+class SymUNet_Pretrain_S2_SingleDilated(nn.Module):
+    """S2_SingleDilated: 并联门控架构 (Token Mixing: 3x3DWConv + 5x5DWConv(d=3), Channel Mixing: MSConvStar)"""
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S2_SingleDense, self).__init__()
+        super(SymUNet_Pretrain_S2_SingleDilated, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -355,7 +355,7 @@ class SymUNet_Pretrain_S2_SingleDense(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                S2_SingleDenseBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S2_SingleDilatedBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
             self.downs.append(DownsampleDW(chan))
             chan *= 2
@@ -375,7 +375,7 @@ class SymUNet_Pretrain_S2_SingleDense(nn.Module):
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                S2_SingleDenseBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S2_SingleDilatedBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4
@@ -444,7 +444,7 @@ class SymUNet_Pretrain_S2_SingleDense(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_S2_SingleDense(args)
+    model = SymUNet_Pretrain_S2_SingleDilated(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)

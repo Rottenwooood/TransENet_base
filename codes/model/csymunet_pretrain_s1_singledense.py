@@ -4,16 +4,14 @@ import torch.nn.functional as F
 import numbers
 from einops import rearrange
 from model import common
-from utils.registry import ARCH_REGISTRY
+#from utils.registry import ARCH_REGISTRY
 
-# 设置设备
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S1_Trans(args)
+    return SymUNet_Pretrain_S1_SingleDense(args)
 
 
 # ============== Channel Attention ==============
@@ -32,9 +30,8 @@ class ChannelAttention(nn.Module):
         return x * self.attention(x)
 
 
-# ============== LAB (Local Aggregation Block) ==============
+# ============== LAB ==============
 class LAB(nn.Module):
-    """Local Aggregation Block from MAT"""
     def __init__(self, dim, local_dwconv=3, expanded_ratio=1., squeeze_factor=4):
         super().__init__()
         hidden_dim = int(dim * expanded_ratio)
@@ -49,12 +46,10 @@ class LAB(nn.Module):
         return u + x
 
 
-# ============== MSDWConv (Multi-Scale Depthwise Conv) ==============
+# ============== MSDWConv ==============
 class MSDWConv(nn.Module):
-    """Multi-Scale Depthwise Convolution from MAT"""
     def __init__(self, dim, dw_sizes=(1, 3, 5, 7)):
         super().__init__()
-        self.dim = dim
         self.dw_sizes = dw_sizes
         self.channels = []
         self.proj = nn.ModuleList()
@@ -76,9 +71,8 @@ class MSDWConv(nn.Module):
         return x
 
 
-# ============== MSConvStar (Multi-Scale Conv Star) ==============
+# ============== MSConvStar ==============
 class MSConvStar(nn.Module):
-    """Multi-Scale Conv Star from MAT"""
     def __init__(self, dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7]):
         super().__init__()
         self.dim = dim
@@ -88,7 +82,6 @@ class MSConvStar(nn.Module):
         self.fc2 = nn.Conv2d(hidden_dim // 2, dim, 1)
         self.num_head = len(dw_sizes)
         self.act = nn.GELU()
-
         assert hidden_dim // self.num_head % 2 == 0
 
     def forward(self, x):
@@ -101,11 +94,15 @@ class MSConvStar(nn.Module):
         return x
 
 
-# ============== SimpleGate ==============
-class SimpleGate(nn.Module):
+# ============== SingleDense DWConv ==============
+class SingleDenseDWConv(nn.Module):
+    """11x11 DWConv with padding=5"""
+    def __init__(self, dim):
+        super().__init__()
+        self.dwconv = nn.Conv2d(dim, dim, kernel_size=11, padding=5, groups=dim)
+
     def forward(self, x):
-        x1, x2 = x.chunk(2, dim=1)
-        return x1 * x2
+        return self.dwconv(x)
 
 
 # ============== LayerNorm2d ==============
@@ -144,130 +141,39 @@ class LayerNormFunction(torch.autograd.Function):
         return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
 
 
-# ============== MAB (Multi-head Attention Block) from MAT ==============
-class StandardSelfAttention(nn.Module):
-    """Standard self-attention as fallback"""
-    def __init__(self, dim, num_head):
-        super().__init__()
-        self.num_head = num_head
-        self.head_dim = dim // num_head
-        self.scale = self.head_dim ** -0.5
-
-        self.qkv = nn.Linear(dim, dim * 3, bias=True)
-        self.proj = nn.Linear(dim, dim)
-
-    def forward(self, x):
-        B, H, W, C = x.shape
-        qkv = self.qkv(x).reshape(B, H, W, 3, self.num_head, self.head_dim).permute(3, 0, 4, 1, 2, 5)
-        q, k, v = qkv[0], qkv[1], qkv[2]
-
-        attn = (q @ k.transpose(-2, -1)) * self.scale
-        attn = attn.softmax(dim=-1)
-
-        out = (attn @ v).transpose(1, 2).reshape(B, H, W, C)
-        out = self.proj(out)
-        return out
-
-
-class MAB(nn.Module):
-    """
-    Multi-head Attention Block from MAT
-    优先使用 NeighborhoodAttention2D，fallback 到 StandardSelfAttention
-    """
-    def __init__(self, dim, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[1, 1, 1, 1]):
-        super().__init__()
-        self.dim = dim
-        self.num_head = num_head  # 硬编码为8，适配dim=32
-        self.dilations = dilations
-        self.norm1 = nn.LayerNorm(dim)
-
-        # 尝试使用 natten 库的 NeighborhoodAttention2D，如果失败则 fallback
-        try:
-            from natten.functional import na2d_av, na2d_qk
-            from natten import NeighborhoodAttention2D
-            self.attn = NeighborhoodAttention2D(
-                dim=dim,
-                num_head=num_head,
-                kernel_sizes=kernel_sizes,
-                dilations=dilations,
-            )
-            print(f"[MAB] 使用 NATTEN NeighborhoodAttention2D (dilations={dilations})")
-        except ImportError:
-            print(f"[MAB] NATTEN 未安装，fallback 到 StandardSelfAttention")
-            self.attn = StandardSelfAttention(dim=dim, num_head=num_head)
-
-        self.norm2 = nn.LayerNorm(dim)
-        self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
-
-    def forward(self, x):
-        # 输入 x shape: (B, C, H, W)
-
-        # ==========================================
-        # Part 1: Self-Attention (依赖 BHWC 格式)
-        # ==========================================
-        shortcut_attn = x  # 保存 BCHW 格式的残差
-
-        # 1. 转换到 BHWC 并进行 LayerNorm (LayerNorm 原生支持 BHWC)
-        x_bhwc = x.permute(0, 2, 3, 1).contiguous()
-        x_norm1 = self.norm1(x_bhwc)
-
-        # 2. 计算 Attention
-        attn_out_bhwc = self.attn(x_norm1)
-
-        # 3. 转回 BCHW 并加上残差 (真正的 Pre-LN 逻辑)
-        x = shortcut_attn + attn_out_bhwc.permute(0, 3, 1, 2).contiguous()
-
-        # ==========================================
-        # Part 2: FFN / MSConvStar (依赖 BCHW 格式)
-        # ==========================================
-        shortcut_ffn = x  # 保存 BCHW 格式的残差
-
-        # 1. 转换到 BHWC 算 LayerNorm
-        x_bhwc = x.permute(0, 2, 3, 1).contiguous()
-        x_norm2 = self.norm2(x_bhwc)
-
-        # 2. 转回 BCHW 给 MSConvStar 计算
-        ffn_input_bchw = x_norm2.permute(0, 3, 1, 2).contiguous()
-        ffn_out_bchw = self.ffn(ffn_input_bchw)
-
-        # 3. 直接在 BCHW 维度上加残差并输出
-        x = shortcut_ffn + ffn_out_bchw
-
-        return x
-
-
-# ============== S1_Trans Block ==============
-
-# ============== S1_Trans Block ==============
-class S1_TransBlock(nn.Module):
+# ============== S1_SingleDense Block ==============
+class S1_SingleDenseBlock(nn.Module):
     """
     S1 Series Block (串联架构):
-    x = LAB(x) -> MAB(dilations=[1,1,1,1]) -> MAB(dilations=[4,4,4,4]) -> Conv -> +shortcut
+    x = LAB(x) -> LayerNorm -> SingleDenseDWConv(x) -> LayerNorm -> MSConvStar(x) -> Conv -> +shortcut
+    使用 11x11 DWConv (padding=5)
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
-        # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
+        self.global_op = SingleDenseDWConv(dim=c)
+        self.msconvstar = MSConvStar(dim=c, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
-        # MAB1: dilations=[1,1,1,1]
-        self.mab1 = MAB(dim=c, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[1, 1, 1, 1])
-
-        # MAB2: dilations=[4,4,4,4]
-        self.mab2 = MAB(dim=c, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[4, 4, 4, 4])
+        self.norm1 = LayerNorm2d(c)
+        self.norm2 = LayerNorm2d(c)
 
         # Conv + residual (like RMAG)
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
 
         self.dropout = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
 
+        self.beta = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
+        self.gamma = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
+
     def forward(self, x):
         # 保存残差连接
         shortcut = x
 
-        # LAB -> MAB1 -> MAB2 (串联)
         x = self.lab(x)
-        x = self.mab1(x)
-        x = self.mab2(x)
+        x = self.norm1(x)
+        x = x + self.global_op(x) * self.beta
+        x = self.norm2(x)
+        x = x + self.msconvstar(x) * self.gamma
 
         # Conv + residual (like RMAG)
         x = self.conv(x)
@@ -276,7 +182,7 @@ class S1_TransBlock(nn.Module):
         return x
 
 
-# ============== FeedForward & Attention for TransformerBlock ==============
+# ============== FeedForward & Attention ==============
 class FeedForward(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
         super(FeedForward, self).__init__()
@@ -327,7 +233,6 @@ class Attention(nn.Module):
 class TransformerBlock(nn.Module):
     def __init__(self, dim, num_heads, ffn_expansion_factor, bias, LayerNorm_type):
         super(TransformerBlock, self).__init__()
-
         self.norm1 = LayerNorm(dim, LayerNorm_type)
         self.attn = Attention(dim, num_heads, bias)
         self.norm2 = LayerNorm(dim, LayerNorm_type)
@@ -394,7 +299,6 @@ class OverlapPatchEmbed(nn.Module):
         return x
 
 
-# ========== Downsample/Upsample ==========
 class DownsampleDW(nn.Module):
     def __init__(self, n_feat):
         super(DownsampleDW, self).__init__()
@@ -423,16 +327,16 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_Trans")
-class SymUNet_Pretrain_S1_Trans(nn.Module):
+#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_SingleDense")
+class SymUNet_Pretrain_S1_SingleDense(nn.Module):
     """
-    S1_Trans: 串联架构
-    - 使用 LAB (Local Aggregation Block)
-    - 使用 MA (Multi-head Attention)
+    S1_SingleDense: 串联架构
+    - 使用 LAB
+    - 使用 SingleDenseDWConv (11x11 DWConv, padding=5)
     - 使用 MSConvStar
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S1_Trans, self).__init__()
+        super(SymUNet_Pretrain_S1_SingleDense, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -465,7 +369,7 @@ class SymUNet_Pretrain_S1_Trans(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                S1_TransBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_SingleDenseBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
             self.downs.append(DownsampleDW(chan))
             chan *= 2
@@ -485,7 +389,7 @@ class SymUNet_Pretrain_S1_Trans(nn.Module):
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                S1_TransBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_SingleDenseBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4
@@ -554,7 +458,7 @@ class SymUNet_Pretrain_S1_Trans(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_S1_Trans(args)
+    model = SymUNet_Pretrain_S1_SingleDense(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)
