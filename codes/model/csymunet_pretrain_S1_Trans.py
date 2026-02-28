@@ -144,113 +144,7 @@ class LayerNormFunction(torch.autograd.Function):
         return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
 
 
-# ============== MA (Multi-head Attention) from MAT ==============
-class MA(nn.Module):
-    """
-    Multi-head Attention Block from MAT (based on NeighborhoodAttention2D)
-    Used for S1_Trans
-    """
-    def __init__(self, dim, num_head=None, kernel_sizes=[7, 9, 11], dilations=[1, 1, 1], rel_pos_bias=True):
-        super().__init__()
-        self.dim = dim
-        # Auto compute num_head if not provided or invalid
-        if num_head is None or dim % num_head != 0:
-            # Find the largest divisor of dim that is <= 8
-            for n in range(8, 0, -1):
-                if dim % n == 0:
-                    num_head = n
-                    break
-            else:
-                num_head = 1
-        self.num_head = num_head
-        self.norm1 = nn.LayerNorm(dim)
-
-        # Try to use NeighborhoodAttention2D if NATTEN is available
-        try:
-            from natten.functional import na2d_av, na2d_qk
-            NATTERN_AVAILABLE = True
-        except ImportError:
-            NATTERN_AVAILABLE = False
-
-        self.NATTERN_AVAILABLE = NATTERN_AVAILABLE
-
-        if NATTERN_AVAILABLE:
-            self.attn = NeighborhoodAttention2D_S1(
-                dim=dim,
-                num_head=num_head,
-                kernel_sizes=kernel_sizes,
-                dilations=dilations,
-                rel_pos_bias=rel_pos_bias
-            )
-        else:
-            # Fallback to standard self-attention
-            self.attn = StandardSelfAttention(dim=dim, num_head=num_head)
-
-        self.norm2 = nn.LayerNorm(dim)
-        self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
-
-    def forward(self, x):
-        # x shape: (B, C, H, W)
-        # Convert to (B, H, W, C) for attention layers
-        x = x.permute(0, 2, 3, 1).contiguous()
-
-        # Self-attention with residual
-        shortcut = x
-        B, H, W, C = x.shape
-        x_reshaped = x.reshape(B * H * W, C)
-        x_reshaped = self.norm1(x_reshaped)
-        x = x_reshaped.reshape(B, H, W, C)
-        x = x + self.attn(x)
-
-        # FFN with residual
-        shortcut = x
-        B, H, W, C = x.shape
-        x_reshaped = x.reshape(B * H * W, C)
-        x_reshaped = self.norm2(x_reshaped)
-        x = x_reshaped.reshape(B, H, W, C)
-
-        # FFN - convert to (B, C, H, W) for MSConvStar
-        ffn_input = x.permute(0, 3, 1, 2).contiguous()  # (B, C, H, W)
-        ffn_output = self.ffn(ffn_input).permute(0, 2, 3, 1)  # back to (B, H, W, C)
-        x = shortcut + ffn_output
-
-        # Convert back to (B, C, H, W)
-        x = x.permute(0, 3, 1, 2).contiguous()
-        return x
-
-
-class NeighborhoodAttention2D_S1(nn.Module):
-    """Simplified Neighborhood Attention for S1"""
-    def __init__(self, dim, num_head, kernel_sizes=[7, 9, 11], dilations=[1, 1, 1], rel_pos_bias=True):
-        super().__init__()
-        self.dim = dim
-        self.num_head = num_head
-        self.head_dim = dim // num_head
-        self.scale = self.head_dim ** -0.5
-
-        self.qkv = nn.Linear(dim, dim * 3, bias=True)
-        self.proj = nn.Linear(dim, dim)
-
-        # Use a simple kernel size for efficiency
-        self.kernel_size = 7
-        self.padding = self.kernel_size // 2
-
-    def forward(self, x):
-        B, H, W, C = x.shape
-
-        qkv = self.qkv(x).reshape(B, H, W, 3, self.num_head, self.head_dim).permute(3, 0, 4, 1, 2, 5)
-        q, k, v = qkv[0], qkv[1], qkv[2]
-
-        # Simple self-attention
-        attn = (q @ k.transpose(-2, -1)) * self.scale
-        attn = attn.softmax(dim=-1)
-
-        out = (attn @ v).transpose(1, 2).reshape(B, H, W, C)
-        out = self.proj(out)
-
-        return out
-
-
+# ============== MAB (Multi-head Attention Block) from MAT ==============
 class StandardSelfAttention(nn.Module):
     """Standard self-attention as fallback"""
     def __init__(self, dim, num_head):
@@ -275,40 +169,109 @@ class StandardSelfAttention(nn.Module):
         return out
 
 
+class MAB(nn.Module):
+    """
+    Multi-head Attention Block from MAT
+    优先使用 NeighborhoodAttention2D，fallback 到 StandardSelfAttention
+    """
+    def __init__(self, dim, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[1, 1, 1, 1]):
+        super().__init__()
+        self.dim = dim
+        self.num_head = num_head  # 硬编码为8，适配dim=32
+        self.dilations = dilations
+        self.norm1 = nn.LayerNorm(dim)
+
+        # 尝试使用 natten 库的 NeighborhoodAttention2D，如果失败则 fallback
+        try:
+            from natten.functional import na2d_av, na2d_qk
+            from natten import NeighborhoodAttention2D
+            self.attn = NeighborhoodAttention2D(
+                dim=dim,
+                num_head=num_head,
+                kernel_sizes=kernel_sizes,
+                dilations=dilations,
+            )
+            print(f"[MAB] 使用 NATTEN NeighborhoodAttention2D (dilations={dilations})")
+        except ImportError:
+            print(f"[MAB] NATTEN 未安装，fallback 到 StandardSelfAttention")
+            self.attn = StandardSelfAttention(dim=dim, num_head=num_head)
+
+        self.norm2 = nn.LayerNorm(dim)
+        self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
+
+    def forward(self, x):
+        # 输入 x shape: (B, C, H, W)
+
+        # ==========================================
+        # Part 1: Self-Attention (依赖 BHWC 格式)
+        # ==========================================
+        shortcut_attn = x  # 保存 BCHW 格式的残差
+
+        # 1. 转换到 BHWC 并进行 LayerNorm (LayerNorm 原生支持 BHWC)
+        x_bhwc = x.permute(0, 2, 3, 1).contiguous()
+        x_norm1 = self.norm1(x_bhwc)
+
+        # 2. 计算 Attention
+        attn_out_bhwc = self.attn(x_norm1)
+
+        # 3. 转回 BCHW 并加上残差 (真正的 Pre-LN 逻辑)
+        x = shortcut_attn + attn_out_bhwc.permute(0, 3, 1, 2).contiguous()
+
+        # ==========================================
+        # Part 2: FFN / MSConvStar (依赖 BCHW 格式)
+        # ==========================================
+        shortcut_ffn = x  # 保存 BCHW 格式的残差
+
+        # 1. 转换到 BHWC 算 LayerNorm
+        x_bhwc = x.permute(0, 2, 3, 1).contiguous()
+        x_norm2 = self.norm2(x_bhwc)
+
+        # 2. 转回 BCHW 给 MSConvStar 计算
+        ffn_input_bchw = x_norm2.permute(0, 3, 1, 2).contiguous()
+        ffn_out_bchw = self.ffn(ffn_input_bchw)
+
+        # 3. 直接在 BCHW 维度上加残差并输出
+        x = shortcut_ffn + ffn_out_bchw
+
+        return x
+
+
+# ============== S1_Trans Block ==============
+
 # ============== S1_Trans Block ==============
 class S1_TransBlock(nn.Module):
     """
     S1 Series Block (串联架构):
-    x = LAB(x) -> LayerNorm -> MA(x) -> LayerNorm -> MSConvStar(x)
+    x = LAB(x) -> MAB(dilations=[1,1,1,1]) -> MAB(dilations=[4,4,4,4]) -> Conv -> +shortcut
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
         # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
-        # MA for global attention
-        self.ma = MA(dim=c, num_head=6, kernel_sizes=[7, 9, 11], dilations=[1, 1, 1], rel_pos_bias=True)
+        # MAB1: dilations=[1,1,1,1]
+        self.mab1 = MAB(dim=c, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[1, 1, 1, 1])
 
-        # SimpleConvStar for channel mixing
-        self.msconvstar = MSConvStar(dim=c, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
+        # MAB2: dilations=[4,4,4,4]
+        self.mab2 = MAB(dim=c, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[4, 4, 4, 4])
 
-        self.norm1 = LayerNorm2d(c)
-        self.norm2 = LayerNorm2d(c)
+        # Conv + residual (like RMAG)
+        self.conv = nn.Conv2d(c, c, 3, 1, 1)
 
         self.dropout = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
 
-        self.beta = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
-        self.gamma = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
-
     def forward(self, x):
-        # LAB -> MA -> MSConvStar (串联)
+        # 保存残差连接
+        shortcut = x
+
+        # LAB -> MAB1 -> MAB2 (串联)
         x = self.lab(x)
+        x = self.mab1(x)
+        x = self.mab2(x)
 
-        x = self.norm1(x)
-        x = x + self.ma(x) * self.beta
-
-        x = self.norm2(x)
-        x = x + self.msconvstar(x) * self.gamma
+        # Conv + residual (like RMAG)
+        x = self.conv(x)
+        x = x + shortcut
 
         return x
 
