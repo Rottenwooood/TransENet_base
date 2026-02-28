@@ -130,12 +130,12 @@ class ExperimentManager:
                             # 非列表参数：直接赋值
                             exp_config[key] = values
 
-                # 生成实验名称
-                if exp_idx < len(paired_experiments):
-                    enc_config, dec_config = paired_experiments[exp_idx]
-                    exp_name = self.generate_paired_experiment_name(exp_idx, enc_config, dec_config, exp_config)
-                else:
-                    exp_name = self.generate_experiment_name(exp_idx, exp_config)
+                # # 生成实验名称
+                # if exp_idx < len(paired_experiments):
+                #     enc_config, dec_config = paired_experiments[exp_idx]
+                #     exp_name = self.generate_paired_experiment_name(exp_idx, enc_config, dec_config, exp_config)
+                # else:
+                exp_name = self.generate_experiment_name(exp_idx, exp_config)
 
                 # 添加WandB配置
                 if self.config["use_wandb"]:
@@ -482,9 +482,9 @@ class ExperimentManager:
             print(f"   {exp['id']}: {exp['name']}")
 
         # 询问用户确认
-        if not self.confirm_execution():
-            print("❌ Experiment execution cancelled")
-            return
+        # if not self.confirm_execution():
+        #     print("❌ Experiment execution cancelled")
+        #     return
 
         # 执行实验
         results = []

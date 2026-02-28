@@ -170,29 +170,21 @@ class S1_SingleDilatedBlock(nn.Module):
         self.norm2 = LayerNorm2d(c)
 
         # Conv + residual (like RMAG)
-        self.conv = nn.Conv2d(c, c, 3, 1, 1)
+        # self.conv = nn.Conv2d(c, c, 3, 1, 1)
 
-        self.dropout = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
+        # self.dropout = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
 
         self.beta = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
         self.gamma = nn.Parameter(torch.zeros((1, c, 1, 1)), requires_grad=True)
 
     def forward(self, x):
-        # 保存残差连接
-        shortcut = x
-
         # LAB -> SingleDilatedDWConv -> MSConvStar (串联)
         x = self.lab(x)
 
-        x = self.norm1(x)
-        x = x + self.global_op(x) * self.beta
-
-        x = self.norm2(x)
-        x = x + self.msconvstar(x) * self.gamma
-
-        # Conv + residual (like RMAG)
-        x = self.conv(x)
-        x = x + shortcut
+        x_norm1 = self.norm1(x)
+        x = x + self.global_op(x_norm1) * self.beta
+        x_norm2 = self.norm2(x)
+        x = x + self.msconvstar(x_norm2) * self.gamma
 
         return x
 

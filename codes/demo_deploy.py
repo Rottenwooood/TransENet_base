@@ -327,8 +327,8 @@ def deploy(args, sr_model):
             final_sr = cv2.cvtColor(final_sr, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(args.dir_out, os.path.split(img_lists[i])[-1]), final_sr)
     #    # 计算PSNR
-    # folder_GT = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/HR_x4'
-    # folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced_UCMercedtest/x4'
+    # folder_GT = '/root/autodl-tmp/TransENet_base/datasets/UCMerced-train/UCMerced-dataset/test/HR_x4'
+    # folder_Gen = '/root/autodl-tmp/TransENet_base/experiment/results/UCMerced_UCMercedtest/x4'
     # img_ext = '.tif'
     # crop_border = 4  # same with scale
     # suffix = ''  # suffix for Gen images
@@ -384,10 +384,10 @@ if __name__ == '__main__':
 
     # args parameter setting
     # You can configure these paths via command line arguments or set them here
-    args.pre_train = '/root/autodl-tmp/TransENet/experiment/test_dir/pair01_NAF_symunet_blk46_w32/model/model_best.pt'
+    args.pre_train = '/root/autodl-tmp/TransENet_base/experiment/test_dir/pair01_NAF_symunet_blk46_w32/model/model_best.pt'
     
-    # args.dir_data = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/LR_x4'
-    args.dir_data = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/LR_x4'
+    # args.dir_data = '/root/autodl-tmp/TransENet_base/datasets/AID-train/AID-dataset/test/LR_x4'
+    args.dir_data = '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset/test/LR_x4'
     args.dir_out = '../experiment/results/466L1W32/x4'
 
     print("Configuration:")

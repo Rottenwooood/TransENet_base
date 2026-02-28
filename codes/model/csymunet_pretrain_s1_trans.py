@@ -1,9 +1,14 @@
+import math
 import torch
-import torch.nn as nn
+from torch import Tensor, nn
 import torch.nn.functional as F
+from natten.functional import na2d_av, na2d_qk
+from torch.nn.init import trunc_normal_
 import numbers
 from einops import rearrange
 from model import common
+from typing import List, Optional
+
 #from utils.registry import ARCH_REGISTRY
 
 # 设置设备
@@ -31,6 +36,104 @@ class ChannelAttention(nn.Module):
     def forward(self, x):
         return x * self.attention(x)
 
+
+class NeighborhoodAttention2D(nn.Module):
+    """
+    Neighborhood Attention 2D Module
+    """
+
+    def __init__(
+        self,
+        dim: int,
+        num_head: int,
+        kernel_sizes: List[int] = [7, 9, 11],
+        dilations: List[int] = [1, 1, 1],
+        is_causal: List[bool] = [False, False],
+        rel_pos_bias: bool = False,
+        qkv_bias: bool = True,
+        qk_scale: Optional[float] = None,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
+    ):
+        super().__init__()
+        assert len(kernel_sizes) == len(dilations)
+        if any(is_causal) and rel_pos_bias:
+            raise NotImplementedError("Causal neighborhood attention is undefined with positional biases."
+                                      "Please consider disabling positional biases, or open an issue.")
+
+        self.k = len(kernel_sizes)
+        self.channels = []
+        for i in range(self.k):
+            if i == 0:
+                channels = dim * 3 - dim * 3 // len(kernel_sizes) * (len(kernel_sizes) - 1)
+            else:
+                channels = dim * 3 // len(kernel_sizes)
+            assert (channels % (3 * num_head // self.k) == 0)
+            self.channels.append(channels)
+
+        self.num_head = num_head
+        self.head_dim = dim // self.num_head
+        self.scale = qk_scale or self.head_dim**-0.5
+        self.kernel_sizes = tuple((i, i) for i in kernel_sizes)
+        self.dilations = tuple((i, i) for i in dilations)
+        self.is_causal = is_causal
+
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        if rel_pos_bias:
+            self.rpb = nn.ParameterList()
+            for i in range(len(kernel_sizes)):
+                temp = nn.Parameter(torch.zeros(
+                    num_head // self.k,
+                    (2 * kernel_sizes[i] - 1),
+                    (2 * kernel_sizes[i] - 1),
+                ))
+                trunc_normal_(temp, mean=0.0, std=0.02, a=-2.0, b=2.0)
+                self.rpb.append(temp)
+        else:
+            self.register_parameter("rpb", None)
+        self.attn_drop_rate = attn_drop
+        self.attn_drop = nn.Dropout(self.attn_drop_rate)
+        self.proj = nn.Linear(dim, dim)
+        self.proj_drop = nn.Dropout(proj_drop)
+
+    def forward(self, x: Tensor) -> Tensor:
+        # self.extra_repr()
+        if x.dim() != 4:
+            raise ValueError(f"NeighborhoodAttention2D expected a rank-4 input tensor; got {x.dim()=}.")
+
+        x = self.qkv(x)
+        x = torch.split(x, split_size_or_sections=self.channels, dim=3)
+        attns = []
+        for i, x_i in enumerate(x):
+            B, H, W, C = x_i.shape
+            qkv = (x_i.reshape(B, H, W, 3, self.num_head // self.k, self.head_dim).permute(3, 0, 4, 1, 2, 5))
+            q, k, v = qkv[0], qkv[1], qkv[2]
+            q = q * self.scale
+            attn = na2d_qk(
+                q,
+                k,
+                kernel_size=self.kernel_sizes[i],
+                dilation=self.dilations[i],
+                is_causal=self.is_causal,
+                rpb=self.rpb[i] if self.rpb is not None else None,
+            )
+            attn = attn.softmax(dim=-1)
+            attn = self.attn_drop(attn)
+            y = na2d_av(
+                attn,
+                v,
+                kernel_size=self.kernel_sizes[i],
+                dilation=self.dilations[i],
+                is_causal=self.is_causal,
+            )
+            y = y.permute(0, 2, 3, 1, 4).reshape(B, H, W, C // 3)
+            attns.append(y)
+        x = torch.cat(attns, dim=3)
+        return self.proj_drop(self.proj(x))
+
+    def extra_repr(self) -> str:
+        return (f"head_dim={self.head_dim}, num_head={self.num_head}, " + f"kernel_sizes={self.kernel_sizes}, " +
+                f"dilations={self.dilations}, " + f"is_causal={self.is_causal}, " + f"has_bias={self.rpb is not None}")
 
 # ============== LAB (Local Aggregation Block) ==============
 class LAB(nn.Module):
@@ -144,29 +247,29 @@ class LayerNormFunction(torch.autograd.Function):
         return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
 
 
-# ============== MAB (Multi-head Attention Block) from MAT ==============
-class StandardSelfAttention(nn.Module):
-    """Standard self-attention as fallback"""
-    def __init__(self, dim, num_head):
-        super().__init__()
-        self.num_head = num_head
-        self.head_dim = dim // num_head
-        self.scale = self.head_dim ** -0.5
+# # ============== MAB (Multi-head Attention Block) from MAT ==============
+# class StandardSelfAttention(nn.Module):
+#     """Standard self-attention as fallback"""
+#     def __init__(self, dim, num_head):
+#         super().__init__()
+#         self.num_head = num_head
+#         self.head_dim = dim // num_head
+#         self.scale = self.head_dim ** -0.5
 
-        self.qkv = nn.Linear(dim, dim * 3, bias=True)
-        self.proj = nn.Linear(dim, dim)
+#         self.qkv = nn.Linear(dim, dim * 3, bias=True)
+#         self.proj = nn.Linear(dim, dim)
 
-    def forward(self, x):
-        B, H, W, C = x.shape
-        qkv = self.qkv(x).reshape(B, H, W, 3, self.num_head, self.head_dim).permute(3, 0, 4, 1, 2, 5)
-        q, k, v = qkv[0], qkv[1], qkv[2]
+#     def forward(self, x):
+#         B, H, W, C = x.shape
+#         qkv = self.qkv(x).reshape(B, H, W, 3, self.num_head, self.head_dim).permute(3, 0, 4, 1, 2, 5)
+#         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        attn = (q @ k.transpose(-2, -1)) * self.scale
-        attn = attn.softmax(dim=-1)
+#         attn = (q @ k.transpose(-2, -1)) * self.scale
+#         attn = attn.softmax(dim=-1)
 
-        out = (attn @ v).transpose(1, 2).reshape(B, H, W, C)
-        out = self.proj(out)
-        return out
+#         out = (attn @ v).transpose(1, 2).reshape(B, H, W, C)
+#         out = self.proj(out)
+#         return out
 
 
 class MAB(nn.Module):
@@ -182,19 +285,24 @@ class MAB(nn.Module):
         self.norm1 = nn.LayerNorm(dim)
 
         # 尝试使用 natten 库的 NeighborhoodAttention2D，如果失败则 fallback
-        try:
-            from natten.functional import na2d_av, na2d_qk
-            from natten import NeighborhoodAttention2D
-            self.attn = NeighborhoodAttention2D(
-                dim=dim,
-                num_head=num_head,
-                kernel_sizes=kernel_sizes,
-                dilations=dilations,
-            )
-            print(f"[MAB] 使用 NATTEN NeighborhoodAttention2D (dilations={dilations})")
-        except ImportError:
-            print(f"[MAB] NATTEN 未安装，fallback 到 StandardSelfAttention")
-            self.attn = StandardSelfAttention(dim=dim, num_head=num_head)
+        # try:
+        #     from natten.functional import na2d_av, na2d_qk
+        #     from natten import NeighborhoodAttention2D
+        self.attn = NeighborhoodAttention2D(
+            dim=dim,
+            num_head=num_head,
+            kernel_sizes=kernel_sizes,
+            dilations=dilations,
+            rel_pos_bias=True,
+            qkv_bias=True,
+            qk_scale=None,
+            attn_drop=0.0,
+            proj_drop=0.0
+        )
+        print(f"[MAB] 使用 自己实现的 NeighborhoodAttention2D (dilations={dilations})")
+        # except ImportError:
+        #     print(f"[MAB] NATTEN 未安装，fallback 到 StandardSelfAttention")
+            # self.attn = StandardSelfAttention(dim=dim, num_head=num_head)
 
         self.norm2 = nn.LayerNorm(dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
@@ -256,22 +364,16 @@ class S1_TransBlock(nn.Module):
         self.mab2 = MAB(dim=c, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[4, 4, 4, 4])
 
         # Conv + residual (like RMAG)
-        self.conv = nn.Conv2d(c, c, 3, 1, 1)
+        # self.conv = nn.Conv2d(c, c, 3, 1, 1)
 
-        self.dropout = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
+        # self.dropout = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
 
     def forward(self, x):
-        # 保存残差连接
-        shortcut = x
 
         # LAB -> MAB1 -> MAB2 (串联)
         x = self.lab(x)
         x = self.mab1(x)
         x = self.mab2(x)
-
-        # Conv + residual (like RMAG)
-        x = self.conv(x)
-        x = x + shortcut
 
         return x
 

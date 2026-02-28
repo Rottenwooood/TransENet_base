@@ -12,8 +12,8 @@ def create_dataloaders(args):
     elif args.dataset == 'UCMerced':
         from data.ucmerced import UCMercedDataset
         # Use configured paths or fall back to defaults
-        train_dir = args.data_train if args.data_train != '.' else '/root/autodl-tmp/TransENet/datasets/TransENet/UCMerced'
-        val_dir = args.data_val if args.data_val != '.' else '/root/autodl-tmp/TransENet/datasets/TransENet/UCMerced'
+        train_dir = args.data_train if args.data_train != '.' else '/root/autodl-tmp/TransENet_base/datasets/TransENet/UCMerced'
+        val_dir = args.data_val if args.data_val != '.' else '/root/autodl-tmp/TransENet_base/datasets/TransENet/UCMerced'
         training_set = UCMercedDataset(args, root_dir=train_dir, train=True)
         val_set = UCMercedDataset(args, root_dir=val_dir, train=False)
     elif args.dataset == 'DIV2K':

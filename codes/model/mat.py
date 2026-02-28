@@ -290,14 +290,11 @@ class RMAG(nn.Module):
         self.conv = nn.Conv2d(dim, dim, 3, 1, 1)
 
     def forward(self, x):
-        shortcut = x
         x = self.lab(x)
         x = x.permute(0, 2, 3, 1).contiguous()
         for mab in self.mabs:
             x = mab(x)
         x = x.permute(0, 3, 1, 2).contiguous()
-        x = self.conv(x)
-        x = x + shortcut
         return x
 
 

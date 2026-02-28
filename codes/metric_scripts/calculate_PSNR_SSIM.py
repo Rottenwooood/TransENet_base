@@ -7,6 +7,7 @@ import math
 import numpy as np
 import cv2
 import glob
+from option import args
 
 
 def main():
@@ -18,10 +19,10 @@ def main():
     # folder_Gen = 'F:/research/results/UCMerced/x3/'
     # folder_GT = 'F:/research/dataset/SR for remote sensing/AID_dataset/test/HR'
     # folder_Gen = 'F:/research/codes/My-projects/transformer-for-sr/experiment/results/AID/x2/CNN7'
-    # folder_GT = '/root/autodl-tmp/TransENet/datasets/AID-train/AID-dataset/test/HR'
-    # folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/UCMerced_AIDtest/x4'
-    folder_GT = '/root/autodl-tmp/TransENet/datasets/UCMerced-train/UCMerced-dataset/test/HR_x4'
-    folder_Gen = '/root/autodl-tmp/TransENet/experiment/results/466L1W32/x4'
+    # folder_GT = '/root/autodl-tmp/TransENet_base/datasets/AID-train/AID-dataset/test/HR'
+    # folder_Gen = '/root/autodl-tmp/TransENet_base/experiment/results/UCMerced_AIDtest/x4'
+    folder_GT = '/root/autodl-tmp/TransENet_base/datasets/UCMerced-train/UCMerced-dataset/test/HR_x4'
+    folder_Gen = args.folder_Gen
     img_ext = '.tif'
     crop_border = 4  # same with scale
     suffix = ''  # suffix for Gen images
