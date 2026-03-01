@@ -384,11 +384,11 @@ if __name__ == '__main__':
 
     # args parameter setting
     # You can configure these paths via command line arguments or set them here
-    args.pre_train = '/root/autodl-tmp/TransENet_base/experiment/test_dir/pair01_NAF_symunet_blk46_w32/model/model_best.pt'
+    # args.pre_train = '/root/autodl-tmp/TransENet_base/experiment/test_dir/pair01_NAF_symunet_blk46_w32/model/model_best.pt'
     
     # args.dir_data = '/root/autodl-tmp/TransENet_base/datasets/AID-train/AID-dataset/test/LR_x4'
     args.dir_data = '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset/test/LR_x4'
-    args.dir_out = '../experiment/results/466L1W32/x4'
+    # args.dir_out = '../experiment/results/466L1W32/x4'
 
     print("Configuration:")
     print(f"  Model: {args.model}")
@@ -403,7 +403,7 @@ if __name__ == '__main__':
     sr_model.eval()
 
     # 模型性能测试
-    test_model_performance(args, sr_model)
+    # test_model_performance(args, sr_model)
 
     # # analyse the params of the load model
     # pytorch_total_params = sum(p.numel() for p in sr_model.parameters())
@@ -416,4 +416,4 @@ if __name__ == '__main__':
     #     print(p.numel())
     #     print('========')
 
-    # deploy(args, sr_model)
+    deploy(args, sr_model)

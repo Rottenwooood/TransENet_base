@@ -275,19 +275,17 @@ class LayerNormFunction(torch.autograd.Function):
 class MAB(nn.Module):
     """
     Multi-head Attention Block from MAT
-    优先使用 NeighborhoodAttention2D，fallback 到 StandardSelfAttention
+    使用 LayerNorm2d 减少格式转换 (4次 -> 2次)
     """
-    def __init__(self, dim, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[1, 1, 1, 1]):
+    def __init__(self, dim, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]):
         super().__init__()
         self.dim = dim
-        self.num_head = num_head  # 硬编码为8，适配dim=32
+        self.num_head = num_head
         self.dilations = dilations
-        self.norm1 = nn.LayerNorm(dim)
 
-        # 尝试使用 natten 库的 NeighborhoodAttention2D，如果失败则 fallback
-        # try:
-        #     from natten.functional import na2d_av, na2d_qk
-        #     from natten import NeighborhoodAttention2D
+        # 使用 LayerNorm2d 直接处理 BCHW 格式
+        self.norm1 = LayerNorm2d(channels=dim)
+
         self.attn = NeighborhoodAttention2D(
             dim=dim,
             num_head=num_head,
@@ -299,44 +297,39 @@ class MAB(nn.Module):
             attn_drop=0.0,
             proj_drop=0.0
         )
-        print(f"[MAB] 使用 自己实现的 NeighborhoodAttention2D (dilations={dilations})")
-        # except ImportError:
-        #     print(f"[MAB] NATTEN 未安装，fallback 到 StandardSelfAttention")
-            # self.attn = StandardSelfAttention(dim=dim, num_head=num_head)
+        print(f"[MAB] 使用 NeighborhoodAttention2D (num_head={num_head}, kernel_sizes={kernel_sizes}, dilations={dilations})")
 
-        self.norm2 = nn.LayerNorm(dim)
+        self.norm2 = LayerNorm2d(channels=dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
     def forward(self, x):
         # 输入 x shape: (B, C, H, W)
 
         # ==========================================
-        # Part 1: Self-Attention (依赖 BHWC 格式)
+        # Part 1: Self-Attention
         # ==========================================
         shortcut_attn = x  # 保存 BCHW 格式的残差
 
-        # 1. 转换到 BHWC 并进行 LayerNorm (LayerNorm 原生支持 BHWC)
-        x_bhwc = x.permute(0, 2, 3, 1).contiguous()
-        x_norm1 = self.norm1(x_bhwc)
+        # 1. LayerNorm2d 直接处理 BCHW，无需转换
+        x_norm1 = self.norm1(x)
 
-        # 2. 计算 Attention
-        attn_out_bhwc = self.attn(x_norm1)
+        # 2. 转换到 BHWC 给 Attention 计算
+        x_bhwc = x_norm1.permute(0, 2, 3, 1).contiguous()
+        attn_out_bhwc = self.attn(x_bhwc)
 
-        # 3. 转回 BCHW 并加上残差 (真正的 Pre-LN 逻辑)
+        # 3. 转回 BCHW 并加上残差
         x = shortcut_attn + attn_out_bhwc.permute(0, 3, 1, 2).contiguous()
 
         # ==========================================
-        # Part 2: FFN / MSConvStar (依赖 BCHW 格式)
+        # Part 2: FFN / MSConvStar
         # ==========================================
         shortcut_ffn = x  # 保存 BCHW 格式的残差
 
-        # 1. 转换到 BHWC 算 LayerNorm
-        x_bhwc = x.permute(0, 2, 3, 1).contiguous()
-        x_norm2 = self.norm2(x_bhwc)
+        # 1. LayerNorm2d 直接处理 BCHW，无需转换
+        x_norm2 = self.norm2(x)
 
-        # 2. 转回 BCHW 给 MSConvStar 计算
-        ffn_input_bchw = x_norm2.permute(0, 3, 1, 2).contiguous()
-        ffn_out_bchw = self.ffn(ffn_input_bchw)
+        # 2. MSConvStar 直接处理 BCHW 格式
+        ffn_out_bchw = self.ffn(x_norm2)
 
         # 3. 直接在 BCHW 维度上加残差并输出
         x = shortcut_ffn + ffn_out_bchw
@@ -350,32 +343,34 @@ class MAB(nn.Module):
 class S1_TransBlock(nn.Module):
     """
     S1 Series Block (串联架构):
-    x = LAB(x) -> MAB(dilations=[1,1,1,1]) -> MAB(dilations=[4,4,4,4]) -> Conv -> +shortcut
+    x = LAB(x) -> MAB(dilations=[1,1]) -> MAB(dilations=[5,3]) -> Conv -> +shortcut
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
         # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
-        # MAB1: dilations=[1,1,1,1]
-        self.mab1 = MAB(dim=c, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[1, 1, 1, 1])
+        # MAB1: num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]
+        self.mab1 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1])
 
-        # MAB2: dilations=[4,4,4,4]
-        self.mab2 = MAB(dim=c, num_head=8, kernel_sizes=[5, 7, 9, 11], dilations=[4, 4, 4, 4])
+        # MAB2: num_head=2, kernel_sizes=[7, 11], dilations=[5, 3]
+        self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
 
-        # Conv + residual (like RMAG)
-        # self.conv = nn.Conv2d(c, c, 3, 1, 1)
-
-        # self.dropout = nn.Dropout(drop_out_rate) if drop_out_rate > 0. else nn.Identity()
+        # Conv + residual (like RMAG) with zero initialization
+        self.conv = nn.Conv2d(c, c, 3, 1, 1)
+        nn.init.zeros_(self.conv.weight)
+        nn.init.zeros_(self.conv.bias)
 
     def forward(self, x):
+        shortcut = x  # 保存输入用于残差连接
 
-        # LAB -> MAB1 -> MAB2 (串联)
+        # LAB -> MAB1 -> MAB2 -> Conv (串联)
         x = self.lab(x)
         x = self.mab1(x)
         x = self.mab2(x)
+        x = self.conv(x)
 
-        return x
+        return shortcut + x  # 整体残差连接
 
 
 # ============== FeedForward & Attention for TransformerBlock ==============

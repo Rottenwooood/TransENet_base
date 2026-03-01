@@ -200,7 +200,7 @@ class S2_MRDenseBlock(nn.Module):
         # SCA (Spatial-Channels Attention)
         self.sca = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(in_channels=c // 2, out_channels=c // 2, kernel_size=1, padding=0, stride=1,
+            nn.Conv2d(in_channels=c, out_channels=c, kernel_size=1, padding=0, stride=1,
                       groups=1, bias=True),
         )
         self.reduce_conv = nn.Conv2d(c, c, 1)
