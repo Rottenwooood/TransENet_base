@@ -4,9 +4,9 @@
 # Note: Use uv to manage environment
 
 # ===== Training (commented out - uncomment to train) =====
-# python user/batch_train.py --config user/experiments_config5_02_s1_trans_nomab2.json
-# python user/batch_train.py --config user/experiments_config5_02_s1_trans_nomab1.json
-# python user/batch_train.py --config user/experiments_config5_02_s1_trans_nomab2_conv.json
+python user/batch_train.py --config user/experiments_config5_02_s1_trans_nomab2.json
+python user/batch_train.py --config user/experiments_config5_02_s1_trans_nomab1.json
+python user/batch_train.py --config user/experiments_config5_02_s1_trans_nomab2_conv.json
 
 # ===== Testing (with pre-trained models) =====
 
