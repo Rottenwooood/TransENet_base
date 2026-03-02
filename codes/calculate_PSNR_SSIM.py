@@ -4,33 +4,47 @@ same as MATLAB's results
 '''
 import os
 import math
+import argparse
 import numpy as np
 import cv2
 import glob
-from option import args
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--folder_Gen', type=str, required=True, help='Generated images folder')
+    return parser.parse_args()
 
 
 def main():
-    # Configurations
+    args = parse_args()
 
-    # GT - Ground-truth;
-    # Gen: Generated / Restored / Recovered images
-    # folder_GT = 'F:/research/dataset/UCMerced_LandUse/test-x3/HR'
-    # folder_Gen = 'F:/research/results/UCMerced/x3/'
-    # folder_GT = 'F:/research/dataset/SR for remote sensing/AID_dataset/test/HR'
-    # folder_Gen = 'F:/research/codes/My-projects/transformer-for-sr/experiment/results/AID/x2/CNN7'
-    # folder_GT = '/root/autodl-tmp/TransENet_base/datasets/AID-train/AID-dataset/test/HR'
-    # folder_Gen = '/root/autodl-tmp/TransENet_base/experiment/results/UCMerced_AIDtest/x4'
-    folder_GT = '/root/autodl-tmp/TransENet_base/datasets/UCMerced-train/UCMerced-dataset/test/HR_x4'
+    # Hardcoded configurations
+    folder_GT = '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset/test/HR_x4'
     folder_Gen = args.folder_Gen
     img_ext = '.tif'
-    crop_border = 4  # same with scale
-    suffix = ''  # suffix for Gen images
-    test_Y = False  # True: test Y channel only; False: test RGB channels
+    crop_border = 4
+    suffix = ''
+    test_Y = False
+
+    print(f'GT folder: {folder_GT}')
+    print(f'Gen folder: {folder_Gen}')
+    print(f'Image extension: {img_ext}')
 
     PSNR_all = []
     SSIM_all = []
-    img_list = sorted(glob.glob(folder_GT + '/*'))
+
+    # Support multiple extensions
+    img_list = []
+    for ext in ['.tif']:
+        img_list.extend(glob.glob(os.path.join(folder_GT, f'*{ext}')))
+    img_list = sorted(img_list)
+
+    if not img_list:
+        print(f'Error: No images found in {folder_GT}')
+        return
+
+    print(f'Found {len(img_list)} images')
 
     if test_Y:
         print('Testing Y channel.')
@@ -39,8 +53,29 @@ def main():
 
     for i, img_path in enumerate(img_list):
         base_name = os.path.splitext(os.path.basename(img_path))[0]
+        ext = os.path.splitext(img_path)[1]
+
+        im_GT = cv2.imread(img_path)
+        im_Gen_path = os.path.join(folder_Gen, base_name + suffix + ext)
+
+        if not os.path.exists(im_Gen_path):
+            # Try with specified img_ext if not found
+            im_Gen_path = os.path.join(folder_Gen, base_name + suffix + img_ext)
+
+        if not os.path.exists(im_Gen_path):
+            print(f'Warning: Generated image not found: {im_Gen_path}')
+            continue
+
         im_GT = cv2.imread(img_path) / 255.
-        im_Gen = cv2.imread(os.path.join(folder_Gen, base_name + suffix + img_ext)) / 255.
+        im_Gen = cv2.imread(im_Gen_path) / 255.
+
+        if im_GT is None or im_Gen is None:
+            print(f'Warning: Failed to read images: {img_path} or {im_Gen_path}')
+            continue
+
+        if im_GT.shape != im_Gen.shape:
+            print(f'Warning: Image size mismatch: {im_GT.shape} vs {im_Gen.shape}')
+            continue
 
         if test_Y and im_GT.shape[2] == 3:  # evaluate on Y channel in YCbCr color space
             im_GT_in = bgr2ycbcr(im_GT)
@@ -74,6 +109,9 @@ def main():
         PSNR_all.append(PSNR)
         SSIM_all.append(SSIM)
 
+    if not PSNR_all:
+        print('Error: No valid images processed')
+        return
 
     print('Average: PSNR: {:.6f} dB, SSIM: {:.6f}'.format(
         sum(PSNR_all) / len(PSNR_all),
