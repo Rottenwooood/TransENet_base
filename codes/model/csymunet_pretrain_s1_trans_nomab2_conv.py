@@ -2,8 +2,6 @@ import math
 import torch
 from torch import Tensor, nn
 import torch.nn.functional as F
-from natten.functional import na2d_av, na2d_qk
-from torch.nn.init import trunc_normal_
 import numbers
 from einops import rearrange
 from model import common
@@ -36,104 +34,6 @@ class ChannelAttention(nn.Module):
     def forward(self, x):
         return x * self.attention(x)
 
-
-class NeighborhoodAttention2D(nn.Module):
-    """
-    Neighborhood Attention 2D Module
-    """
-
-    def __init__(
-        self,
-        dim: int,
-        num_head: int,
-        kernel_sizes: List[int] = [7, 9, 11],
-        dilations: List[int] = [1, 1, 1],
-        is_causal: List[bool] = [False, False],
-        rel_pos_bias: bool = False,
-        qkv_bias: bool = True,
-        qk_scale: Optional[float] = None,
-        attn_drop: float = 0.0,
-        proj_drop: float = 0.0,
-    ):
-        super().__init__()
-        assert len(kernel_sizes) == len(dilations)
-        if any(is_causal) and rel_pos_bias:
-            raise NotImplementedError("Causal neighborhood attention is undefined with positional biases."
-                                      "Please consider disabling positional biases, or open an issue.")
-
-        self.k = len(kernel_sizes)
-        self.channels = []
-        for i in range(self.k):
-            if i == 0:
-                channels = dim * 3 - dim * 3 // len(kernel_sizes) * (len(kernel_sizes) - 1)
-            else:
-                channels = dim * 3 // len(kernel_sizes)
-            assert (channels % (3 * num_head // self.k) == 0)
-            self.channels.append(channels)
-
-        self.num_head = num_head
-        self.head_dim = dim // self.num_head
-        self.scale = qk_scale or self.head_dim**-0.5
-        self.kernel_sizes = tuple((i, i) for i in kernel_sizes)
-        self.dilations = tuple((i, i) for i in dilations)
-        self.is_causal = is_causal
-
-        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
-        if rel_pos_bias:
-            self.rpb = nn.ParameterList()
-            for i in range(len(kernel_sizes)):
-                temp = nn.Parameter(torch.zeros(
-                    num_head // self.k,
-                    (2 * kernel_sizes[i] - 1),
-                    (2 * kernel_sizes[i] - 1),
-                ))
-                trunc_normal_(temp, mean=0.0, std=0.02, a=-2.0, b=2.0)
-                self.rpb.append(temp)
-        else:
-            self.register_parameter("rpb", None)
-        self.attn_drop_rate = attn_drop
-        self.attn_drop = nn.Dropout(self.attn_drop_rate)
-        self.proj = nn.Linear(dim, dim)
-        self.proj_drop = nn.Dropout(proj_drop)
-
-    def forward(self, x: Tensor) -> Tensor:
-        # self.extra_repr()
-        if x.dim() != 4:
-            raise ValueError(f"NeighborhoodAttention2D expected a rank-4 input tensor; got {x.dim()=}.")
-
-        x = self.qkv(x)
-        x = torch.split(x, split_size_or_sections=self.channels, dim=3)
-        attns = []
-        for i, x_i in enumerate(x):
-            B, H, W, C = x_i.shape
-            qkv = (x_i.reshape(B, H, W, 3, self.num_head // self.k, self.head_dim).permute(3, 0, 4, 1, 2, 5))
-            q, k, v = qkv[0], qkv[1], qkv[2]
-            q = q * self.scale
-            attn = na2d_qk(
-                q,
-                k,
-                kernel_size=self.kernel_sizes[i],
-                dilation=self.dilations[i],
-                is_causal=self.is_causal,
-                rpb=self.rpb[i] if self.rpb is not None else None,
-            )
-            attn = attn.softmax(dim=-1)
-            attn = self.attn_drop(attn)
-            y = na2d_av(
-                attn,
-                v,
-                kernel_size=self.kernel_sizes[i],
-                dilation=self.dilations[i],
-                is_causal=self.is_causal,
-            )
-            y = y.permute(0, 2, 3, 1, 4).reshape(B, H, W, C // 3)
-            attns.append(y)
-        x = torch.cat(attns, dim=3)
-        return self.proj_drop(self.proj(x))
-
-    def extra_repr(self) -> str:
-        return (f"head_dim={self.head_dim}, num_head={self.num_head}, " + f"kernel_sizes={self.kernel_sizes}, " +
-                f"dilations={self.dilations}, " + f"is_causal={self.is_causal}, " + f"has_bias={self.rpb is not None}")
 
 # ============== LAB (Local Aggregation Block) ==============
 class LAB(nn.Module):
@@ -247,148 +147,52 @@ class LayerNormFunction(torch.autograd.Function):
         return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
 
 
-# # ============== MAB (Multi-head Attention Block) from MAT ==============
-# class StandardSelfAttention(nn.Module):
-#     """Standard self-attention as fallback"""
-#     def __init__(self, dim, num_head):
-#         super().__init__()
-#         self.num_head = num_head
-#         self.head_dim = dim // num_head
-#         self.scale = self.head_dim ** -0.5
-
-#         self.qkv = nn.Linear(dim, dim * 3, bias=True)
-#         self.proj = nn.Linear(dim, dim)
-
-#     def forward(self, x):
-#         B, H, W, C = x.shape
-#         qkv = self.qkv(x).reshape(B, H, W, 3, self.num_head, self.head_dim).permute(3, 0, 4, 1, 2, 5)
-#         q, k, v = qkv[0], qkv[1], qkv[2]
-
-#         attn = (q @ k.transpose(-2, -1)) * self.scale
-#         attn = attn.softmax(dim=-1)
-
-#         out = (attn @ v).transpose(1, 2).reshape(B, H, W, C)
-#         out = self.proj(out)
-#         return out
-
-
-class MAB(nn.Module):
+class LargeKernelMAB(nn.Module):
     """
-    Multi-head Attention Block from MAT
-    使用 LayerNorm2d 减少格式转换 (4次 -> 2次)
-    """
-    def __init__(self, dim, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]):
-        super().__init__()
-        self.dim = dim
-        self.num_head = num_head
-        self.dilations = dilations
-
-        # 使用 LayerNorm2d 直接处理 BCHW 格式
-        self.norm1 = LayerNorm2d(channels=dim)
-
-        self.attn = NeighborhoodAttention2D(
-            dim=dim,
-            num_head=num_head,
-            kernel_sizes=kernel_sizes,
-            dilations=dilations,
-            rel_pos_bias=True,
-            qkv_bias=True,
-            qk_scale=None,
-            attn_drop=0.0,
-            proj_drop=0.0
-        )
-        print(f"[MAB] 使用 NeighborhoodAttention2D (num_head={num_head}, kernel_sizes={kernel_sizes}, dilations={dilations})")
-
-        self.norm2 = LayerNorm2d(channels=dim)
-        self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
-
-    def forward(self, x):
-        # 输入 x shape: (B, C, H, W)
-
-        # ==========================================
-        # Part 1: Self-Attention
-        # ==========================================
-        shortcut_attn = x  # 保存 BCHW 格式的残差
-
-        # 1. LayerNorm2d 直接处理 BCHW，无需转换
-        x_norm1 = self.norm1(x)
-
-        # 2. 转换到 BHWC 给 Attention 计算
-        x_bhwc = x_norm1.permute(0, 2, 3, 1).contiguous()
-        attn_out_bhwc = self.attn(x_bhwc)
-
-        # 3. 转回 BCHW 并加上残差
-        x = shortcut_attn + attn_out_bhwc.permute(0, 3, 1, 2).contiguous()
-
-        # ==========================================
-        # Part 2: FFN / MSConvStar
-        # ==========================================
-        shortcut_ffn = x  # 保存 BCHW 格式的残差
-
-        # 1. LayerNorm2d 直接处理 BCHW，无需转换
-        x_norm2 = self.norm2(x)
-
-        # 2. MSConvStar 直接处理 BCHW 格式
-        ffn_out_bchw = self.ffn(x_norm2)
-
-        # 3. 直接在 BCHW 维度上加残差并输出
-        x = shortcut_ffn + ffn_out_bchw
-
-        return x
-
-
-# ============== Multi-Kernel Conv (替换MA) ==============
-class MultiKernelConv(nn.Module):
-    """
-    Multi-Kernel Convolution (替换MAB):
-    使用 7x7 和 11x11 两个大卷积核，dilations=[1,1]
-    模仿 MAB 的结构但使用卷积替代 attention
+    替换 MAB 中的 NeighborhoodAttention2D 为两路大核 DWConv
+    保留 MSConvStar 作为 FFN
     """
     def __init__(self, dim, kernel_sizes=[7, 11], dilations=[1, 1]):
         super().__init__()
-        self.dim = dim
-        self.kernel_sizes = kernel_sizes
-        self.dilations = dilations
+        half = dim // 2
 
-        # 使用 LayerNorm2d
-        self.norm1 = LayerNorm2d(channels=dim)
+        # ---- 替换 Attention 的部分 ----
+        self.norm1 = LayerNorm2d(dim)
+        self.dw1 = nn.Conv2d(
+            half, half, kernel_sizes[0],
+            padding=dilations[0] * (kernel_sizes[0] // 2),
+            dilation=dilations[0], groups=half
+        )
+        self.dw2 = nn.Conv2d(
+            half, half, kernel_sizes[1],
+            padding=dilations[1] * (kernel_sizes[1] // 2),
+            dilation=dilations[1], groups=half
+        )
+        self.act = nn.GELU()
+        self.pw = nn.Conv2d(dim, dim, 1)    # concat 后通道混合
 
-        # 多个大卷积核的 Depthwise Conv
-        self.dwconvs = nn.ModuleList()
-        for ks, dil in zip(kernel_sizes, dilations):
-            self.dwconvs.append(
-                nn.Conv2d(dim, dim, kernel_size=ks, padding=dil * (ks // 2),
-                         dilation=dil, groups=dim)
-            )
-
-        # 1x1 融合卷积
-        self.fusion = nn.Conv2d(dim, dim, 1)
-
-        # LayerNorm2d + FFN
-        self.norm2 = LayerNorm2d(channels=dim)
+        # ---- 保留 FFN 部分 ----
+        self.norm2 = LayerNorm2d(dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
     def forward(self, x):
-        # Part 1: Multi-Kernel Conv
+        # Part 1: 大核卷积（替代 Attention）
         shortcut = x
         x = self.norm1(x)
+        x1, x2 = x.chunk(2, dim=1)
+        x1 = self.act(self.dw1(x1))
+        x2 = self.act(self.dw2(x2))
+        x = torch.cat([x1, x2], dim=1)   # concat 汇合
+        x = self.pw(x)
+        x = shortcut + x
 
-        # 多个卷积核的结果相加
-        conv_out = 0
-        for dwconv in self.dwconvs:
-            conv_out = conv_out + dwconv(x)
-        x = shortcut + self.fusion(conv_out)
-
-        # Part 2: FFN
-        shortcut_ffn = x
-        x = self.norm2(x)
-        x = shortcut_ffn + self.ffn(x)
-
+        # Part 2: FFN（保持不变）
+        x = x + self.ffn(self.norm2(x))
         return x
 
 
 # ============== S1_Trans Block (NoMAB2 + Conv替换MA) ==============
-class S1_TransBlock_NoMAB2_Conv_NoMAB2_Conv(nn.Module):
+class S1_TransBlock_NoMAB2_Conv(nn.Module):
     """
     S1 Series Block (去掉MAB2，用卷积替换MAB1):
     x = LAB(x) -> MultiKernelConv(7,11,dil=[1,1]) -> Conv -> +shortcut
@@ -399,7 +203,7 @@ class S1_TransBlock_NoMAB2_Conv_NoMAB2_Conv(nn.Module):
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
         # 用 MultiKernelConv 替换 MAB1
-        self.mkconv = MultiKernelConv(dim=c, kernel_sizes=[7, 11], dilations=[1, 1])
+        self.mkconv = LargeKernelMAB(dim=c, kernel_sizes=[7, 11], dilations=[1, 1])
 
         # Conv + residual (like RMAG) with zero initialization
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
@@ -695,7 +499,7 @@ class SymUNet_Pretrain_S1_Trans_NoMAB2_Conv(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_S1_Trans(args)
+    model = SymUNet_Pretrain_S1_Trans_NoMAB2_Conv(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)
