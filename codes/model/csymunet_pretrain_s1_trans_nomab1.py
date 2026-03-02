@@ -18,7 +18,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S1_Trans(args)
+    return SymUNet_Pretrain_S1_Trans_NoMAB1(args)
 
 
 # ============== Channel Attention ==============
@@ -337,21 +337,16 @@ class MAB(nn.Module):
         return x
 
 
-# ============== S1_Trans Block ==============
-
-# ============== S1_Trans Block ==============
-class S1_TransBlock(nn.Module):
+# ============== S1_Trans Block (NoMAB1 - 仅保留MAB2) ==============
+class S1_TransBlock_NoMAB1_NoMAB1(nn.Module):
     """
-    S1 Series Block (串联架构):
-    x = LAB(x) -> MAB(dilations=[1,1]) -> MAB(dilations=[5,3]) -> Conv -> +shortcut
+    S1 Series Block (去掉MAB1):
+    x = LAB(x) -> MAB(dilations=[5,3]) -> Conv -> +shortcut
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
         # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
-
-        # MAB1: num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]
-        self.mab1 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1])
 
         # MAB2: num_head=2, kernel_sizes=[7, 11], dilations=[5, 3]
         self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
@@ -364,9 +359,8 @@ class S1_TransBlock(nn.Module):
     def forward(self, x):
         shortcut = x  # 保存输入用于残差连接
 
-        # LAB -> MAB1 -> MAB2 -> Conv (串联)
+        # LAB -> MAB2 -> Conv (去掉MAB1)
         x = self.lab(x)
-        x = self.mab1(x)
         x = self.mab2(x)
         x = self.conv(x)
 
@@ -520,16 +514,16 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_Trans")
-class SymUNet_Pretrain_S1_Trans(nn.Module):
+#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_Trans_NoMAB1")
+class SymUNet_Pretrain_S1_Trans_NoMAB1(nn.Module):
     """
-    S1_Trans: 串联架构
+    S1_Trans_NoMAB1: 去掉MAB1的变体
     - 使用 LAB (Local Aggregation Block)
-    - 使用 MA (Multi-head Attention)
+    - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S1_Trans, self).__init__()
+        super(SymUNet_Pretrain_S1_Trans_NoMAB1, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -562,7 +556,7 @@ class SymUNet_Pretrain_S1_Trans(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                S1_TransBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_TransBlock_NoMAB1(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
             self.downs.append(DownsampleDW(chan))
             chan *= 2
@@ -582,7 +576,7 @@ class SymUNet_Pretrain_S1_Trans(nn.Module):
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                S1_TransBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_TransBlock_NoMAB1(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4

@@ -18,7 +18,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S1_Trans(args)
+    return SymUNet_Pretrain_S1_Trans_NoMAB2_Conv(args)
 
 
 # ============== Channel Attention ==============
@@ -337,24 +337,69 @@ class MAB(nn.Module):
         return x
 
 
-# ============== S1_Trans Block ==============
-
-# ============== S1_Trans Block ==============
-class S1_TransBlock(nn.Module):
+# ============== Multi-Kernel Conv (替换MA) ==============
+class MultiKernelConv(nn.Module):
     """
-    S1 Series Block (串联架构):
-    x = LAB(x) -> MAB(dilations=[1,1]) -> MAB(dilations=[5,3]) -> Conv -> +shortcut
+    Multi-Kernel Convolution (替换MAB):
+    使用 7x7 和 11x11 两个大卷积核，dilations=[1,1]
+    模仿 MAB 的结构但使用卷积替代 attention
+    """
+    def __init__(self, dim, kernel_sizes=[7, 11], dilations=[1, 1]):
+        super().__init__()
+        self.dim = dim
+        self.kernel_sizes = kernel_sizes
+        self.dilations = dilations
+
+        # 使用 LayerNorm2d
+        self.norm1 = LayerNorm2d(channels=dim)
+
+        # 多个大卷积核的 Depthwise Conv
+        self.dwconvs = nn.ModuleList()
+        for ks, dil in zip(kernel_sizes, dilations):
+            self.dwconvs.append(
+                nn.Conv2d(dim, dim, kernel_size=ks, padding=dil * (ks // 2),
+                         dilation=dil, groups=dim)
+            )
+
+        # 1x1 融合卷积
+        self.fusion = nn.Conv2d(dim, dim, 1)
+
+        # LayerNorm2d + FFN
+        self.norm2 = LayerNorm2d(channels=dim)
+        self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
+
+    def forward(self, x):
+        # Part 1: Multi-Kernel Conv
+        shortcut = x
+        x = self.norm1(x)
+
+        # 多个卷积核的结果相加
+        conv_out = 0
+        for dwconv in self.dwconvs:
+            conv_out = conv_out + dwconv(x)
+        x = shortcut + self.fusion(conv_out)
+
+        # Part 2: FFN
+        shortcut_ffn = x
+        x = self.norm2(x)
+        x = shortcut_ffn + self.ffn(x)
+
+        return x
+
+
+# ============== S1_Trans Block (NoMAB2 + Conv替换MA) ==============
+class S1_TransBlock_NoMAB2_Conv_NoMAB2_Conv(nn.Module):
+    """
+    S1 Series Block (去掉MAB2，用卷积替换MAB1):
+    x = LAB(x) -> MultiKernelConv(7,11,dil=[1,1]) -> Conv -> +shortcut
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
         # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
-        # MAB1: num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]
-        self.mab1 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1])
-
-        # MAB2: num_head=2, kernel_sizes=[7, 11], dilations=[5, 3]
-        self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+        # 用 MultiKernelConv 替换 MAB1
+        self.mkconv = MultiKernelConv(dim=c, kernel_sizes=[7, 11], dilations=[1, 1])
 
         # Conv + residual (like RMAG) with zero initialization
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
@@ -364,10 +409,9 @@ class S1_TransBlock(nn.Module):
     def forward(self, x):
         shortcut = x  # 保存输入用于残差连接
 
-        # LAB -> MAB1 -> MAB2 -> Conv (串联)
+        # LAB -> MultiKernelConv -> Conv (去掉MAB2，用卷积替换MAB1)
         x = self.lab(x)
-        x = self.mab1(x)
-        x = self.mab2(x)
+        x = self.mkconv(x)
         x = self.conv(x)
 
         return shortcut + x  # 整体残差连接
@@ -520,16 +564,16 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_Trans")
-class SymUNet_Pretrain_S1_Trans(nn.Module):
+#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_Trans_NoMAB2_Conv")
+class SymUNet_Pretrain_S1_Trans_NoMAB2_Conv(nn.Module):
     """
-    S1_Trans: 串联架构
+    S1_Trans_NoMAB2_Conv: 去掉MAB2，用卷积替换MAB1
     - 使用 LAB (Local Aggregation Block)
-    - 使用 MA (Multi-head Attention)
+    - 使用 MultiKernelConv (7x7, 11x11, dilations=[1,1])
     - 使用 MSConvStar
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S1_Trans, self).__init__()
+        super(SymUNet_Pretrain_S1_Trans_NoMAB2_Conv, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -562,7 +606,7 @@ class SymUNet_Pretrain_S1_Trans(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                S1_TransBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_TransBlock_NoMAB2_Conv(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
             self.downs.append(DownsampleDW(chan))
             chan *= 2
@@ -582,7 +626,7 @@ class SymUNet_Pretrain_S1_Trans(nn.Module):
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                S1_TransBlock(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_TransBlock_NoMAB2_Conv(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4
