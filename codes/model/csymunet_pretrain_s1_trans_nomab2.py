@@ -338,7 +338,7 @@ class MAB(nn.Module):
 
 
 # ============== S1_Trans Block (NoMAB2 - 仅保留MAB1) ==============
-class S1_TransBlock_NoMAB2_NoMAB2(nn.Module):
+class S1_TransBlock_NoMAB2(nn.Module):
     """
     S1 Series Block (去掉MAB2):
     x = LAB(x) -> MAB(dilations=[1,1]) -> Conv -> +shortcut

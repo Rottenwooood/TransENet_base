@@ -195,15 +195,15 @@ class LargeKernelMAB(nn.Module):
 class S1_TransBlock_NoMAB2_Conv(nn.Module):
     """
     S1 Series Block (去掉MAB2，用卷积替换MAB1):
-    x = LAB(x) -> MultiKernelConv(7,11,dil=[1,1]) -> Conv -> +shortcut
+    x = LAB(x) -> LargeKernelMAB(7,11,dil=[1,1]) -> Conv -> +shortcut
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
         # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
-        # 用 MultiKernelConv 替换 MAB1
-        self.mkconv = LargeKernelMAB(dim=c, kernel_sizes=[7, 11], dilations=[1, 1])
+        # 用 LargeKernelMAB 替换 MAB1
+        self.lk_mab = LargeKernelMAB(dim=c, kernel_sizes=[7, 11], dilations=[1, 1])
 
         # Conv + residual (like RMAG) with zero initialization
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
@@ -213,9 +213,9 @@ class S1_TransBlock_NoMAB2_Conv(nn.Module):
     def forward(self, x):
         shortcut = x  # 保存输入用于残差连接
 
-        # LAB -> MultiKernelConv -> Conv (去掉MAB2，用卷积替换MAB1)
+        # LAB -> LargeKernelMAB -> Conv (去掉MAB2，用卷积替换MAB1)
         x = self.lab(x)
-        x = self.mkconv(x)
+        x = self.lk_mab(x)
         x = self.conv(x)
 
         return shortcut + x  # 整体残差连接
