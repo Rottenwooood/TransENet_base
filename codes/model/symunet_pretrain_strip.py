@@ -18,7 +18,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S1_Trans_NoMAB1(args)
+    return SymUNet_Pretrain_Strip(args)
 
 
 # ============== Channel Attention ==============
@@ -272,6 +272,99 @@ class LayerNormFunction(torch.autograd.Function):
 #         return out
 
 
+# ============== StripModule (参考 StripNet) ==============
+class StripModule(nn.Module):
+    """
+    条形卷积模块 - StripNet StripBlock
+    """
+    def __init__(self, dim, k1=1, k2=47):
+        super().__init__()
+        self.dim = dim
+
+        # 1. 局部特征提取 (Local Context) - 5x5 DWConv
+        self.conv0 = nn.Conv2d(dim, dim, 5, padding=2, groups=dim)
+
+        # 2. 双向条形卷积
+        self.conv_spatial1 = nn.Conv2d(dim, dim, kernel_size=(k1, k2),
+                                        stride=1, padding=(k1 // 2, k2 // 2), groups=dim)
+        self.conv_spatial2 = nn.Conv2d(dim, dim, kernel_size=(k2, k1),
+                                        stride=1, padding=(k2 // 2, k1 // 2), groups=dim)
+
+        # 3. 注意力投影
+        self.conv1 = nn.Conv2d(dim, dim, 1)
+
+    def forward(self, x):
+        attn = self.conv0(x)
+        attn = self.conv_spatial1(attn)
+        attn = self.conv_spatial2(attn)
+        attn = self.conv1(attn)
+        return x * attn
+
+
+# ============== StripAttention ==============
+class StripAttention(nn.Module):
+    """
+    条形注意力模块 - 参考 StripNet Attention
+    proj_1 -> GELU -> StripModule -> proj_2 + shortcut
+    """
+    def __init__(self, dim, k1=1, k2=47):
+        super().__init__()
+        self.proj_1 = nn.Conv2d(dim, dim, 1)
+        self.activation = nn.GELU()
+        self.spatial_gating_unit = StripModule(dim, k1=k1, k2=k2)
+        self.proj_2 = nn.Conv2d(dim, dim, 1)
+
+    def forward(self, x):
+        shortcut = x.clone()
+        x = self.proj_1(x)
+        x = self.activation(x)
+        x = self.spatial_gating_unit(x)
+        x = self.proj_2(x)
+        x = x + shortcut
+        return x
+
+
+# ============== StripMiddleBlock ==============
+class StripMiddleBlock(nn.Module):
+    """
+    Middle Block using StripAttention
+    StripAttention + FFN
+    """
+    def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47):
+        super().__init__()
+        self.dim = dim
+
+        # Strip Attention
+        self.norm1 = LayerNorm2d(channels=dim)
+        self.strip_attn = StripAttention(dim=dim, k1=k1, k2=k2)
+
+        # FFN
+        self.norm2 = LayerNorm2d(channels=dim)
+        hidden_features = int(dim * ffn_expansion_factor)
+        self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
+        self.dwconv = nn.Conv2d(hidden_features * 2, hidden_features * 2, kernel_size=3,
+                                stride=1, padding=1, groups=hidden_features * 2, bias=bias)
+        self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
+
+    def forward(self, x):
+        # Strip Attention path
+        shortcut = x
+        x = self.norm1(x)
+        x = self.strip_attn(x)
+        x = shortcut + x
+
+        # FFN path
+        shortcut = x
+        x = self.norm2(x)
+        x = self.project_in(x)
+        x1, x2 = self.dwconv(x).chunk(2, dim=1)
+        x = F.gelu(x1) * x2
+        x = self.project_out(x)
+        x = shortcut + x
+
+        return x
+
+
 class MAB(nn.Module):
     """
     Multi-head Attention Block from MAT
@@ -514,16 +607,17 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_Trans_NoMAB1")
-class SymUNet_Pretrain_S1_Trans_NoMAB1(nn.Module):
+#@ARCH_REGISTRY.register("symunet_pretrain_strip")
+class SymUNet_Pretrain_Strip(nn.Module):
     """
-    S1_Trans_NoMAB1: 去掉MAB1的变体
+    symunet_pretrain_strip: Middle Blk使用StripAttention (k=47)
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
+    - Middle Blk使用StripAttention (k1=1, k2=47)
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S1_Trans_NoMAB1, self).__init__()
+        super(SymUNet_Pretrain_Strip, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -561,13 +655,17 @@ class SymUNet_Pretrain_S1_Trans_NoMAB1(nn.Module):
             self.downs.append(DownsampleDW(chan))
             chan *= 2
 
+        # Strip kernel sizes
+        strip_k1 = getattr(args, 'symunet_pretrain_strip_k1', 1)
+        strip_k2 = getattr(args, 'symunet_pretrain_strip_k2', 47)
+
         self.middle_blks = nn.Sequential(*[
-            TransformerBlock(
+            StripMiddleBlock(
                 dim=chan,
-                num_heads=restormer_middle_heads,
                 ffn_expansion_factor=ffn_expansion_factor,
                 bias=bias,
-                LayerNorm_type=LayerNorm_type
+                k1=strip_k1,
+                k2=strip_k2
             ) for _ in range(middle_blk_num)
         ])
 

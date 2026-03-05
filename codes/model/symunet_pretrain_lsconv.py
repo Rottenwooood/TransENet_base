@@ -18,7 +18,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S1_Trans_NoMAB1(args)
+    return SymUNet_Pretrain_LSConv(args)
 
 
 # ============== Channel Attention ==============
@@ -272,6 +272,113 @@ class LayerNormFunction(torch.autograd.Function):
 #         return out
 
 
+# ============== SKA (Selective Kernel Attention) ==============
+class SKA(nn.Module):
+    """Selectve Kernel Attention from LSNet"""
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, weight):
+        """
+        x: input features (B, C, H, W)
+        weight: (B, C, K^2, H, W) where K is the kernel size
+        """
+        b, c, h, w = x.shape
+        k = int(weight.shape[2] ** 0.5)
+        assert k * k == weight.shape[2], "Weight shape error"
+
+        # Reshape weight: (B, C, K, K, H, W)
+        weight = weight.view(b, c, k, k, h, w)
+
+        # Softmax along kernel dimension
+        weight = F.softmax(weight, dim=2)
+
+        # Apply attention: x * weight (broadcast)
+        # x: (B, C, H, W) -> (B, C, 1, H, W)
+        # weight: (B, C, K, K, H, W)
+        x = x.unsqueeze(2)  # (B, C, 1, H, W)
+        x = (x * weight).sum(dim=(2, 3))  # (B, C, H, W)
+
+        return x
+
+
+# ============== LKP (Large Kernel Projection) ==============
+class LKP(nn.Module):
+    """Large Kernel Projection - 无BN版本"""
+    def __init__(self, dim, lks=7, sks=3, groups=8):
+        super().__init__()
+        self.cv1 = nn.Conv2d(dim, dim // 2, 1)
+        self.act = nn.ReLU()
+        self.cv2 = nn.Conv2d(dim // 2, dim // 2, ks=lks, pad=(lks - 1) // 2, groups=dim // 2)
+        self.cv3 = nn.Conv2d(dim // 2, dim // 2, 1)
+        self.cv4 = nn.Conv2d(dim // 2, sks ** 2 * dim // groups, kernel_size=1)
+        self.norm = nn.GroupNorm(num_groups=dim // groups, num_channels=sks ** 2 * dim // groups)
+
+        self.sks = sks
+        self.groups = groups
+        self.dim = dim
+
+    def forward(self, x):
+        x = self.act(self.cv3(self.cv2(self.act(self.cv1(x)))))
+        w = self.norm(self.cv4(x))
+        b, _, h, width = w.size()
+        w = w.view(b, self.dim // self.groups, self.sks ** 2, h, width)
+        return w
+
+
+# ============== LSConv (无BN版本) ==============
+class LSConv(nn.Module):
+    """Large Selective Conv - 无BN版本"""
+    def __init__(self, dim):
+        super(LSConv, self).__init__()
+        self.lkp = LKP(dim, lks=7, sks=3, groups=8)
+        self.ska = SKA()
+
+    def forward(self, x):
+        return self.ska(x, self.lkp(x)) + x
+
+
+# ============== LSConvMiddleBlock ==============
+class LSConvMiddleBlock(nn.Module):
+    """
+    Middle Block using LSConv (无BN)
+    LSConv + FFN
+    """
+    def __init__(self, dim, ffn_expansion_factor=2., bias=False):
+        super().__init__()
+        self.dim = dim
+
+        # LSConv
+        self.norm1 = LayerNorm2d(channels=dim)
+        self.lsconv = LSConv(dim=dim)
+
+        # FFN
+        self.norm2 = LayerNorm2d(channels=dim)
+        hidden_features = int(dim * ffn_expansion_factor)
+        self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
+        self.dwconv = nn.Conv2d(hidden_features * 2, hidden_features * 2, kernel_size=3,
+                                stride=1, padding=1, groups=hidden_features * 2, bias=bias)
+        self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
+
+    def forward(self, x):
+        # LSConv path
+        shortcut = x
+        x = self.norm1(x)
+        x = self.lsconv(x)
+        x = shortcut + x
+
+        # FFN path
+        shortcut = x
+        x = self.norm2(x)
+        x = self.project_in(x)
+        x1, x2 = self.dwconv(x).chunk(2, dim=1)
+        x = F.gelu(x1) * x2
+        x = self.project_out(x)
+        x = shortcut + x
+
+        return x
+
+
 class MAB(nn.Module):
     """
     Multi-head Attention Block from MAT
@@ -514,16 +621,17 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_Trans_NoMAB1")
-class SymUNet_Pretrain_S1_Trans_NoMAB1(nn.Module):
+#@ARCH_REGISTRY.register("symunet_pretrain_lsconv")
+class SymUNet_Pretrain_LSConv(nn.Module):
     """
-    S1_Trans_NoMAB1: 去掉MAB1的变体
+    symunet_pretrain_lsconv: Middle Blk使用LSConv (无BN)
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
+    - Middle Blk使用LSConv (去掉BatchNorm2d)
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S1_Trans_NoMAB1, self).__init__()
+        super(SymUNet_Pretrain_LSConv, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -562,12 +670,10 @@ class SymUNet_Pretrain_S1_Trans_NoMAB1(nn.Module):
             chan *= 2
 
         self.middle_blks = nn.Sequential(*[
-            TransformerBlock(
+            LSConvMiddleBlock(
                 dim=chan,
-                num_heads=restormer_middle_heads,
                 ffn_expansion_factor=ffn_expansion_factor,
-                bias=bias,
-                LayerNorm_type=LayerNorm_type
+                bias=bias
             ) for _ in range(middle_blk_num)
         ])
 

@@ -18,7 +18,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_S1_Trans_NoMAB1(args)
+    return SymUNet_Pretrain_PKI(args)
 
 
 # ============== Channel Attention ==============
@@ -272,6 +272,139 @@ class LayerNormFunction(torch.autograd.Function):
 #         return out
 
 
+# ============== GSiLU ==============
+class GSiLU(nn.Module):
+    """Global Sigmoid-Gated Linear Unit"""
+    def __init__(self):
+        super().__init__()
+        self.adpool = nn.AdaptiveAvgPool2d(1)
+
+    def forward(self, x):
+        return x * torch.sigmoid(self.adpool(x))
+
+
+# ============== Native_CAA ==============
+class Native_CAA(nn.Module):
+    """Context Anchor Attention - 无 BN 纯 PyTorch 实现"""
+    def __init__(self, channels: int, h_kernel_size: int = 11, v_kernel_size: int = 11):
+        super().__init__()
+        self.avg_pool = nn.AvgPool2d(kernel_size=7, stride=1, padding=3)
+
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(channels, channels, 1, 1, 0, bias=True),
+            nn.SiLU(inplace=True)
+        )
+        self.h_conv = nn.Conv2d(channels, channels, (1, h_kernel_size), 1, (0, h_kernel_size // 2), groups=channels)
+        self.v_conv = nn.Conv2d(channels, channels, (v_kernel_size, 1), 1, (v_kernel_size // 2, 0), groups=channels)
+
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(channels, channels, 1, 1, 0, bias=True),
+            nn.SiLU(inplace=True)
+        )
+        self.act = nn.Sigmoid()
+
+    def forward(self, x):
+        pooled = self.avg_pool(x)
+        c1 = self.conv1(pooled)
+        h = self.h_conv(c1)
+        v = self.v_conv(h)
+        attn_factor = self.act(self.conv2(v))
+        return attn_factor
+
+
+# ============== Native_InceptionBottleneck ==============
+class Native_InceptionBottleneck(nn.Module):
+    """InceptionBottleneck - PKI核心模块"""
+    def __init__(self, channels: int, kernel_sizes=(3, 5, 7, 9, 11), with_caa=True, caa_kernel_size=11):
+        super().__init__()
+        # Pre Conv
+        self.pre_conv = nn.Sequential(
+            nn.Conv2d(channels, channels, 1, 1, 0, bias=True),
+            nn.SiLU(inplace=True)
+        )
+
+        # 并行 DW Conv
+        self.dw_convs = nn.ModuleList([
+            nn.Conv2d(channels, channels, ks, 1, ks // 2, groups=channels, bias=True)
+            for ks in kernel_sizes
+        ])
+
+        # PW Conv
+        self.pw_conv = nn.Sequential(
+            nn.Conv2d(channels, channels, 1, 1, 0, bias=True),
+            nn.SiLU(inplace=True)
+        )
+
+        self.with_caa = with_caa
+        if with_caa:
+            self.caa_factor = Native_CAA(channels, h_kernel_size=caa_kernel_size, v_kernel_size=caa_kernel_size)
+
+        self.post_conv = nn.Sequential(
+            nn.Conv2d(channels, channels, 1, 1, 0, bias=True),
+            nn.SiLU(inplace=True)
+        )
+
+    def forward(self, x):
+        x = self.pre_conv(x)
+        y = x
+
+        dw_outs = [dw(x) for dw in self.dw_convs]
+        x = sum(dw_outs)
+
+        x = self.pw_conv(x)
+
+        if self.with_caa:
+            y = self.caa_factor(y)
+            y = x * y
+            x = x + y
+        else:
+            x = x * y
+
+        x = self.post_conv(x)
+        return x
+
+
+# ============== PKIMiddleBlock ==============
+class PKIMiddleBlock(nn.Module):
+    """
+    Middle Block using InceptionBottleneck
+    InceptionBottleneck + FFN
+    """
+    def __init__(self, dim, ffn_expansion_factor=2., bias=False):
+        super().__init__()
+        self.dim = dim
+
+        # InceptionBottleneck
+        self.norm1 = LayerNorm2d(channels=dim)
+        self.inception = Native_InceptionBottleneck(channels=dim, kernel_sizes=(3, 5, 7, 9, 11), with_caa=True, caa_kernel_size=11)
+
+        # FFN
+        self.norm2 = LayerNorm2d(channels=dim)
+        hidden_features = int(dim * ffn_expansion_factor)
+        self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
+        self.dwconv = nn.Conv2d(hidden_features * 2, hidden_features * 2, kernel_size=3,
+                                stride=1, padding=1, groups=hidden_features * 2, bias=bias)
+        self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
+
+    def forward(self, x):
+        # InceptionBottleneck path
+        shortcut = x
+        x = self.norm1(x)
+        x = self.inception(x)
+        x = shortcut + x
+
+        # FFN path
+        shortcut = x
+        x = self.norm2(x)
+        x = self.project_in(x)
+        x1, x2 = self.dwconv(x).chunk(2, dim=1)
+        x = F.gelu(x1) * x2
+        x = self.project_out(x)
+        x = shortcut + x
+
+        return x
+
+
 class MAB(nn.Module):
     """
     Multi-head Attention Block from MAT
@@ -514,16 +647,17 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("CSymUNet_Pretrain_S1_Trans_NoMAB1")
-class SymUNet_Pretrain_S1_Trans_NoMAB1(nn.Module):
+#@ARCH_REGISTRY.register("symunet_pretrain_pki")
+class SymUNet_Pretrain_PKI(nn.Module):
     """
-    S1_Trans_NoMAB1: 去掉MAB1的变体
+    symunet_pretrain_pki: Middle Blk使用InceptionBottleneck
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
+    - Middle Blk使用InceptionBottleneck
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_S1_Trans_NoMAB1, self).__init__()
+        super(SymUNet_Pretrain_PKI, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -562,12 +696,10 @@ class SymUNet_Pretrain_S1_Trans_NoMAB1(nn.Module):
             chan *= 2
 
         self.middle_blks = nn.Sequential(*[
-            TransformerBlock(
+            PKIMiddleBlock(
                 dim=chan,
-                num_heads=restormer_middle_heads,
                 ffn_expansion_factor=ffn_expansion_factor,
-                bias=bias,
-                LayerNorm_type=LayerNorm_type
+                bias=bias
             ) for _ in range(middle_blk_num)
         ])
 
