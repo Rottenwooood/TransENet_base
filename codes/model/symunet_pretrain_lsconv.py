@@ -272,34 +272,75 @@ class LayerNormFunction(torch.autograd.Function):
 #         return out
 
 
-# ============== SKA (Selective Kernel Attention) ==============
+# ============== SKA (Selective Kernel Attention) - 精确 PyTorch 实现 ==============
 class SKA(nn.Module):
-    """Selectve Kernel Attention from LSNet"""
+    """
+    Selective Kernel Attention - 精确 PyTorch 实现
+    完全参考 lsnet/model/ska.py 的 Triton 实现逻辑
+    
+    Triton 实现等价于分组深度卷积，权重来自 LKP
+    """
     def __init__(self):
         super().__init__()
 
     def forward(self, x, weight):
         """
         x: input features (B, C, H, W)
-        weight: (B, C, K^2, H, W) where K is the kernel size
+        weight: (B, C//groups, K^2, H, W) where K is the kernel size
         """
         b, c, h, w = x.shape
-        k = int(weight.shape[2] ** 0.5)
-        assert k * k == weight.shape[2], "Weight shape error"
-
-        # Reshape weight: (B, C, K, K, H, W)
-        weight = weight.view(b, c, k, k, h, w)
-
+        # weight: (B, Cg, K^2, H, W), Cg = C // groups
+        k2 = weight.shape[2]
+        k = int(k2 ** 0.5)
+        groups = c // weight.shape[1]
+        
         # Softmax along kernel dimension
-        weight = F.softmax(weight, dim=2)
-
-        # Apply attention: x * weight (broadcast)
-        # x: (B, C, H, W) -> (B, C, 1, H, W)
-        # weight: (B, C, K, K, H, W)
-        x = x.unsqueeze(2)  # (B, C, 1, H, W)
-        x = (x * weight).sum(dim=(2, 3))  # (B, C, H, W)
-
-        return x
+        weight = F.softmax(weight, dim=2)  # (B, Cg, K^2, H, W)
+        
+        # 填充
+        pad = (k - 1) // 2
+        x_pad = F.pad(x, (pad, pad, pad, pad), mode='constant', value=0)
+        
+        # 实现分组深度卷积
+        # 对每个 channel group 和 spatial position，使用 attention weight 加权
+        out = torch.zeros((b, c, h, w), dtype=x.dtype, device=x.device)
+        
+        # 按 group 分组处理
+        cpg = c // groups  # channels per group
+        
+        for g in range(groups):
+            # 当前 group 的通道
+            ch_start = g * cpg
+            ch_end = (g + 1) * cpg
+            
+            # 当前 group 的注意力权重: (B, Cpg, K^2, H, W)
+            w_g = weight[:, g * cpg:(g + 1) * cpg, :, :, :]  # (B, Cpg, K^2, H, W)
+            
+            # 当前 group 的输入特征 (填充后): (B, Cpg, H+2pad, W+2pad)
+            x_g = x_pad[:, ch_start:ch_end, :, :]  # (B, Cpg, H+2pad, W+2pad)
+            
+            # 对每个 kernel 位置 (kh, kw)
+            for kh in range(k):
+                for kw in range(k):
+                    # 计算有效范围
+                    h_in_start = kh
+                    h_in_end = h + kh
+                    w_in_start = kw
+                    w_in_end = w + kw
+                    
+                    # 当前 kernel 位置的权重索引
+                    kidx = kh * k + kw
+                    
+                    # 提取权重: (B, Cpg, H, W)
+                    w_cur = w_g[:, :, kidx, :, :]
+                    
+                    # 提取对应位置的输入: (B, Cpg, H, W)
+                    x_cur = x_g[:, :, h_in_start:h_in_end, w_in_start:w_in_end]
+                    
+                    # 累加: out += x * w
+                    out[:, ch_start:ch_end, :, :] += x_cur * w_cur
+        
+        return out
 
 
 # ============== LKP (Large Kernel Projection) ==============

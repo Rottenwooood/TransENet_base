@@ -272,15 +272,15 @@ class LayerNormFunction(torch.autograd.Function):
 #         return out
 
 
-# ============== GSiLU ==============
-class GSiLU(nn.Module):
-    """Global Sigmoid-Gated Linear Unit"""
-    def __init__(self):
-        super().__init__()
-        self.adpool = nn.AdaptiveAvgPool2d(1)
+# # ============== GSiLU ==============
+# class GSiLU(nn.Module):
+#     """Global Sigmoid-Gated Linear Unit"""
+#     def __init__(self):
+#         super().__init__()
+#         self.adpool = nn.AdaptiveAvgPool2d(1)
 
-    def forward(self, x):
-        return x * torch.sigmoid(self.adpool(x))
+#     def forward(self, x):
+#         return x * torch.sigmoid(self.adpool(x))
 
 
 # ============== Native_CAA ==============
