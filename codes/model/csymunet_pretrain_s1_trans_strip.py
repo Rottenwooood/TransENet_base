@@ -184,28 +184,51 @@ class StripModule(nn.Module):
         return x * attn                      # 注意力加权
 
 
+# ============== StripAttention (参考 StripNet Attention) ==============
+class StripAttention(nn.Module):
+    """
+    条形注意力模块 - 参考 StripNet Attention
+    proj_1 -> GELU -> StripModule -> proj_2 + shortcut
+    """
+    def __init__(self, dim, k1=1, k2=19):
+        super().__init__()
+        self.proj_1 = nn.Conv2d(dim, dim, 1)
+        self.activation = nn.GELU()
+        self.spatial_gating_unit = StripModule(dim, k1=k1, k2=k2)
+        self.proj_2 = nn.Conv2d(dim, dim, 1)
+
+    def forward(self, x):
+        shortcut = x.clone()
+        x = self.proj_1(x)
+        x = self.activation(x)
+        x = self.spatial_gating_unit(x)
+        x = self.proj_2(x)
+        x = x + shortcut
+        return x
+
+
 # ============== StripMAB (基于 StripModule 的 MAB 替代) ==============
 class StripMAB(nn.Module):
     """
     基于 StripModule 的 Multi-head Attention Block 替代方案
-    保留 FFN (MSConvStar) 部分
+    使用 StripAttention (参考 StripNet Attention)
     """
     def __init__(self, dim, k1=1, k2=19):
         super().__init__()
 
-        # 使用 StripModule 替换 Attention
+        # 使用 StripAttention 替换 Attention
         self.norm1 = LayerNorm2d(dim)
-        self.strip = StripModule(dim=dim, k1=k1, k2=k2)
+        self.strip_attn = StripAttention(dim=dim, k1=k1, k2=k2)
 
         # 保留 FFN 部分
         self.norm2 = LayerNorm2d(dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
     def forward(self, x):
-        # Part 1: Strip Module（替代 Attention）
+        # Part 1: Strip Attention（参考 StripNet Attention）
         shortcut = x
         x = self.norm1(x)
-        x = self.strip(x)
+        x = self.strip_attn(x)
         x = shortcut + x
 
         # Part 2: FFN（保持不变）
