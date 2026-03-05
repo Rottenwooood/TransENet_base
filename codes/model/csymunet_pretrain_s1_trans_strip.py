@@ -148,46 +148,40 @@ class LayerNormFunction(torch.autograd.Function):
 # ============== StripModule (新方案) ==============
 class StripModule(nn.Module):
     """
-    条形卷积模块 (Strip Module)
-    替换原来的 LargeKernelMAB，使用条形卷积捕获长程依赖
+    条形卷积模块 (Strip Module) - 参考 StripNet 实现
+    使用双向条形卷积捕获长程依赖
 
     组成:
     1. 局部特征提取: 5x5 深度卷积
-    2. 序列化条形卷积: 水平 (1xK) -> 垂直 (Kx1)
-    3. 注意力加权: Sigmoid 生成权重并逐元素相乘
+    2. 双向条形卷积: (k1, k2) 和 (k2, k1) 并行
+    3. 注意力加权: 1x1 投影后逐元素相乘
     """
-    def __init__(self, dim, kernel_size=19):
+    def __init__(self, dim, k1=1, k2=19):
         super().__init__()
         self.dim = dim
-        self.kernel_size = kernel_size
 
-        # 1. 局部特征提取 (Local Context)
-        self.conv_local = nn.Conv2d(dim, dim, 5, padding=2, groups=dim, padding_mode='reflect')
+        # 1. 局部特征提取 (Local Context) - 5x5 DWConv
+        self.conv0 = nn.Conv2d(dim, dim, 5, padding=2, groups=dim)
 
-        # 2. 序列化条形卷积 (Sequential Strip Convs)
-        # 水平方向 (1 x K)
-        self.conv_h = nn.Conv2d(dim, dim, (1, kernel_size),
-                                padding=(0, kernel_size // 2), groups=dim, padding_mode='reflect')
-        # 垂直方向 (K x 1) - 串联在水平卷积之后
-        self.conv_v = nn.Conv2d(dim, dim, (kernel_size, 1),
-                                padding=(kernel_size // 2, 0), groups=dim, padding_mode='reflect')
+        # 2. 双向条形卷积 (Bidirectional Strip Convs)
+        # (k1, k2) 方向
+        self.conv_spatial1 = nn.Conv2d(dim, dim, kernel_size=(k1, k2),
+                                        stride=1, padding=(k1 // 2, k2 // 2), groups=dim)
+        # (k2, k1) 方向
+        self.conv_spatial2 = nn.Conv2d(dim, dim, kernel_size=(k2, k1),
+                                        stride=1, padding=(k2 // 2, k1 // 2), groups=dim)
 
-        # 3. 注意力生成
-        self.proj = nn.Conv2d(dim, dim, 1)
-        self.act = nn.GELU()
-        self.sigmoid = nn.Sigmoid()
+        # 3. 注意力投影
+        self.conv1 = nn.Conv2d(dim, dim, 1)
 
     def forward(self, x):
-        identity = x
+        # 核心前向传播 - 参考 StripNet StripBlock
+        attn = self.conv0(x)                 # 5x5 Local
+        attn = self.conv_spatial1(attn)      # (k1, k2) 方向
+        attn = self.conv_spatial2(attn)      # (k2, k1) 方向
+        attn = self.conv1(attn)              # 1x1 投影
 
-        # 核心前向传播
-        x = self.act(self.conv_local(x))  # Local
-        x = self.act(self.conv_h(x))      # Horizontal
-        x = self.conv_v(x)                 # Vertical (Sequential)
-
-        # 生成权重并加权
-        weights = self.sigmoid(self.proj(x))
-        return identity * weights
+        return x * attn                      # 注意力加权
 
 
 # ============== StripMAB (基于 StripModule 的 MAB 替代) ==============
@@ -196,12 +190,12 @@ class StripMAB(nn.Module):
     基于 StripModule 的 Multi-head Attention Block 替代方案
     保留 FFN (MSConvStar) 部分
     """
-    def __init__(self, dim, strip_kernel_size=19):
+    def __init__(self, dim, k1=1, k2=19):
         super().__init__()
 
         # 使用 StripModule 替换 Attention
         self.norm1 = LayerNorm2d(dim)
-        self.strip = StripModule(dim=dim, kernel_size=strip_kernel_size)
+        self.strip = StripModule(dim=dim, k1=k1, k2=k2)
 
         # 保留 FFN 部分
         self.norm2 = LayerNorm2d(dim)
@@ -225,13 +219,13 @@ class S1_TransBlock_Strip(nn.Module):
     S1 Series Block (去掉MAB1，用Strip替换MAB2):
     x = LAB(x) -> StripMAB -> Conv -> +shortcut
     """
-    def __init__(self, c, strip_kernel_size=19, drop_out_rate=0.):
+    def __init__(self, c, k1=1, k2=19, drop_out_rate=0.):
         super().__init__()
         # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
         # 用 StripMAB 替换 MAB
-        self.strip_mab = StripMAB(dim=c, strip_kernel_size=strip_kernel_size)
+        self.strip_mab = StripMAB(dim=c, k1=k1, k2=k2)
 
         # Conv + residual (like RMAG) with zero initialization
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
@@ -398,11 +392,11 @@ class UpsampleDW(nn.Module):
 
 class SymUNet_Pretrain_S1_Trans_Strip(nn.Module):
     """
-    S1_Trans_Strip: 去掉MAB1，用StripModule替换MAB2
+    S1_Trans_Strip: 去掉MAB1，用StripModule替换MAB2 (参考 StripNet 实现)
 
     特点:
     - 使用 LAB (Local Aggregation Block)
-    - 使用 StripModule (5x5局部 + 水平/垂直条形卷积 + 注意力加权)
+    - 使用 StripModule (5x5局部 + 双向条形卷积 (k1,k2)/(k2,k1) + 注意力加权)
     - 使用 MSConvStar
     """
     def __init__(self, args, conv=common.default_conv):
@@ -426,8 +420,9 @@ class SymUNet_Pretrain_S1_Trans_Strip(nn.Module):
 
         drop_out_rate = getattr(args, 'symunet_pretrain_dropout', 0.)
 
-        # Strip Module kernel size
-        strip_kernel_size = getattr(args, 'symunet_pretrain_strip_kernel_size', 19)
+        # Strip Module kernel sizes (参考 StripNet: k1=1, k2=19)
+        strip_k1 = getattr(args, 'symunet_pretrain_strip_k1', 1)
+        strip_k2 = getattr(args, 'symunet_pretrain_strip_k2', 19)
 
         self.pre_upsample = nn.Upsample(scale_factor=self.scale, mode='bicubic', align_corners=False)
 
@@ -442,7 +437,7 @@ class SymUNet_Pretrain_S1_Trans_Strip(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                S1_TransBlock_Strip(c=chan, strip_kernel_size=strip_kernel_size, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_TransBlock_Strip(c=chan, k1=strip_k1, k2=strip_k2, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
             self.downs.append(DownsampleDW(chan))
             chan *= 2
@@ -462,7 +457,7 @@ class SymUNet_Pretrain_S1_Trans_Strip(nn.Module):
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                S1_TransBlock_Strip(c=chan, strip_kernel_size=strip_kernel_size, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_TransBlock_Strip(c=chan, k1=strip_k1, k2=strip_k2, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4
