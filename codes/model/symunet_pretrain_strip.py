@@ -328,7 +328,7 @@ class StripAttention(nn.Module):
 class StripMiddleBlock(nn.Module):
     """
     Middle Block using StripAttention
-    StripAttention + FFN
+    与官方 StripNet Block 保持一致：内部残差 + layer_scale
     """
     def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47):
         super().__init__()
@@ -346,21 +346,26 @@ class StripMiddleBlock(nn.Module):
                                 stride=1, padding=1, groups=hidden_features * 2, bias=bias)
         self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
 
+        # ⭐ layer_scale（官方 StripNet 使用 1e-2）
+        layer_scale_init = 1e-2
+        self.layer_scale_1 = nn.Parameter(
+            layer_scale_init * torch.ones(dim), requires_grad=True)
+        self.layer_scale_2 = nn.Parameter(
+            layer_scale_init * torch.ones(dim), requires_grad=True)
+
     def forward(self, x):
         # Strip Attention path
-        shortcut = x
-        x = self.norm1(x)
-        x = self.strip_attn(x)
-        x = shortcut + x
+        x = x + self.layer_scale_1.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
+            self.strip_attn(self.norm1(x))
 
         # FFN path
         shortcut = x
-        x = self.norm2(x)
-        x = self.project_in(x)
-        x1, x2 = self.dwconv(x).chunk(2, dim=1)
-        x = F.gelu(x1) * x2
-        x = self.project_out(x)
-        x = shortcut + x
+        y = self.norm2(x)
+        y = self.project_in(y)
+        y1, y2 = self.dwconv(y).chunk(2, dim=1)
+        y = F.gelu(y1) * y2
+        y = self.project_out(y)
+        x = shortcut + self.layer_scale_2.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * y
 
         return x
 

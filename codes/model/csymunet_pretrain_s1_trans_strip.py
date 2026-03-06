@@ -210,29 +210,34 @@ class StripAttention(nn.Module):
 # ============== StripMAB (基于 StripModule 的 MAB 替代) ==============
 class StripMAB(nn.Module):
     """
-    基于 StripModule 的 Multi-head Attention Block 替代方案
-    使用 StripAttention (参考 StripNet Attention)
+    基于 StripModule 的 MAB 替代方案
+    忠于官方 StripNet Block 设计：内部残差 + layer_scale
     """
     def __init__(self, dim, k1=1, k2=19):
         super().__init__()
 
-        # 使用 StripAttention 替换 Attention
         self.norm1 = LayerNorm2d(dim)
-        self.strip_attn = StripAttention(dim=dim, k1=k1, k2=k2)
+        self.strip_attn = StripAttention(dim=dim, k1=k1, k2=k2)  # 保留内部残差
 
-        # 保留 FFN 部分
         self.norm2 = LayerNorm2d(dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
-    def forward(self, x):
-        # Part 1: Strip Attention（参考 StripNet Attention）
-        shortcut = x
-        x = self.norm1(x)
-        x = self.strip_attn(x)
-        x = shortcut + x
+        # ⭐ 关键：layer_scale，与官方一致
+        layer_scale_init = 1e-2
+        self.layer_scale_1 = nn.Parameter(
+            layer_scale_init * torch.ones(dim), requires_grad=True)
+        self.layer_scale_2 = nn.Parameter(
+            layer_scale_init * torch.ones(dim), requires_grad=True)
 
-        # Part 2: FFN（保持不变）
-        x = x + self.ffn(self.norm2(x))
+    def forward(self, x):
+        # Part 1: Strip Attention（官方风格）
+        x = x + self.layer_scale_1.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
+            self.strip_attn(self.norm1(x))
+
+        # Part 2: FFN
+        x = x + self.layer_scale_2.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
+            self.ffn(self.norm2(x))
+
         return x
 
 

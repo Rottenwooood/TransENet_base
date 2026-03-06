@@ -323,6 +323,15 @@ class Native_InceptionBottleneck(nn.Module):
             nn.SiLU(inplace=True)
         )
 
+        # ⭐ split 方式：每组处理部分通道
+        self.split_dims = []
+        for i in range(self.num_scales):
+            if i == 0:
+                d = channels - channels // self.num_scales * (self.num_scales - 1)
+            else:
+                d = channels // self.num_scales
+            self.split_dims.append(d)
+
         # 并行 DW Conv
         self.dw_convs = nn.ModuleList([
             nn.Conv2d(channels, channels, ks, 1, ks // 2, groups=channels, bias=True)
@@ -348,8 +357,10 @@ class Native_InceptionBottleneck(nn.Module):
         x = self.pre_conv(x)
         y = x
 
-        dw_outs = [dw(x) for dw in self.dw_convs]
-        x = sum(dw_outs)
+        # ⭐ split → 各自处理 → concat
+        splits = torch.split(x, self.split_dims, dim=1)
+        dw_outs = [dw(s) for dw, s in zip(self.dw_convs, splits)]
+        x = torch.cat(dw_outs, dim=1)
 
         x = self.pw_conv(x)
 
@@ -376,9 +387,11 @@ class PKIMiddleBlock(nn.Module):
 
         # InceptionBottleneck
         self.norm1 = LayerNorm2d(channels=dim)
-        self.inception = Native_InceptionBottleneck(channels=dim, kernel_sizes=(3, 5, 7, 9, 11), with_caa=True, caa_kernel_size=11)
+        self.inception = Native_InceptionBottleneck(
+            channels=dim, kernel_sizes=(3, 5, 7, 9, 11),
+            with_caa=True, caa_kernel_size=11
+        )
 
-        # FFN
         self.norm2 = LayerNorm2d(channels=dim)
         hidden_features = int(dim * ffn_expansion_factor)
         self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
@@ -386,21 +399,25 @@ class PKIMiddleBlock(nn.Module):
                                 stride=1, padding=1, groups=hidden_features * 2, bias=bias)
         self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
 
+        # ⭐ 加 layer_scale
+        layer_scale_init = 1e-2
+        self.layer_scale_1 = nn.Parameter(
+            layer_scale_init * torch.ones(dim), requires_grad=True)
+        self.layer_scale_2 = nn.Parameter(
+            layer_scale_init * torch.ones(dim), requires_grad=True)
+
     def forward(self, x):
-        # InceptionBottleneck path
-        shortcut = x
-        x = self.norm1(x)
-        x = self.inception(x)
-        x = shortcut + x
+        # Inception path
+        x = x + self.layer_scale_1.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
+            self.inception(self.norm1(x))
 
         # FFN path
-        shortcut = x
-        x = self.norm2(x)
-        x = self.project_in(x)
-        x1, x2 = self.dwconv(x).chunk(2, dim=1)
-        x = F.gelu(x1) * x2
-        x = self.project_out(x)
-        x = shortcut + x
+        y = self.norm2(x)
+        y = self.project_in(y)
+        y1, y2 = self.dwconv(y).chunk(2, dim=1)
+        y = F.gelu(y1) * y2
+        y = self.project_out(y)
+        x = x + self.layer_scale_2.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * y
 
         return x
 
