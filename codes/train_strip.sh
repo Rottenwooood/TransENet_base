@@ -11,8 +11,6 @@ python demo_deploy.py --model symunet_pretrain_strip \
     --symunet_pretrain_width 32 \
     --symunet_pretrain_enc_blk_nums 4,6 \
     --symunet_pretrain_dec_blk_nums 6,4 \
-    --symunet_pretrain_strip_k1 1 \
-    --symunet_pretrain_strip_k2 47 \
     --dataset UCMerced \
     --scale 4 \
     --pre_train ../experiment/s1_trans_strip_001_s1_trans_strip_w32/model/model_best.pt \

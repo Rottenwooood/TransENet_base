@@ -1,6 +1,6 @@
 {
   "base_config": {
-    "model": "symunet_pretrain_strip",
+    "model": "csymunet_pretrain_s1_trans_strip",
     "dataset": "UCMerced",
     "scale": 4,
     "epochs": 300,
@@ -18,7 +18,7 @@
     "symunet_pretrain_enc_blk_nums": ["4,6"],
     "symunet_pretrain_dec_blk_nums": ["6,4"]
   },
-  "experiment_prefix": "s1_trans_strip",
+  "experiment_prefix": "s1_trans_strip_c",
   "max_experiments": 1,
   "use_wandb": true,
   "wandb_project": "SymUNet-Pretrain-Variants",
