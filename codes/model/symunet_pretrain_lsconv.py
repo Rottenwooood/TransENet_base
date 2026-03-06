@@ -9,6 +9,12 @@ from einops import rearrange
 from model import common
 from typing import List, Optional
 
+# Triton imports for SKA
+import triton
+import triton.language as tl
+from torch.amp import custom_fwd, custom_bwd
+import math as math_lib
+
 #from utils.registry import ARCH_REGISTRY
 
 # 设置设备
@@ -272,75 +278,175 @@ class LayerNormFunction(torch.autograd.Function):
 #         return out
 
 
-# ============== SKA (Selective Kernel Attention) - 精确 PyTorch 实现 ==============
+# ============== Triton SKA (Selective Kernel Attention) ==============
+def _grid(numel: int, bs: int) -> tuple:
+    return (triton.cdiv(numel, bs),)
+
+@triton.jit
+def _idx(i, n: int, c: int, h: int, w: int):
+    ni = i // (c * h * w)
+    ci = (i // (h * w)) % c
+    hi = (i // w) % h
+    wi = i % w
+    m = i < (n * c * h * w)
+    return ni, ci, hi, wi, m
+
+@triton.jit
+def ska_fwd(
+    x_ptr, w_ptr, o_ptr,
+    n, ic, h, w, ks, pad, wc,
+    BS: tl.constexpr,
+    CT: tl.constexpr, AT: tl.constexpr
+):
+    pid = tl.program_id(0)
+    start = pid * BS
+    offs = start + tl.arange(0, BS)
+
+    ni, ci, hi, wi, m = _idx(offs, n, ic, h, w)
+    val = tl.zeros((BS,), dtype=AT)
+
+    for kh in range(ks):
+        hin = hi - pad + kh
+        hb = (hin >= 0) & (hin < h)
+        for kw in range(ks):
+            win = wi - pad + kw
+            b = hb & (win >= 0) & (win < w)
+
+            x_off = ((ni * ic + ci) * h + hin) * w + win
+            w_off = ((ni * wc + ci % wc) * ks * ks + (kh * ks + kw)) * h * w + hi * w + wi
+
+            x_val = tl.load(x_ptr + x_off, mask=m & b, other=0.0).to(CT)
+            w_val = tl.load(w_ptr + w_off, mask=m, other=0.0).to(CT)
+            val += tl.where(b & m, x_val * w_val, 0.0).to(AT)
+
+    tl.store(o_ptr + offs, val.to(CT), mask=m)
+
+@triton.jit
+def ska_bwd_x(
+    go_ptr, w_ptr, gi_ptr,
+    n, ic, h, w, ks, pad, wc,
+    BS: tl.constexpr,
+    CT: tl.constexpr, AT: tl.constexpr
+):
+    pid = tl.program_id(0)
+    start = pid * BS
+    offs = start + tl.arange(0, BS)
+
+    ni, ci, hi, wi, m = _idx(offs, n, ic, h, w)
+    val = tl.zeros((BS,), dtype=AT)
+
+    for kh in range(ks):
+        ho = hi + pad - kh
+        hb = (ho >= 0) & (ho < h)
+        for kw in range(ks):
+            wo = wi + pad - kw
+            b = hb & (wo >= 0) & (wo < w)
+
+            go_off = ((ni * ic + ci) * h + ho) * w + wo
+            w_off = ((ni * wc + ci % wc) * ks * ks + (kh * ks + kw)) * h * w + ho * w + wo
+
+            go_val = tl.load(go_ptr + go_off, mask=m & b, other=0.0).to(CT)
+            w_val = tl.load(w_ptr + w_off, mask=m, other=0.0).to(CT)
+            val += tl.where(b & m, go_val * w_val, 0.0).to(AT)
+
+    tl.store(gi_ptr + offs, val.to(CT), mask=m)
+
+@triton.jit
+def ska_bwd_w(
+    go_ptr, x_ptr, gw_ptr,
+    n, wc, h, w, ic, ks, pad,
+    BS: tl.constexpr,
+    CT: tl.constexpr, AT: tl.constexpr
+):
+    pid = tl.program_id(0)
+    start = pid * BS
+    offs = start + tl.arange(0, BS)
+
+    ni, ci, hi, wi, m = _idx(offs, n, wc, h, w)
+
+    for kh in range(ks):
+        hin = hi - pad + kh
+        hb = (hin >= 0) & (hin < h)
+        for kw in range(ks):
+            win = wi - pad + kw
+            b = hb & (win >= 0) & (win < w)
+            w_off = ((ni * wc + ci) * ks * ks + (kh * ks + kw)) * h * w + hi * w + wi
+
+            val = tl.zeros((BS,), dtype=AT)
+            steps = (ic - ci + wc - 1) // wc
+            for s in range(tl.max(steps, axis=0)):
+                cc = ci + s * wc
+                cm = (cc < ic) & m & b
+
+                x_off = ((ni * ic + cc) * h + hin) * w + win
+                go_off = ((ni * ic + cc) * h + hi) * w + wi
+
+                x_val = tl.load(x_ptr + x_off, mask=cm, other=0.0).to(CT)
+                go_val = tl.load(go_ptr + go_off, mask=cm, other=0.0).to(CT)
+                val += tl.where(cm, x_val * go_val, 0.0).to(AT)
+
+            tl.store(gw_ptr + w_off, val.to(CT), mask=m)
+
+class SkaFn(torch.autograd.Function):
+    @staticmethod
+    @custom_fwd(device_type='cuda')
+    def forward(ctx, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+        ks = int(math_lib.sqrt(w.shape[2]))
+        pad = (ks - 1) // 2
+        ctx.ks, ctx.pad = ks, pad
+        n, ic, h, width = x.shape
+        wc = w.shape[1]
+        o = torch.empty(n, ic, h, width, device=x.device, dtype=x.dtype)
+        numel = o.numel()
+
+        x = x.contiguous()
+        w = w.contiguous()
+
+        grid = lambda meta: _grid(numel, meta["BS"])
+
+        ct = tl.float16 if x.dtype == torch.float16 else (tl.float32 if x.dtype == torch.float32 else tl.float64)
+        at = tl.float32 if x.dtype == torch.float16 else ct
+
+        ska_fwd[grid](x, w, o, n, ic, h, width, ks, pad, wc, BS=1024, CT=ct, AT=at)
+
+        ctx.save_for_backward(x, w)
+        ctx.ct, ctx.at = ct, at
+        return o
+
+    @staticmethod
+    @custom_bwd(device_type='cuda')
+    def backward(ctx, go: torch.Tensor) -> tuple:
+        ks, pad = ctx.ks, ctx.pad
+        x, w = ctx.saved_tensors
+        n, ic, h, width = x.shape
+        wc = w.shape[1]
+
+        go = go.contiguous()
+        gx = gw = None
+        ct, at = ctx.ct, ctx.at
+
+        if ctx.needs_input_grad[0]:
+            gx = torch.empty_like(x)
+            numel = gx.numel()
+            ska_bwd_x[lambda meta: _grid(numel, meta["BS"])](go, w, gx, n, ic, h, width, ks, pad, wc, BS=1024, CT=ct, AT=at)
+
+        if ctx.needs_input_grad[1]:
+            gw = torch.empty_like(w)
+            numel = gw.numel() // w.shape[2]
+            ska_bwd_w[lambda meta: _grid(numel, meta["BS"])](go, x, gw, n, wc, h, width, ic, ks, pad, BS=1024, CT=ct, AT=at)
+
+        return gx, gw, None, None
+
 class SKA(nn.Module):
     """
-    Selective Kernel Attention - 精确 PyTorch 实现
-    完全参考 lsnet/model/ska.py 的 Triton 实现逻辑
-    
-    Triton 实现等价于分组深度卷积，权重来自 LKP
+    Selective Kernel Attention - Triton 实现
+    参考 lsnet/model/ska.py
     """
     def __init__(self):
         super().__init__()
 
-    def forward(self, x, weight):
-        """
-        x: input features (B, C, H, W)
-        weight: (B, C//groups, K^2, H, W) where K is the kernel size
-        """
-        b, c, h, w = x.shape
-        # weight: (B, Cg, K^2, H, W), Cg = C // groups
-        k2 = weight.shape[2]
-        k = int(k2 ** 0.5)
-        groups = c // weight.shape[1]
-        
-        # Softmax along kernel dimension
-        weight = F.softmax(weight, dim=2)  # (B, Cg, K^2, H, W)
-        
-        # 填充
-        pad = (k - 1) // 2
-        x_pad = F.pad(x, (pad, pad, pad, pad), mode='constant', value=0)
-        
-        # 实现分组深度卷积
-        # 对每个 channel group 和 spatial position，使用 attention weight 加权
-        out = torch.zeros((b, c, h, w), dtype=x.dtype, device=x.device)
-        
-        # 按 group 分组处理
-        cpg = c // groups  # channels per group
-        
-        for g in range(groups):
-            # 当前 group 的通道
-            ch_start = g * cpg
-            ch_end = (g + 1) * cpg
-            
-            # 当前 group 的注意力权重: (B, Cpg, K^2, H, W)
-            w_g = weight[:, g * cpg:(g + 1) * cpg, :, :, :]  # (B, Cpg, K^2, H, W)
-            
-            # 当前 group 的输入特征 (填充后): (B, Cpg, H+2pad, W+2pad)
-            x_g = x_pad[:, ch_start:ch_end, :, :]  # (B, Cpg, H+2pad, W+2pad)
-            
-            # 对每个 kernel 位置 (kh, kw)
-            for kh in range(k):
-                for kw in range(k):
-                    # 计算有效范围
-                    h_in_start = kh
-                    h_in_end = h + kh
-                    w_in_start = kw
-                    w_in_end = w + kw
-                    
-                    # 当前 kernel 位置的权重索引
-                    kidx = kh * k + kw
-                    
-                    # 提取权重: (B, Cpg, H, W)
-                    w_cur = w_g[:, :, kidx, :, :]
-                    
-                    # 提取对应位置的输入: (B, Cpg, H, W)
-                    x_cur = x_g[:, :, h_in_start:h_in_end, w_in_start:w_in_end]
-                    
-                    # 累加: out += x * w
-                    out[:, ch_start:ch_end, :, :] += x_cur * w_cur
-        
-        return out
+    def forward(self, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+        return SkaFn.apply(x, w)
 
 
 # ============== LKP (Large Kernel Projection) ==============
