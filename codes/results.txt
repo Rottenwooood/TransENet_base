@@ -13,7 +13,8 @@ Average: PSNR: 27.855609 dB, SSIM: 0.766662
 Average: PSNR: 27.859286 dB, SSIM: 0.766084
 Average: PSNR: 27.863048 dB, SSIM: 0.766386
 
-3/5 de_en_strip cam mid_strip
-# Average: PSNR: 27.859286 dB, SSIM: 0.766084
+3/5 de_en_strip 1cam 2mid_strip
 Average: PSNR: 27.979308 dB, SSIM: 0.770214
 Average: PSNR: 27.990974 dB, SSIM: 0.770813
+
+# de_en_strip(v3) cam(v2) strip(v2)

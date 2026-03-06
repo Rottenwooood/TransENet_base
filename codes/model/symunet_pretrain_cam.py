@@ -433,18 +433,23 @@ class TransformerBlock(nn.Module):
 # ============== CAMiddleBlock (Channel Attention Middle Block) ==============
 class CAMiddleBlock(nn.Module):
     """
-    Middle Block using Channel Attention instead of self-attention
-    Channel Attention + FFN
+    Middle Block using Channel Attention (RCAN/MobileNetV3 style)
+    Spatial DWConv + Channel Attention + FFN
     """
     def __init__(self, dim, ffn_expansion_factor=2., bias=False):
         super().__init__()
         self.dim = dim
 
-        # Channel Attention
+        # --- 第一分支: 空间局部交互 + 全局通道注意力 ---
         self.norm1 = LayerNorm2d(channels=dim)
-        self.ca = ChannelAttention(dim=dim, squeeze_factor=16)
+        
+        # 增加一个 DWConv，弥补纯 CA 丢失的空间感受野，参数量极小 (128*3*3 = 1152)
+        self.spatial_conv = nn.Conv2d(dim, dim, kernel_size=3, stride=1, padding=1, groups=dim, bias=bias)
+        
+        # squeeze_factor 从 16 改为 4，保证瓶颈层 128 -> 32 的信息容量
+        self.ca = ChannelAttention(dim=dim, squeeze_factor=4)
 
-        # FFN (same structure as FeedForward but for BCHW format)
+        # --- 第二分支: FFN (门控机制) ---
         self.norm2 = LayerNorm2d(channels=dim)
         hidden_features = int(dim * ffn_expansion_factor)
         self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
@@ -453,13 +458,14 @@ class CAMiddleBlock(nn.Module):
         self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
 
     def forward(self, x):
-        # Channel Attention path
+        # 1. 空间-通道注意力路径
         shortcut = x
         x = self.norm1(x)
-        x = self.ca(x)
+        x = self.spatial_conv(x) # 先让相邻像素打个招呼
+        x = self.ca(x)           # 再根据全图信息重分配通道权重
         x = shortcut + x
 
-        # FFN path
+        # 2. FFN 路径 (代码非常完美，保持不变)
         shortcut = x
         x = self.norm2(x)
         x = self.project_in(x)
