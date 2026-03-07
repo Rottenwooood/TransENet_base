@@ -11,7 +11,7 @@ export https_proxy="http://127.0.0.1:7890"
 # # python calculate_PSNR_SSIM.py --folder_Gen /root/autodl-tmp/TransENet_base/experiment/results/s1_trans_strip_c_46W32/x4 | tail -n 1 >> results.txt
 
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_cam.json
-python user/batch_train.py --config user/experiments_config5_02_s1_trans_lsconv.json
+# python user/batch_train.py --config user/experiments_config5_02_s1_trans_lsconv.json
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_pki.json
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip.json
 
