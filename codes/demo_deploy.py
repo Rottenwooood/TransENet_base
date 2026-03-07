@@ -403,7 +403,7 @@ if __name__ == '__main__':
     sr_model.eval()
 
     # 模型性能测试
-    # test_model_performance(args, sr_model)
+    test_model_performance(args, sr_model)
 
     # # analyse the params of the load model
     # pytorch_total_params = sum(p.numel() for p in sr_model.parameters())
@@ -416,4 +416,4 @@ if __name__ == '__main__':
     #     print(p.numel())
     #     print('========')
 
-    deploy(args, sr_model)
+    # deploy(args, sr_model)

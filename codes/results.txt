@@ -18,3 +18,7 @@ Average: PSNR: 27.979308 dB, SSIM: 0.770214
 Average: PSNR: 27.990974 dB, SSIM: 0.770813
 
 # de_en_strip(v3) cam(v2) strip(v2)
+Average: PSNR: 27.992524 dB, SSIM: 0.769870
+Error: No valid images processed
+Error: No valid images processed
+Average: PSNR: 28.033203 dB, SSIM: 0.771414
