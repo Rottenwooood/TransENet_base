@@ -4,3 +4,4 @@ experiment/
 codes/wandb
 UCMerced-dataset.zip
 natten-0.17.4+torch200cu118-cp38-cp38-linux_x86_64.whl
+natten-0.17.4+torch210cu118-cp38-cp38-linux_x86_64.whl

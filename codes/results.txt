@@ -22,3 +22,7 @@ Average: PSNR: 27.992524 dB, SSIM: 0.769870
 Error: No valid images processed
 Error: No valid images processed
 Average: PSNR: 28.033203 dB, SSIM: 0.771414
+PKI： 
+
+Average: PSNR: 27.951335 dB, SSIM: 0.769254
+

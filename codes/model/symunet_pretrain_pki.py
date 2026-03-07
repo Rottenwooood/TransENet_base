@@ -314,12 +314,12 @@ class Native_CAA(nn.Module):
 
 # ============== Native_InceptionBottleneck ==============
 class Native_InceptionBottleneck(nn.Module):
-    """InceptionBottleneck - PKI核心模块"""
-    def __init__(self, channels: int, kernel_sizes=(3, 5, 7, 9, 11), with_caa=True, caa_kernel_size=11):
+    def __init__(self, channels, kernel_sizes=(3, 5, 7, 9, 11), with_caa=True, caa_kernel_size=11):
         super().__init__()
-        # Pre Conv
+        self.num_scales = len(kernel_sizes)
+
         self.pre_conv = nn.Sequential(
-            nn.Conv2d(channels, channels, 1, 1, 0, bias=True),
+            nn.Conv2d(channels, channels, 1, bias=True),
             nn.SiLU(inplace=True)
         )
 
@@ -332,24 +332,22 @@ class Native_InceptionBottleneck(nn.Module):
                 d = channels // self.num_scales
             self.split_dims.append(d)
 
-        # 并行 DW Conv
         self.dw_convs = nn.ModuleList([
-            nn.Conv2d(channels, channels, ks, 1, ks // 2, groups=channels, bias=True)
-            for ks in kernel_sizes
+            nn.Conv2d(d, d, ks, 1, ks // 2, groups=d, bias=True)
+            for d, ks in zip(self.split_dims, kernel_sizes)
         ])
 
-        # PW Conv
         self.pw_conv = nn.Sequential(
-            nn.Conv2d(channels, channels, 1, 1, 0, bias=True),
+            nn.Conv2d(channels, channels, 1, bias=True),
             nn.SiLU(inplace=True)
         )
 
         self.with_caa = with_caa
         if with_caa:
-            self.caa_factor = Native_CAA(channels, h_kernel_size=caa_kernel_size, v_kernel_size=caa_kernel_size)
+            self.caa_factor = Native_CAA(channels, caa_kernel_size, caa_kernel_size)
 
         self.post_conv = nn.Sequential(
-            nn.Conv2d(channels, channels, 1, 1, 0, bias=True),
+            nn.Conv2d(channels, channels, 1, bias=True),
             nn.SiLU(inplace=True)
         )
 
@@ -366,10 +364,7 @@ class Native_InceptionBottleneck(nn.Module):
 
         if self.with_caa:
             y = self.caa_factor(y)
-            y = x * y
-            x = x + y
-        else:
-            x = x * y
+            x = x + x * y
 
         x = self.post_conv(x)
         return x
