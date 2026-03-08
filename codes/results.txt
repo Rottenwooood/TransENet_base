@@ -23,12 +23,14 @@ Error: No valid images processed
 Error: No valid images processed
 Average: PSNR: 28.033203 dB, SSIM: 0.771414
 PKI： 
-
 Average: PSNR: 27.951335 dB, SSIM: 0.769254
-
+lsconv:
 Average: PSNR: 27.971147 dB, SSIM: 0.768784
-Average: PSNR: 27.971147 dB, SSIM: 0.768784
-Error: No valid images processed
-Error: No valid images processed
-Error: No valid images processed
+strip+lsconv:
+Average: PSNR: 27.997071 dB, SSIM: 0.769678
+strip+cam
+Average: PSNR: 28.039041 dB, SSIM: 0.771001
+mab2
+Average: PSNR: 28.017900 dB, SSIM: 0.771241
+strip+lsconv:
 Error: No valid images processed

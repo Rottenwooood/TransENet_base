@@ -353,9 +353,8 @@ class StripCAMiddleBlock(nn.Module):
         # Strip Attention
         self.norm1 = LayerNorm2d(channels=dim)
         self.strip_attn = StripAttention(dim=dim, k1=k1, k2=k2)
-
         # Channel Attention
-        # self.norm_cam = LayerNorm2d(channels=dim)
+        self.norm_cam = LayerNorm2d(channels=dim)
         self.channel_attn = ChannelAttention(dim=dim, squeeze_factor=4)
 
         # FFN
@@ -382,7 +381,7 @@ class StripCAMiddleBlock(nn.Module):
 
         # Channel Attention path
         x = x + self.layer_scale_cam.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
-            self.channel_attn(x)
+            self.channel_attn(self.norm_cam(x))
 
         # FFN path
         shortcut = x

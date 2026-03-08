@@ -379,7 +379,7 @@ class S1_TransBlock_NoMAB1_Middle(nn.Module):
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
         # MAB2: num_head=2, kernel_sizes=[7, 11], dilations=[7, 4]
-        self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[7, 4])
+        self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[6, 4])
 
         # Conv + residual (like RMAG) with zero initialization
         self.conv = nn.Conv2d(c, c, 3, 1, 1)

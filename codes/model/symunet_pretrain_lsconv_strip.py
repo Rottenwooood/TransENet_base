@@ -449,7 +449,8 @@ class SKA(nn.Module):
 
 
 # ============== LSConvMiddleBlock with Strip Gating ==============
-# ============== StripModule (官方实现 from StripNet) ==============
+
+# ============== StripModule (参考 StripNet) ==============
 class StripModule(nn.Module):
     """
     条形卷积模块 - StripNet StripBlock
@@ -478,7 +479,7 @@ class StripModule(nn.Module):
         return x * attn
 
 
-# ============== StripAttention (官方实现 from StripNet) ==============
+# ============== StripAttention ==============
 class StripAttention(nn.Module):
     """
     条形注意力模块 - 参考 StripNet Attention
@@ -501,7 +502,54 @@ class StripAttention(nn.Module):
         return x
 
 
-class LKP_NoBN(nn.Module):
+# ============== StripMiddleBlock ==============
+class StripMiddleBlock(nn.Module):
+    """
+    Middle Block using StripAttention
+    与官方 StripNet Block 保持一致：内部残差 + layer_scale
+    """
+    def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47):
+        super().__init__()
+        self.dim = dim
+
+        # Strip Attention
+        self.norm1 = LayerNorm2d(channels=dim)
+        self.strip_attn = StripAttention(dim=dim, k1=k1, k2=k2)
+
+        # FFN
+        self.norm2 = LayerNorm2d(channels=dim)
+        hidden_features = int(dim * ffn_expansion_factor)
+        self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
+        self.dwconv = nn.Conv2d(hidden_features * 2, hidden_features * 2, kernel_size=3,
+                                stride=1, padding=1, groups=hidden_features * 2, bias=bias)
+        self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
+
+        # ⭐ layer_scale（官方 StripNet 使用 1e-2）
+        layer_scale_init = 1e-2
+        self.layer_scale_1 = nn.Parameter(
+            layer_scale_init * torch.ones(dim), requires_grad=True)
+        self.layer_scale_2 = nn.Parameter(
+            layer_scale_init * torch.ones(dim), requires_grad=True)
+
+    def forward(self, x):
+        # Strip Attention path
+        x = x + self.layer_scale_1.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
+            self.strip_attn(self.norm1(x))
+
+        # FFN path
+        shortcut = x
+        y = self.norm2(x)
+        y = self.project_in(y)
+        y1, y2 = self.dwconv(y).chunk(2, dim=1)
+        y = F.gelu(y1) * y2
+        y = self.project_out(y)
+        x = shortcut + self.layer_scale_2.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * y
+
+        return x
+
+
+# ============== LKP (Large Kernel Projection) ==============
+class LKP(nn.Module):
     """Large Kernel Projection - 无BN版本"""
     def __init__(self, dim, lks=7, sks=3, groups=8):
         super().__init__()
@@ -524,58 +572,58 @@ class LKP_NoBN(nn.Module):
         return w
 
 
-class LSConvStripMiddleBlock(nn.Module):
-    """
-    LSConv + StripAttention 组合
-    LSConv: 动态卷积（强特征变换，7×7感知）
-    StripAttention: 全局空间门控（官方实现）
-    """
-    def __init__(self, dim, lks=7, sks=3, groups=8, k1=1, k2=47, ffn_expansion_factor=2.):
-        super().__init__()
-
-        # Part 1: LSConv
-        self.norm1 = LayerNorm2d(dim)
-        self.lkp = LKP_NoBN(dim, lks=lks, sks=sks, groups=groups)
+# ============== LSConv (无BN版本) ==============
+class LSConv(nn.Module):
+    """Large Selective Conv - 无BN版本"""
+    def __init__(self, dim):
+        super(LSConv, self).__init__()
+        self.lkp = LKP(dim, lks=7, sks=3, groups=8)
         self.ska = SKA()
 
-        # Part 2: Strip（直接用你已有的官方实现）
-        self.norm2 = LayerNorm2d(dim)
-        self.strip_attn = StripAttention(dim=dim, k1=k1, k2=k2)
-
-        # Part 3: FFN
-        self.norm3 = LayerNorm2d(dim)
-        hidden = int(dim * ffn_expansion_factor)
-        self.project_in = nn.Conv2d(dim, hidden * 2, 1, bias=False)
-        self.dwconv = nn.Conv2d(hidden * 2, hidden * 2, 3,
-                                padding=1, groups=hidden * 2, bias=False)
-        self.project_out = nn.Conv2d(hidden, dim, 1, bias=False)
-
-        # layer_scale
-        ls_init = 1e-2
-        self.ls1 = nn.Parameter(ls_init * torch.ones(dim))
-        self.ls2 = nn.Parameter(ls_init * torch.ones(dim))
-        self.ls3 = nn.Parameter(ls_init * torch.ones(dim))
-
     def forward(self, x):
-        # LSConv: 动态卷积
-        y = self.norm1(x)
-        w = self.lkp(y)
-        y = self.ska(y, w)
-        x = x + self.ls1.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * y
+        return self.ska(x, self.lkp(x)) + x
 
-        # Strip: 全局门控（官方完整实现，含内部残差）
-        x = x + self.ls2.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
-            self.strip_attn(self.norm2(x))
+
+# ============== LSConvMiddleBlock ==============
+class LSConvMiddleBlock(nn.Module):
+    """
+    Middle Block using LSConv (无BN)
+    LSConv + FFN
+    """
+    def __init__(self, dim, ffn_expansion_factor=2., bias=False):
+        super().__init__()
+        self.dim = dim
+
+        # LSConv
+        self.norm1 = LayerNorm2d(channels=dim)
+        self.lsconv = LSConv(dim=dim)
 
         # FFN
-        y = self.norm3(x)
-        y = self.project_in(y)
-        y1, y2 = self.dwconv(y).chunk(2, dim=1)
-        y = F.gelu(y1) * y2
-        y = self.project_out(y)
-        x = x + self.ls3.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * y
+        self.norm2 = LayerNorm2d(channels=dim)
+        hidden_features = int(dim * ffn_expansion_factor)
+        self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
+        self.dwconv = nn.Conv2d(hidden_features * 2, hidden_features * 2, kernel_size=3,
+                                stride=1, padding=1, groups=hidden_features * 2, bias=bias)
+        self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
+
+    def forward(self, x):
+        # LSConv path
+        shortcut = x
+        x = self.norm1(x)
+        x = self.lsconv(x)
+        x = shortcut + x
+
+        # FFN path
+        shortcut = x
+        x = self.norm2(x)
+        x = self.project_in(x)
+        x1, x2 = self.dwconv(x).chunk(2, dim=1)
+        x = F.gelu(x1) * x2
+        x = self.project_out(x)
+        x = shortcut + x
 
         return x
+
 
 
 class MAB(nn.Module):
@@ -868,12 +916,21 @@ class SymUNet_Pretrain_LSConv_Strip(nn.Module):
             self.downs.append(DownsampleDW(chan))
             chan *= 2
 
+        strip_k1 = getattr(args, 'symunet_pretrain_strip_k1', 1)
+        strip_k2 = getattr(args, 'symunet_pretrain_strip_k2', 47)
         self.middle_blks = nn.Sequential(*[
-            LSConvStripMiddleBlock(
+            LSConvMiddleBlock(
                 dim=chan,
                 ffn_expansion_factor=ffn_expansion_factor,
-                k2=47
-            ) for _ in range(middle_blk_num)
+                bias=bias
+            ),
+            StripMiddleBlock(
+                dim=chan,
+                ffn_expansion_factor=ffn_expansion_factor,
+                bias=bias,
+                k1=strip_k1,
+                k2=strip_k2
+            )
         ])
 
         for i, num in enumerate(dec_blk_nums):
