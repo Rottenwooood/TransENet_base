@@ -34,3 +34,6 @@ mab2
 Average: PSNR: 28.017900 dB, SSIM: 0.771241
 strip+lsconv:
 Error: No valid images processed
+Average: PSNR: 28.024816 dB, SSIM: 0.771527
+Average: PSNR: 27.996185 dB, SSIM: 0.770464
+Average: PSNR: 27.996185 dB, SSIM: 0.770464

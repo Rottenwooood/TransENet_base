@@ -7,7 +7,7 @@
     "batch_size": 4,
     "ext": "img",
     "patch_size": 192,
-    "resume": 0
+    "resume": 1
   },
   "hyperparameter_grid": {
     "optimizer": ["ADAMW"],
@@ -18,7 +18,7 @@
     "symunet_pretrain_enc_blk_nums": ["4,6"],
     "symunet_pretrain_dec_blk_nums": ["6,4"]
   },
-  "experiment_prefix": "s1_trans_strip_cam_v2",
+  "experiment_prefix": "s1_trans_strip_cam_v3",
   "max_experiments": 1,
   "use_wandb": true,
   "wandb_project": "SymUNet-Pretrain-Variants",

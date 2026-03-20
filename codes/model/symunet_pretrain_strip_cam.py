@@ -304,60 +304,59 @@ class StripModule(nn.Module):
 # ============== StripAttention ==============
 class StripAttention(nn.Module):
     """
-    条形注意力模块 - 参考 StripNet Attention
-    proj_1 -> GELU -> StripModule -> proj_2 + shortcut
+    条形注意力 + 通道注意力 (融合版)
     """
     def __init__(self, dim, k1=1, k2=47):
         super().__init__()
         self.proj_1 = nn.Conv2d(dim, dim, 1)
         self.activation = nn.GELU()
+        
+        # 核心：空间门控
         self.spatial_gating_unit = StripModule(dim, k1=k1, k2=k2)
+        
+        # 核心：通道门控 (接在空间门控后面)
+        self.channel_gating = ChannelAttention(dim=dim, squeeze_factor=4)
+        
         self.proj_2 = nn.Conv2d(dim, dim, 1)
 
     def forward(self, x):
-        shortcut = x.clone()
+        # 保持外层不再做残差，内部纯净的变换流
         x = self.proj_1(x)
         x = self.activation(x)
+        
+        # 空间与通道的双重提纯
         x = self.spatial_gating_unit(x)
+        x = self.channel_gating(x)  # 直接串联，不需要 norm_cam !
+        
         x = self.proj_2(x)
-        x = x + shortcut
         return x
 
 
-# ============== Channel Attention ==============
-class ChannelAttention(nn.Module):
-    def __init__(self, dim, squeeze_factor=16):
-        super().__init__()
-        self.attention = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(dim, dim // squeeze_factor, 1),
-            nn.SiLU(),
-            nn.Conv2d(dim // squeeze_factor, dim, 1),
-            nn.Sigmoid(),
-        )
+# # ============== Channel Attention ==============
+# class ChannelAttention(nn.Module):
+#     def __init__(self, dim, squeeze_factor=16):
+#         super().__init__()
+#         self.attention = nn.Sequential(
+#             nn.AdaptiveAvgPool2d(1),
+#             nn.Conv2d(dim, dim // squeeze_factor, 1),
+#             nn.SiLU(),
+#             nn.Conv2d(dim // squeeze_factor, dim, 1),
+#             nn.Sigmoid(),
+#         )
 
-    def forward(self, x):
-        return x * self.attention(x)
-
+#     def forward(self, x):
+#         return x * self.attention(x)
 
 class StripCAMiddleBlock(nn.Module):
-    """
-    Middle Block using StripAttention + ChannelAttention
-    Strip: 空间注意力
-    ChannelAttention: 通道注意力
-    """
     def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47):
         super().__init__()
         self.dim = dim
 
-        # Strip Attention
+        # Part 1: Spatial-Channel Mixer (融合了 Strip 和 CA)
         self.norm1 = LayerNorm2d(channels=dim)
-        self.strip_attn = StripAttention(dim=dim, k1=k1, k2=k2)
-        # Channel Attention
-        self.norm_cam = LayerNorm2d(channels=dim)
-        self.channel_attn = ChannelAttention(dim=dim, squeeze_factor=4)
-
-        # FFN
+        self.strip_ca_attn = StripAttention(dim=dim, k1=k1, k2=k2)
+        
+        # Part 2: FFN
         self.norm2 = LayerNorm2d(channels=dim)
         hidden_features = int(dim * ffn_expansion_factor)
         self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
@@ -365,25 +364,17 @@ class StripCAMiddleBlock(nn.Module):
                                 stride=1, padding=1, groups=hidden_features * 2, bias=bias)
         self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
 
-        # layer_scale
+        # 只需要 2 个 LayerScale
         layer_scale_init = 1e-2
-        self.layer_scale_1 = nn.Parameter(
-            layer_scale_init * torch.ones(dim), requires_grad=True)
-        self.layer_scale_cam = nn.Parameter(
-            layer_scale_init * torch.ones(dim), requires_grad=True)
-        self.layer_scale_2 = nn.Parameter(
-            layer_scale_init * torch.ones(dim), requires_grad=True)
+        self.layer_scale_1 = nn.Parameter(layer_scale_init * torch.ones(dim), requires_grad=True)
+        self.layer_scale_2 = nn.Parameter(layer_scale_init * torch.ones(dim), requires_grad=True)
 
     def forward(self, x):
-        # Strip Attention path
+        # 1. Mixer Path (包含了 Strip空间 和 CA通道)
         x = x + self.layer_scale_1.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
-            self.strip_attn(self.norm1(x))
+            self.strip_ca_attn(self.norm1(x))
 
-        # Channel Attention path
-        x = x + self.layer_scale_cam.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
-            self.channel_attn(self.norm_cam(x))
-
-        # FFN path
+        # 2. FFN path
         shortcut = x
         y = self.norm2(x)
         y = self.project_in(y)
@@ -393,7 +384,6 @@ class StripCAMiddleBlock(nn.Module):
         x = shortcut + self.layer_scale_2.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * y
 
         return x
-
 
 class MAB(nn.Module):
     """
