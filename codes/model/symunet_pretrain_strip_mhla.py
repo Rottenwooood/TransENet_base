@@ -8,6 +8,9 @@ import numbers
 from einops import rearrange
 from model import common
 from typing import List, Optional
+import sys
+sys.path.append('..')
+from MHLA import MHLA_Normed_Torch
 
 #from utils.registry import ARCH_REGISTRY
 
@@ -18,7 +21,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_Strip(args)
+    return SymUNet_Pretrain_Strip_MHLA(args)
 
 
 # ============== Channel Attention ==============
@@ -134,6 +137,63 @@ class NeighborhoodAttention2D(nn.Module):
     def extra_repr(self) -> str:
         return (f"head_dim={self.head_dim}, num_head={self.num_head}, " + f"kernel_sizes={self.kernel_sizes}, " +
                 f"dilations={self.dilations}, " + f"is_causal={self.is_causal}, " + f"has_bias={self.rpb is not None}")
+
+
+# ============== MHLA2D Wrapper ==============
+class MHLA2D(nn.Module):
+    """
+    MHLA 2D Wrapper - 将 MHLA 适配到 BCHW 格式
+    MHLA 期望输入: (B, N, W, C) 其中 N*W = H*W (空间位置数)
+    """
+    def __init__(self, dim, heads=4, window_size=49, embed_len=196, transform="cos"):
+        super().__init__()
+        self.dim = dim
+        self.heads = heads
+        self.window_size = window_size
+        self.embed_len = embed_len
+        self.pieces_len = int(embed_len // window_size) ** 0.5
+        if self.pieces_len * self.pieces_len != embed_len // window_size:
+            self.pieces_len = int(embed_len ** 0.5)
+        self.pieces_len = int(self.pieces_len)
+        self.target_spatial = int(self.embed_len ** 0.5)
+
+        self.mhla = MHLA_Normed_Torch(
+            dim=dim,
+            heads=heads,
+            dim_head=dim // heads,
+            dropout=0.1,
+            qk_norm=False,
+            transform=transform,
+            window_size=window_size,
+            embed_len=embed_len,
+        )
+
+    def forward(self, x):
+        # x: (B, C, H, W)
+        B, C, H, W = x.shape
+
+        # 自适应池化到 MHLA 期望的尺寸
+        if H != self.target_spatial or W != self.target_spatial:
+            x = F.adaptive_avg_pool2d(x, (self.target_spatial, self.target_spatial))
+
+        # 转换 BCHW -> (B, H*W, 1, C) 格式给 MHLA
+        x = x.view(B, C, self.target_spatial, self.target_spatial)
+        x = x.permute(0, 2, 3, 1).contiguous()  # (B, H, W, C)
+        x = x.view(B, self.target_spatial * self.target_spatial, 1, C)  # (B, N, W, C)
+
+        # MHLA 处理
+        x = self.mhla(x)
+
+        # 转换回 BCHW
+        x = x.view(B, self.target_spatial, self.target_spatial, C)
+        x = x.permute(0, 3, 1, 2).contiguous()  # (B, C, H, W)
+
+        # 如果原始尺寸不同，需要插值回原始尺寸
+        if H != self.target_spatial or W != self.target_spatial:
+            x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=False)
+
+        return x
+
 
 # ============== LAB (Local Aggregation Block) ==============
 class LAB(nn.Module):
@@ -373,9 +433,9 @@ class StripMiddleBlock(nn.Module):
 class MAB(nn.Module):
     """
     Multi-head Attention Block from MAT
-    使用 LayerNorm2d 减少格式转换 (4次 -> 2次)
+    使用 MHLA (Multi-Head Linear Attention) 替换 NeighborhoodAttention2D
     """
-    def __init__(self, dim, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]):
+    def __init__(self, dim, num_head=4, kernel_sizes=[7, 11], dilations=[1, 1]):
         super().__init__()
         self.dim = dim
         self.num_head = num_head
@@ -384,18 +444,15 @@ class MAB(nn.Module):
         # 使用 LayerNorm2d 直接处理 BCHW 格式
         self.norm1 = LayerNorm2d(channels=dim)
 
-        self.attn = NeighborhoodAttention2D(
+        # MHLA: heads=4, window_size=49, embed_len=196 (14*14 spatial positions)
+        self.attn = MHLA2D(
             dim=dim,
-            num_head=num_head,
-            kernel_sizes=kernel_sizes,
-            dilations=dilations,
-            rel_pos_bias=True,
-            qkv_bias=True,
-            qk_scale=None,
-            attn_drop=0.0,
-            proj_drop=0.0
+            heads=num_head,
+            window_size=49,
+            embed_len=196,
+            transform="cos"
         )
-        print(f"[MAB] 使用 NeighborhoodAttention2D (num_head={num_head}, kernel_sizes={kernel_sizes}, dilations={dilations})")
+        print(f"[MAB] 使用 MHLA2D (num_head={num_head})")
 
         self.norm2 = LayerNorm2d(channels=dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
@@ -404,19 +461,18 @@ class MAB(nn.Module):
         # 输入 x shape: (B, C, H, W)
 
         # ==========================================
-        # Part 1: Self-Attention
+        # Part 1: Self-Attention (MHLA)
         # ==========================================
         shortcut_attn = x  # 保存 BCHW 格式的残差
 
         # 1. LayerNorm2d 直接处理 BCHW，无需转换
         x_norm1 = self.norm1(x)
 
-        # 2. 转换到 BHWC 给 Attention 计算
-        x_bhwc = x_norm1.permute(0, 2, 3, 1).contiguous()
-        attn_out_bhwc = self.attn(x_bhwc)
+        # 2. MHLA2D 直接处理 BCHW 格式
+        attn_out = self.attn(x_norm1)
 
-        # 3. 转回 BCHW 并加上残差
-        x = shortcut_attn + attn_out_bhwc.permute(0, 3, 1, 2).contiguous()
+        # 3. 加上残差
+        x = shortcut_attn + attn_out
 
         # ==========================================
         # Part 2: FFN / MSConvStar
@@ -612,17 +668,18 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("symunet_pretrain_strip")
-class SymUNet_Pretrain_Strip(nn.Module):
+#@ARCH_REGISTRY.register("symunet_pretrain_strip_mhla")
+class SymUNet_Pretrain_Strip_MHLA(nn.Module):
     """
-    symunet_pretrain_strip: Middle Blk使用StripAttention (k=47)
+    symunet_pretrain_strip_mhla: MAB使用MHLA替换NeighborhoodAttention
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
     - Middle Blk使用StripAttention (k1=1, k2=47)
+    - MAB使用MHLA替换NeighborhoodAttention2D
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_Strip, self).__init__()
+        super(SymUNet_Pretrain_Strip_MHLA, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
