@@ -16,4 +16,4 @@ python demo_deploy.py --model symunet_pretrain_strip \
     --pre_train ../experiment/s1_trans_strip_001_s1_trans_strip_w32/model/model_best.pt \
     --dir_out ../experiment/results/s1_trans_strip_46W32/x4
 
-python metric_scripts/calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_46W32/x4 | tail -n 1 >> results.txt
+python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_46W32/x4 | tail -n 1 >> results.txt
