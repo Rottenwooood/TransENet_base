@@ -9,7 +9,7 @@ from model import common
 from typing import List, Optional
 import sys
 sys.path.append('..')
-from MHLA import MHLA_Normed_Torch
+from MHLA import MHLA_Normed_Torch_Dynamic
 
 #from utils.registry import ARCH_REGISTRY
 
@@ -140,74 +140,66 @@ class NeighborhoodAttention2D(nn.Module):
 
 # ============== MHLA2D Wrapper ==============
 class MHLA2D(nn.Module):
-    """
-    MHLA 2D Wrapper - 将 MHLA 适配到 BCHW 格式
-    MHLA expects: (B, N, W, C) where N = pieces_len^2, W = window_len^2
-    For embed_len=196, window_size=49: pieces_len=2, window_len=7, H=W=14
-    """
-    def __init__(self, dim, heads=4, window_size=49, embed_len=196, transform="cos"):
+    def __init__(self, dim, heads=4, window_size=49, transform="cos"):
         super().__init__()
         self.dim = dim
-        self.heads = heads
         self.window_size = window_size
-        self.embed_len = embed_len
-
-        # MHLA internal parameters
-        # embed_len = pieces_len^2 * window_len^2 = H * W (total spatial positions)
-        # H = W = pieces_len * window_len
-        self.window_len = int(window_size ** 0.5)  # 7
-        self.pieces_len = int((embed_len // window_size) ** 0.5)  # sqrt(4) = 2
-        self.target_spatial = self.pieces_len * self.window_len  # 14
-
-        self.mhla = MHLA_Normed_Torch(
+        self.window_len = int(window_size ** 0.5)
+        
+        self.mhla = MHLA_Normed_Torch_Dynamic(
             dim=dim,
             heads=heads,
-            dim_head=dim // heads,
-            dropout=0.1,
-            qk_norm=False,
-            transform=transform,
             window_size=window_size,
-            embed_len=embed_len,
+            transform=transform
         )
 
     def forward(self, x):
-        # x: (B, C, H, W)
+        """
+        x: (B, C, H, W)
+        """
         B, C, H, W = x.shape
-
-        # Pool to MHLA's expected spatial size (14x14)
-        if H != self.target_spatial or W != self.target_spatial:
-            x = F.adaptive_avg_pool2d(x, (self.target_spatial, self.target_spatial))
-
-        # Convert BCHW -> (B, H, W, C) -> (B, pieces_len, window_len, pieces_len, window_len, C)
-        x = x.view(B, C, self.target_spatial, self.target_spatial)
-        x = x.permute(0, 2, 3, 1).contiguous()  # (B, H, W, C)
-        x = x.view(B, self.pieces_len, self.window_len, self.pieces_len, self.window_len, C)
-        # Transpose to get (B, pieces_len, pieces_len, window_len, window_len, C)
+        
+        # ==========================================
+        # 1. 动态 Padding (保证宽高是 window_len 的整数倍)
+        # ==========================================
+        pad_r = (self.window_len - W % self.window_len) % self.window_len
+        pad_b = (self.window_len - H % self.window_len) % self.window_len
+        
+        if pad_r > 0 or pad_b > 0:
+            x = F.pad(x, (0, pad_r, 0, pad_b)) # 右侧和下方填充0
+            
+        H_pad, W_pad = x.shape[2:]
+        pieces_h = H_pad // self.window_len
+        pieces_w = W_pad // self.window_len
+        
+        # ==========================================
+        # 2. Reshape: BCHW -> B, N, WindowSize, C
+        # ==========================================
+        x = x.permute(0, 2, 3, 1).contiguous() # (B, H_pad, W_pad, C)
+        x = x.view(B, pieces_h, self.window_len, pieces_w, self.window_len, C)
+        x = x.permute(0, 1, 3, 2, 4, 5).contiguous() # (B, pieces_h, pieces_w, window_len, window_len, C)
+        x = x.view(B, pieces_h * pieces_w, self.window_size, C) # (B, N, W, C)
+        
+        # ==========================================
+        # 3. 执行 MHLA (传入动态尺寸)
+        # ==========================================
+        x = self.mhla(x, pieces_h, pieces_w)
+        
+        # ==========================================
+        # 4. Reshape Back: B, N, WindowSize, C -> BCHW
+        # ==========================================
+        x = x.view(B, pieces_h, pieces_w, self.window_len, self.window_len, C)
         x = x.permute(0, 1, 3, 2, 4, 5).contiguous()
-        # Flatten to (B, pieces_len^2, window_len^2, C) = (B, 4, 49, C)
-        x = x.view(B, self.pieces_len * self.pieces_len, self.window_len * self.window_len, C)
-
-        # MHLA expects (B, N, W, C) where N = pieces_len^2 and W = window_len^2
-        x = self.mhla(x)
-
-        # Reverse: (B, 4, 49, C) -> (B, 2, 2, 7, 7, C) -> (B, 14, 14, C) -> (B, C, 14, 14)
-        x = x.view(B, self.pieces_len, self.pieces_len, self.window_len, self.window_len, C)
-        x = x.permute(0, 1, 3, 2, 4, 5).contiguous()  # (B, 2, 7, 2, 7, C)
-        x = x.view(B, self.target_spatial, self.target_spatial, C)  # (B, 14, 14, C)
-        x = x.permute(0, 3, 1, 2).contiguous()  # (B, C, 14, 14)
-
-        # Upsample back to original size
-        if H != self.target_spatial or W != self.target_spatial:
-            x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=False)
-
+        x = x.view(B, H_pad, W_pad, C)
+        x = x.permute(0, 3, 1, 2).contiguous() # (B, C, H_pad, W_pad)
+        
+        # ==========================================
+        # 5. Un-pad (恢复到原始输入尺寸，完美还原细节)
+        # ==========================================
+        if pad_r > 0 or pad_b > 0:
+            x = x[:, :, :H, :W].contiguous()
+            
         return x
-
-        # 如果原始尺寸不同，需要插值回原始尺寸
-        if H != self.target_spatial or W != self.target_spatial:
-            x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=False)
-
-        return x
-
 
 # ============== LAB (Local Aggregation Block) ==============
 class LAB(nn.Module):
@@ -463,7 +455,6 @@ class MAB(nn.Module):
             dim=dim,
             heads=num_head,
             window_size=49,
-            embed_len=196,
             transform="cos"
         )
         print(f"[MAB] 使用 MHLA2D (num_head={num_head})")
