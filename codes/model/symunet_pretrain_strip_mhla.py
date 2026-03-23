@@ -437,25 +437,18 @@ class StripMiddleBlock(nn.Module):
 
 
 class MAB(nn.Module):
-    """
-    Multi-head Attention Block from MAT
-    使用 MHLA (Multi-Head Linear Attention) 替换 NeighborhoodAttention2D
-    """
-    def __init__(self, dim, num_head=4, kernel_sizes=[7, 11], dilations=[1, 1]):
+    def __init__(self, dim, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]):
         super().__init__()
         self.dim = dim
         self.num_head = num_head
-        self.dilations = dilations
-
-        # 使用 LayerNorm2d 直接处理 BCHW 格式
         self.norm1 = LayerNorm2d(channels=dim)
 
-        # MHLA: heads=4, window_size=49, embed_len=196 (14*14 spatial positions)
+        # ===== 更新此处的参数 =====
         self.attn = MHLA2D(
             dim=dim,
             heads=num_head,
-            window_size=49,
-            transform="cos"
+            window_size=64,       # 修改为 64 (8x8 窗口)
+            transform="exp"       # 使用指数衰减，对超分最好
         )
         print(f"[MAB] 使用 MHLA2D (num_head={num_head})")
 
