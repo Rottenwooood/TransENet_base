@@ -9,7 +9,7 @@ from model import common
 from typing import List, Optional
 import sys
 sys.path.append('..')
-from MHLA import MHLA_Normed_Torch_Dynamic
+from MHLA_v3 import MHLA_Normed_Torch_Dynamic
 
 #from utils.registry import ARCH_REGISTRY
 
@@ -149,8 +149,7 @@ class MHLA2D(nn.Module):
         self.mhla = MHLA_Normed_Torch_Dynamic(
             dim=dim,
             heads=heads,
-            window_size=window_size,
-            transform=transform
+            window_size=window_size
         )
 
     def forward(self, x):

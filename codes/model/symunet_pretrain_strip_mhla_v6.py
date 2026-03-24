@@ -448,7 +448,7 @@ class MAB(nn.Module):
             dim=dim,
             heads=num_head,
             window_size=49,       # 修改为 64 (8x8 窗口)
-            transform="cos"       # 使用余弦衰减，对超分最好
+            transform="exp"       # 使用指数衰减，对超分最好
         )
         print(f"[MAB] 使用 MHLA2D (num_head={num_head})")
 
