@@ -13,12 +13,6 @@ class DynamicBlockDistanceWeight(nn.Module):
         self.transform = transform
         self.local_thres = local_thres
         self.exp_sigma = exp_sigma
-<<<<<<< HEAD
-
-    def forward(self, num_blocks_h, num_blocks_w, device, dtype):
-        total_blocks = num_blocks_h * num_blocks_w
-
-=======
         self.cache = {} 
 
     def forward(self, num_blocks_h, num_blocks_w, device, dtype):
@@ -29,7 +23,6 @@ class DynamicBlockDistanceWeight(nn.Module):
         if key in self.cache:
             return self.cache[key]
         
->>>>>>> refs/remotes/origin/pren
         # 1. 生成网格坐标
         y, x = torch.meshgrid(torch.arange(num_blocks_h), torch.arange(num_blocks_w), indexing='ij')
         centers = torch.stack([x.flatten(), y.flatten()], dim=1).to(device=device, dtype=dtype) # [total_blocks, 2]
@@ -39,28 +32,6 @@ class DynamicBlockDistanceWeight(nn.Module):
         dist_matrix = torch.norm(centers.unsqueeze(1) - centers.unsqueeze(0), p=2, dim=-1)
 
         # 3. 应用转换函数
-<<<<<<< HEAD
-        if self.transform == "linear":
-            max_dist = dist_matrix.max() + 1e-6
-            mat = 1.0 - (dist_matrix / max_dist)
-            return mat / mat.sum(dim=0, keepdim=True)
-
-        elif self.transform == "cos":
-            max_dist = dist_matrix.max() + 1e-6
-            normalized_dist = dist_matrix / max_dist * math.pi / 4
-            mat = torch.cos(normalized_dist)
-            return mat / mat.sum(dim=0, keepdim=True)
-
-        elif self.transform == "exp":
-            mat = torch.exp(-dist_matrix / self.exp_sigma)
-            return mat / mat.sum(dim=0, keepdim=True)
-
-        elif self.transform == "local":
-            mat = (dist_matrix <= self.local_thres).float()
-            return mat / (mat.sum(dim=0, keepdim=True) + 1e-6)
-
-        return dist_matrix # Fallback
-=======
         # if self.transform == "linear":
         #     max_dist = dist_matrix.max() + 1e-6
         #     mat = 1.0 - (dist_matrix / max_dist)
@@ -85,7 +56,6 @@ class DynamicBlockDistanceWeight(nn.Module):
         #     return mat / (mat.sum(dim=0, keepdim=True) + 1e-6)
 
         # return dist_matrix # Fallback
->>>>>>> refs/remotes/origin/pren
 
 class MHLA_Normed_Torch_Dynamic_RALA(nn.Module):
     def __init__(self, dim, heads=4, dim_head=None, dropout=0.1, qk_norm=False, transform="cos", window_size=49):
@@ -124,11 +94,7 @@ class MHLA_Normed_Torch_Dynamic_RALA(nn.Module):
         lepe = rearrange(lepe, 'b d (ph wh) (pw ww) -> b (ph pw) (wh ww) d',
                          ph=pieces_h, pw=pieces_w, wh=self.window_len, ww=self.window_len)
         return q, k, v, lepe
-<<<<<<< HEAD
     def forward(self, x, pieces_h, pieces_w):
-=======
-def forward(self, x, pieces_h, pieces_w):
->>>>>>> refs/remotes/origin/pren
         # 1. 归一化输入
         x = self.norm(x)
         B, N, W, C = x.shape
