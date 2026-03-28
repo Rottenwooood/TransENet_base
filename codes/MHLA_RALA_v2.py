@@ -4,6 +4,7 @@ from einops import rearrange
 import torch.nn.functional as F
 import math
 
+
 class DynamicBlockDistanceWeight(nn.Module):
     """
     动态生成块间距离权重，支持任意分辨率带来的不同 Block 数量。
@@ -57,6 +58,7 @@ class DynamicBlockDistanceWeight(nn.Module):
 
         # return dist_matrix # Fallback
 
+
 class MHLA_Normed_Torch_Dynamic_RALA(nn.Module):
     def __init__(self, dim, heads=4, dim_head=None, dropout=0.1, qk_norm=False, transform="cos", window_size=49):
         super().__init__()
@@ -81,8 +83,8 @@ class MHLA_Normed_Torch_Dynamic_RALA(nn.Module):
         # RALA 门控：用于高频恢复
         # ==========================================
         self.rala_gate = nn.Sequential(
-            nn.Linear(dim, inner_dim),  # inner_dim = head_dim * heads
-            nn.SiLU()                    # SiLU 曲线平滑利于超分
+            nn.Linear(dim, inner_dim,bias=False),  # inner_dim = head_dim * heads
+            # nn.SiLU()                    # SiLU 曲线平滑利于超分
         )
 
     def _mlp_lepe(self, x, pieces_h, pieces_w):
@@ -94,7 +96,7 @@ class MHLA_Normed_Torch_Dynamic_RALA(nn.Module):
         lepe = rearrange(lepe, 'b d (ph wh) (pw ww) -> b (ph pw) (wh ww) d',
                          ph=pieces_h, pw=pieces_w, wh=self.window_len, ww=self.window_len)
         return q, k, v, lepe
-    def forward(self, x, pieces_h, pieces_w):
+def forward(self, x, pieces_h, pieces_w):
         # 1. 归一化输入
         x = self.norm(x)
         B, N, W, C = x.shape
