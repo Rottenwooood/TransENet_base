@@ -278,7 +278,9 @@ class LayerNormFunction(torch.autograd.Function):
 #         return out
 
 
-# ============== Triton SKA (Selective Kernel Attention) ==============
+# ==========================================
+# Triton SKA (Selective Kernel Attention) 核心算子
+# ==========================================
 def _grid(numel: int, bs: int) -> tuple:
     return (triton.cdiv(numel, bs),)
 
@@ -292,17 +294,12 @@ def _idx(i, n: int, c: int, h: int, w: int):
     return ni, ci, hi, wi, m
     
 @triton.jit
-def ska_fwd(
-    x_ptr, w_ptr, o_ptr,
-    n, ic, h, w, ks, pad, wc,
-    BS: tl.constexpr
-):
+def ska_fwd(x_ptr, w_ptr, o_ptr, n, ic, h, w, ks, pad, wc, BS: tl.constexpr):
     pid = tl.program_id(0)
     start = pid * BS
     offs = start + tl.arange(0, BS)
 
     ni, ci, hi, wi, m = _idx(offs, n, ic, h, w)
-    # 统一使用 float32 累加器以保证精度
     val = tl.zeros((BS,), dtype=tl.float32)
 
     for kh in range(ks):
@@ -315,20 +312,14 @@ def ska_fwd(
             x_off = ((ni * ic + ci) * h + hin) * w + win
             w_off = ((ni * wc + ci % wc) * ks * ks + (kh * ks + kw)) * h * w + hi * w + wi
 
-            # 读取时直接转为 float32
             x_val = tl.load(x_ptr + x_off, mask=m & b, other=0.0).to(tl.float32)
             w_val = tl.load(w_ptr + w_off, mask=m, other=0.0).to(tl.float32)
             val += tl.where(b & m, x_val * w_val, 0.0)
 
-    # 存储时自动转回输出指针的原本类型 (fp16 / fp32)
     tl.store(o_ptr + offs, val.to(o_ptr.dtype.element_ty), mask=m)
 
 @triton.jit
-def ska_bwd_x(
-    go_ptr, w_ptr, gi_ptr,
-    n, ic, h, w, ks, pad, wc,
-    BS: tl.constexpr
-):
+def ska_bwd_x(go_ptr, w_ptr, gi_ptr, n, ic, h, w, ks, pad, wc, BS: tl.constexpr):
     pid = tl.program_id(0)
     start = pid * BS
     offs = start + tl.arange(0, BS)
@@ -353,11 +344,7 @@ def ska_bwd_x(
     tl.store(gi_ptr + offs, val.to(gi_ptr.dtype.element_ty), mask=m)
 
 @triton.jit
-def ska_bwd_w(
-    go_ptr, x_ptr, gw_ptr,
-    n, wc, h, w, ic, ks, pad,
-    BS: tl.constexpr
-):
+def ska_bwd_w(go_ptr, x_ptr, gw_ptr, n, wc, h, w, ic, ks, pad, BS: tl.constexpr):
     pid = tl.program_id(0)
     start = pid * BS
     offs = start + tl.arange(0, BS)
@@ -391,7 +378,8 @@ class SkaFn(torch.autograd.Function):
     @staticmethod
     @custom_fwd
     def forward(ctx, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        ks = int(math_lib.sqrt(w.shape[2]))
+        # 修复：把 math_lib.sqrt 改为标准的 math.sqrt
+        ks = int(math.sqrt(w.shape[2]))
         pad = (ks - 1) // 2
         ctx.ks, ctx.pad = ks, pad
         n, ic, h, width = x.shape
@@ -403,8 +391,6 @@ class SkaFn(torch.autograd.Function):
         w = w.contiguous()
 
         grid = lambda meta: _grid(numel, meta["BS"])
-
-        # 移除传递 CT 和 AT 变量
         ska_fwd[grid](x, w, o, n, ic, h, width, ks, pad, wc, BS=1024)
 
         ctx.save_for_backward(x, w)
@@ -424,34 +410,32 @@ class SkaFn(torch.autograd.Function):
         if ctx.needs_input_grad[0]:
             gx = torch.empty_like(x)
             numel = gx.numel()
-            # 移除传递 CT 和 AT 变量
             ska_bwd_x[lambda meta: _grid(numel, meta["BS"])](go, w, gx, n, ic, h, width, ks, pad, wc, BS=1024)
 
         if ctx.needs_input_grad[1]:
             gw = torch.empty_like(w)
             numel = gw.numel() // w.shape[2]
-            # 移除传递 CT 和 AT 变量
             ska_bwd_w[lambda meta: _grid(numel, meta["BS"])](go, x, gw, n, wc, h, width, ic, ks, pad, BS=1024)
 
         return gx, gw, None, None
 
 class SKA(nn.Module):
-    """
-    Selective Kernel Attention - Triton 实现
-    参考 lsnet/model/ska.py
-    """
     def __init__(self):
         super().__init__()
 
     def forward(self, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
         return SkaFn.apply(x, w)
 
-
-# ============== LKP (Large Kernel Projection) ==============
+# ==========================================
+# LKP & LSConv
+# ==========================================
 class LKP(nn.Module):
-    """Large Kernel Projection - 无BN版本"""
     def __init__(self, dim, lks=7, sks=3, groups=8):
         super().__init__()
+        # 确保 groups 合理 (防止 dim=32 时，dim//groups = 4 等报错)
+        # 一般 SR 模型 dim=32, 48, 64，都是 8 的倍数，没问题
+        assert dim % groups == 0, f"dim {dim} must be divisible by groups {groups}"
+        
         self.cv1 = nn.Conv2d(dim, dim // 2, 1)
         self.act = nn.ReLU()
         self.cv2 = nn.Conv2d(dim // 2, dim // 2, kernel_size=lks, padding=(lks - 1) // 2, groups=dim // 2)
@@ -470,17 +454,20 @@ class LKP(nn.Module):
         w = w.view(b, self.dim // self.groups, self.sks ** 2, h, width)
         return w
 
-
-# ============== LSConv_v2(无BN版本) ==============
 class LSConv(nn.Module):
-    """Large Selective Conv - 无BN版本"""
-    def __init__(self, dim):
+    """
+    Large Selective Conv
+    修改：去掉了内部的 +x 残差，使其成为纯粹的 Attention/Mixing 模块
+    """
+    def __init__(self, dim, groups=8):
         super(LSConv, self).__init__()
-        self.lkp = LKP(dim, lks=7, sks=3, groups=8)
+        self.lkp = LKP(dim, lks=7, sks=3, groups=groups)
         self.ska = SKA()
 
     def forward(self, x):
-        return self.ska(x, self.lkp(x)) + x
+        # 原来是 return self.ska(x, self.lkp(x)) + x
+        # 现在直接返回混合特征，让外层的 MAB 去加残差
+        return self.ska(x, self.lkp(x))
 
 
 # ============== LSConvMiddleBlock ==============
