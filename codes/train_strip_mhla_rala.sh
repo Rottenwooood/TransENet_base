@@ -4,10 +4,10 @@
 #export http_proxy="http://127.0.0.1:7890"
 #export https_proxy="http://127.0.0.1:7890"
 
-# Training
-python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_mhla_rala.json
+# # Training
+# python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_mhla_rala.json
 
-# Inference and Evaluation
+# # Inference and Evaluation
 python demo_deploy.py --model symunet_pretrain_strip_mhla_rala \
     --symunet_pretrain_width 32 \
     --symunet_pretrain_enc_blk_nums 4,6 \
@@ -18,4 +18,4 @@ python demo_deploy.py --model symunet_pretrain_strip_mhla_rala \
     --dir_out ../experiment/results/s1_trans_strip_mhla_rala_46W32/x4
 
 # Calculate PSNR/SSIM
-python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_rala_46W32/x4 | tail -n 1 >> results.txt
+# python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_rala_46W32/x4 | tail -n 1 >> results.txt

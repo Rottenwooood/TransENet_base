@@ -84,7 +84,7 @@ class MHLA_Normed_Torch_Dynamic_RALA(nn.Module):
         lepe = rearrange(lepe, 'b d (ph wh) (pw ww) -> b (ph pw) (wh ww) d',
                          ph=pieces_h, pw=pieces_w, wh=self.window_len, ww=self.window_len)
         return q, k, v, lepe
-def forward(self, x, pieces_h, pieces_w):
+    def forward(self, x, pieces_h, pieces_w):
         # 1. 归一化输入
         x = self.norm(x)
         B, N, W, C = x.shape

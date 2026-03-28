@@ -1,9 +1,6 @@
 #!/bin/bash
 # Training script for symunet_pretrain_rala (RALA Gate Linear Attention)
 
-export http_proxy="http://127.0.0.1:7890"
-export https_proxy="http://127.0.0.1:7890"
-
 # Training
 python user/batch_train.py --config user/experiments_config5_02_s1_trans_rala.json
 

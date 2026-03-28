@@ -9,7 +9,7 @@ from model import common
 from typing import List, Optional
 import sys
 sys.path.append('..')
-from MHLA import MHLA_Normed_Torch_Dynamic
+from MHLA_RALA import MHLA_Normed_Torch_Dynamic_RALA
 
 #from utils.registry import ARCH_REGISTRY
 
@@ -20,7 +20,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_Strip_MHLA(args)
+    return SymUNet_Pretrain_Strip_MHLA_RALA(args)
 
 
 # ============== Channel Attention ==============
@@ -138,15 +138,15 @@ class NeighborhoodAttention2D(nn.Module):
                 f"dilations={self.dilations}, " + f"is_causal={self.is_causal}, " + f"has_bias={self.rpb is not None}")
 
 
-# ============== MHLA2D Wrapper ==============
+# ============== MHLA2D Wrapper (使用RALA版本) ==============
 class MHLA2D(nn.Module):
     def __init__(self, dim, heads=4, window_size=49, transform="cos"):
         super().__init__()
         self.dim = dim
         self.window_size = window_size
         self.window_len = int(window_size ** 0.5)
-        
-        self.mhla = MHLA_Normed_Torch_Dynamic(
+
+        self.mhla = MHLA_Normed_Torch_Dynamic_RALA(
             dim=dim,
             heads=heads,
             window_size=window_size,
@@ -158,20 +158,20 @@ class MHLA2D(nn.Module):
         x: (B, C, H, W)
         """
         B, C, H, W = x.shape
-        
+
         # ==========================================
         # 1. 动态 Padding (保证宽高是 window_len 的整数倍)
         # ==========================================
         pad_r = (self.window_len - W % self.window_len) % self.window_len
         pad_b = (self.window_len - H % self.window_len) % self.window_len
-        
+
         if pad_r > 0 or pad_b > 0:
             x = F.pad(x, (0, pad_r, 0, pad_b)) # 右侧和下方填充0
-            
+
         H_pad, W_pad = x.shape[2:]
         pieces_h = H_pad // self.window_len
         pieces_w = W_pad // self.window_len
-        
+
         # ==========================================
         # 2. Reshape: BCHW -> B, N, WindowSize, C
         # ==========================================
@@ -179,12 +179,12 @@ class MHLA2D(nn.Module):
         x = x.view(B, pieces_h, self.window_len, pieces_w, self.window_len, C)
         x = x.permute(0, 1, 3, 2, 4, 5).contiguous() # (B, pieces_h, pieces_w, window_len, window_len, C)
         x = x.view(B, pieces_h * pieces_w, self.window_size, C) # (B, N, W, C)
-        
+
         # ==========================================
         # 3. 执行 MHLA (传入动态尺寸)
         # ==========================================
         x = self.mhla(x, pieces_h, pieces_w)
-        
+
         # ==========================================
         # 4. Reshape Back: B, N, WindowSize, C -> BCHW
         # ==========================================
@@ -192,13 +192,13 @@ class MHLA2D(nn.Module):
         x = x.permute(0, 1, 3, 2, 4, 5).contiguous()
         x = x.view(B, H_pad, W_pad, C)
         x = x.permute(0, 3, 1, 2).contiguous() # (B, C, H_pad, W_pad)
-        
+
         # ==========================================
         # 5. Un-pad (恢复到原始输入尺寸，完美还原细节)
         # ==========================================
         if pad_r > 0 or pad_b > 0:
             x = x[:, :, :H, :W].contiguous()
-            
+
         return x
 
 # ============== LAB (Local Aggregation Block) ==============
@@ -313,31 +313,6 @@ class LayerNormFunction(torch.autograd.Function):
         return gx, (grad_output * y).sum(dim=3).sum(dim=2).sum(dim=0), grad_output.sum(dim=3).sum(dim=2).sum(dim=0), None
 
 
-# # ============== MAB (Multi-head Attention Block) from MAT ==============
-# class StandardSelfAttention(nn.Module):
-#     """Standard self-attention as fallback"""
-#     def __init__(self, dim, num_head):
-#         super().__init__()
-#         self.num_head = num_head
-#         self.head_dim = dim // num_head
-#         self.scale = self.head_dim ** -0.5
-
-#         self.qkv = nn.Linear(dim, dim * 3, bias=True)
-#         self.proj = nn.Linear(dim, dim)
-
-#     def forward(self, x):
-#         B, H, W, C = x.shape
-#         qkv = self.qkv(x).reshape(B, H, W, 3, self.num_head, self.head_dim).permute(3, 0, 4, 1, 2, 5)
-#         q, k, v = qkv[0], qkv[1], qkv[2]
-
-#         attn = (q @ k.transpose(-2, -1)) * self.scale
-#         attn = attn.softmax(dim=-1)
-
-#         out = (attn @ v).transpose(1, 2).reshape(B, H, W, C)
-#         out = self.proj(out)
-#         return out
-
-
 # ============== StripModule (参考 StripNet) ==============
 class StripModule(nn.Module):
     """
@@ -443,14 +418,14 @@ class MAB(nn.Module):
         self.num_head = num_head
         self.norm1 = LayerNorm2d(channels=dim)
 
-        # ===== 更新此处的参数 =====
+        # ===== 使用 RALA 版本的 MHLA2D =====
         self.attn = MHLA2D(
             dim=dim,
             heads=num_head,
-            window_size=49,       # 修改为 64 (8x8 窗口)
+            window_size=49,       # 64 (8x8 窗口)
             transform="cos"       # 使用余弦衰减，对超分最好
         )
-        print(f"[MAB] 使用 MHLA2D (num_head={num_head})")
+        print(f"[MAB] 使用 MHLA2D_RALA (num_head={num_head})")
 
         self.norm2 = LayerNorm2d(channels=dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
@@ -459,7 +434,7 @@ class MAB(nn.Module):
         # 输入 x shape: (B, C, H, W)
 
         # ==========================================
-        # Part 1: Self-Attention (MHLA)
+        # Part 1: Self-Attention (MHLA-RALA)
         # ==========================================
         shortcut_attn = x  # 保存 BCHW 格式的残差
 
@@ -666,18 +641,18 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("symunet_pretrain_strip_mhla")
-class SymUNet_Pretrain_Strip_MHLA(nn.Module):
+#@ARCH_REGISTRY.register("symunet_pretrain_strip_mhla_rala")
+class SymUNet_Pretrain_Strip_MHLA_RALA(nn.Module):
     """
-    symunet_pretrain_strip_mhla: MAB使用MHLA替换NeighborhoodAttention
+    symunet_pretrain_strip_mhla_rala: MAB使用RALA版本的MHLA
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
     - Middle Blk使用StripAttention (k1=1, k2=47)
-    - MAB使用MHLA替换NeighborhoodAttention2D
+    - MAB使用RALA版本的MHLA (带高频恢复门控)
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_Strip_MHLA, self).__init__()
+        super(SymUNet_Pretrain_Strip_MHLA_RALA, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -803,7 +778,7 @@ class SymUNet_Pretrain_Strip_MHLA(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_S1_Trans(args)
+    model = SymUNet_Pretrain_Strip_MHLA_RALA(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)
