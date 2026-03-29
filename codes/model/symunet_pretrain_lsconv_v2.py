@@ -482,7 +482,7 @@ class LSConvMiddleBlock(nn.Module):
 
         # LSConv
         self.norm1 = LayerNorm2d(channels=dim)
-        self.LSConv_v2= LSConv(dim=dim)
+        self.lsconv = LSConv(dim=dim)
 
         # FFN
         self.norm2 = LayerNorm2d(channels=dim)

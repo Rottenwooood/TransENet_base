@@ -233,6 +233,8 @@ def test_model_performance(args, sr_model, sample_input=None):
 
     print("="*60 + "\n")
 
+    print(f"[ptflops] FLOPs (G): {macs / 1e9:.2f} G，[ptflops] 参数量 (M): {params_ptflops / 1e6:.2f} M")
+
     return {
         'total_params': total_params,
         'trainable_params': trainable_params,
@@ -398,9 +400,6 @@ if __name__ == '__main__':
     sr_model = model.Model(args, checkpoint)
     sr_model.eval()
 
-    # 模型性能测试
-    test_model_performance(args, sr_model)
-
     # # analyse the params of the load model
     # pytorch_total_params = sum(p.numel() for p in sr_model.parameters())
     # print(pytorch_total_params)
@@ -412,4 +411,7 @@ if __name__ == '__main__':
     #     print(p.numel())
     #     print('========')
 
-    # deploy(args, sr_model)
+    deploy(args, sr_model)
+    # 模型性能测试
+    test_model_performance(args, sr_model)
+

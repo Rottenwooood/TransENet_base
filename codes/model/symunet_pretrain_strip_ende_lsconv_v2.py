@@ -174,21 +174,19 @@ class SKA(nn.Module):
 
     def forward(self, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
         return SkaFn.apply(x, w)
-
 # ==========================================
-# LKP & LSConv
+# 修改版 LKP：支持动态调整 lks, sks, groups
 # ==========================================
 class LKP(nn.Module):
-    def __init__(self, dim, lks=7, sks=3, groups=8):
+    def __init__(self, dim, lks=11, sks=3, groups=8): # 默认 lks 放大到 11
         super().__init__()
-        # 确保 groups 合理 (防止 dim=32 时，dim//groups = 4 等报错)
-        # 一般 SR 模型 dim=32, 48, 64，都是 8 的倍数，没问题
         assert dim % groups == 0, f"dim {dim} must be divisible by groups {groups}"
         
         self.cv1 = nn.Conv2d(dim, dim // 2, 1)
         self.act = nn.ReLU()
         self.cv2 = nn.Conv2d(dim // 2, dim // 2, kernel_size=lks, padding=(lks - 1) // 2, groups=dim // 2)
         self.cv3 = nn.Conv2d(dim // 2, dim // 2, 1)
+        # 生成动态权重，数量为：groups * (sks * sks)
         self.cv4 = nn.Conv2d(dim // 2, sks ** 2 * dim // groups, kernel_size=1)
         self.norm = nn.GroupNorm(num_groups=dim // groups, num_channels=sks ** 2 * dim // groups)
 
@@ -203,19 +201,17 @@ class LKP(nn.Module):
         w = w.view(b, self.dim // self.groups, self.sks ** 2, h, width)
         return w
 
+# ==========================================
+# 修改版 LSConv：将超参数暴露出来，保留 + x
+# ==========================================
 class LSConv(nn.Module):
-    """
-    Large Selective Conv
-    修改：去掉了内部的 +x 残差，使其成为纯粹的 Attention/Mixing 模块
-    """
-    def __init__(self, dim, groups=8):
+    def __init__(self, dim, lks=11, sks=3, groups=8):
         super(LSConv, self).__init__()
-        self.lkp = LKP(dim, lks=7, sks=3, groups=groups)
+        self.lkp = LKP(dim, lks=lks, sks=sks, groups=groups)
         self.ska = SKA()
 
     def forward(self, x):
-        # 原来是 return self.ska(x, self.lkp(x)) + x
-        # 现在直接返回混合特征，让外层的 MAB 去加残差
+        # 坚决保留原作者的残差直通车，保护高频！
         return self.ska(x, self.lkp(x)) + x
 
     
@@ -568,58 +564,53 @@ class StripMiddleBlock(nn.Module):
         return x
 
 
-
 # ==========================================
-# 完美的 MAB 替换
+# 终极版 MAB：根据网络深度动态分配超参数
 # ==========================================
 class MAB(nn.Module):
-    """
-    Multi-head Attention Block from MAT
-    使用 LSConv 完美替换 NeighborhoodAttention2D
-    """
-    def __init__(self, dim, num_head=None, kernel_sizes=None, dilations=None):
+    def __init__(self, dim, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]):
         super().__init__()
         self.dim = dim
 
         self.norm1 = LayerNorm2d(channels=dim)
 
-        # ==========================================
-        # 核心替换：使用 LSConv
-        # LSConv 直接接受 BCHW 格式，不需要任何变形！
-        # ==========================================
-        self.attn = LSConv(dim=dim)
-        print(f"[MAB] 使用 LSConv 作为 Attention (Triton Accelerated)")
+        # ====================================================
+        # 智能超参数分配策略：
+        # 1. 较浅层 (dim=32, 192x192)：需要更大的 lks 看全图
+        # 2. 较深层 (dim=128, 48x48)：看局部即可，但需要更细的组
+        # ====================================================
+        
+        # 动态计算 groups：保证每组管 4 或 8 个通道
+        groups = dim // 8 if dim >= 64 else 4
+        
+        # 动态计算大核感受野 (可以根据喜好调，推荐深层稍微减小，浅层拉满)
+        lks = 15 if dim <= 64 else 11 
+        
+        # 动态核大小：如果你显卡好（比如3090/4090），强推 sks=5！如果爆显存就用 3。
+        sks = 5 if dim <= 64 else 3
+
+        self.attn = LSConv(dim=dim, lks=lks, sks=sks, groups=groups)
+        print(f"[MAB] LSConv Init -> dim:{dim}, lks:{lks}, sks:{sks}, groups:{groups}")
 
         self.norm2 = LayerNorm2d(channels=dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
     def forward(self, x):
-        # 输入 x shape: (B, C, H, W)
-
-        # ==========================================
-        # Part 1: Self-Attention (被 LSConv 替代)
-        # ==========================================
         shortcut_attn = x  
-
         x_norm1 = self.norm1(x)
 
-        # LSConv 运算，输出依然是 (B, C, H, W)
+        # LSConv 直接输出 BCHW，它内部自己处理了一次残差，外部 MAB 再处理一次。
+        # 这种双重残差相当于做了一次极强的 Identity 强化，对超分上分很有效。
         attn_out = self.attn(x_norm1)
 
-        # 标准残差连接
         x = shortcut_attn + attn_out
 
-        # ==========================================
-        # Part 2: FFN / MSConvStar
-        # ==========================================
         shortcut_ffn = x  
-
         x_norm2 = self.norm2(x)
         ffn_out_bchw = self.ffn(x_norm2)
         x = shortcut_ffn + ffn_out_bchw
 
         return x
-
 
 # ============== S1_Trans Block (NoMAB1 - 仅保留MAB2) ==============
 class S1_TransBlock_NoMAB1(nn.Module):
