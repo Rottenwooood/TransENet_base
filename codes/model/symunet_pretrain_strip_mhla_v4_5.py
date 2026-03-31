@@ -9,7 +9,7 @@ from model import common
 from typing import List, Optional
 import sys
 sys.path.append('..')
-from MHLA import MHLA_Normed_Torch_Dynamic
+from MHLA_v4_5 import MHLA_Normed_Torch_Dynamic
 
 #from utils.registry import ARCH_REGISTRY
 
@@ -39,103 +39,103 @@ class ChannelAttention(nn.Module):
         return x * self.attention(x)
 
 
-class NeighborhoodAttention2D(nn.Module):
-    """
-    Neighborhood Attention 2D Module
-    """
+# class NeighborhoodAttention2D(nn.Module):
+#     """
+#     Neighborhood Attention 2D Module
+#     """
 
-    def __init__(
-        self,
-        dim: int,
-        num_head: int,
-        kernel_sizes: List[int] = [7, 9, 11],
-        dilations: List[int] = [1, 1, 1],
-        is_causal: List[bool] = [False, False],
-        rel_pos_bias: bool = False,
-        qkv_bias: bool = True,
-        qk_scale: Optional[float] = None,
-        attn_drop: float = 0.0,
-        proj_drop: float = 0.0,
-    ):
-        super().__init__()
-        assert len(kernel_sizes) == len(dilations)
-        if any(is_causal) and rel_pos_bias:
-            raise NotImplementedError("Causal neighborhood attention is undefined with positional biases."
-                                      "Please consider disabling positional biases, or open an issue.")
+#     def __init__(
+#         self,
+#         dim: int,
+#         num_head: int,
+#         kernel_sizes: List[int] = [7, 9, 11],
+#         dilations: List[int] = [1, 1, 1],
+#         is_causal: List[bool] = [False, False],
+#         rel_pos_bias: bool = False,
+#         qkv_bias: bool = True,
+#         qk_scale: Optional[float] = None,
+#         attn_drop: float = 0.0,
+#         proj_drop: float = 0.0,
+#     ):
+#         super().__init__()
+#         assert len(kernel_sizes) == len(dilations)
+#         if any(is_causal) and rel_pos_bias:
+#             raise NotImplementedError("Causal neighborhood attention is undefined with positional biases."
+#                                       "Please consider disabling positional biases, or open an issue.")
 
-        self.k = len(kernel_sizes)
-        self.channels = []
-        for i in range(self.k):
-            if i == 0:
-                channels = dim * 3 - dim * 3 // len(kernel_sizes) * (len(kernel_sizes) - 1)
-            else:
-                channels = dim * 3 // len(kernel_sizes)
-            assert (channels % (3 * num_head // self.k) == 0)
-            self.channels.append(channels)
+#         self.k = len(kernel_sizes)
+#         self.channels = []
+#         for i in range(self.k):
+#             if i == 0:
+#                 channels = dim * 3 - dim * 3 // len(kernel_sizes) * (len(kernel_sizes) - 1)
+#             else:
+#                 channels = dim * 3 // len(kernel_sizes)
+#             assert (channels % (3 * num_head // self.k) == 0)
+#             self.channels.append(channels)
 
-        self.num_head = num_head
-        self.head_dim = dim // self.num_head
-        self.scale = qk_scale or self.head_dim**-0.5
-        self.kernel_sizes = tuple((i, i) for i in kernel_sizes)
-        self.dilations = tuple((i, i) for i in dilations)
-        self.is_causal = is_causal
+#         self.num_head = num_head
+#         self.head_dim = dim // self.num_head
+#         self.scale = qk_scale or self.head_dim**-0.5
+#         self.kernel_sizes = tuple((i, i) for i in kernel_sizes)
+#         self.dilations = tuple((i, i) for i in dilations)
+#         self.is_causal = is_causal
 
-        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
-        if rel_pos_bias:
-            self.rpb = nn.ParameterList()
-            for i in range(len(kernel_sizes)):
-                temp = nn.Parameter(torch.zeros(
-                    num_head // self.k,
-                    (2 * kernel_sizes[i] - 1),
-                    (2 * kernel_sizes[i] - 1),
-                ))
-                trunc_normal_(temp, mean=0.0, std=0.02, a=-2.0, b=2.0)
-                self.rpb.append(temp)
-        else:
-            self.register_parameter("rpb", None)
-        self.attn_drop_rate = attn_drop
-        self.attn_drop = nn.Dropout(self.attn_drop_rate)
-        self.proj = nn.Linear(dim, dim)
-        self.proj_drop = nn.Dropout(proj_drop)
+#         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+#         if rel_pos_bias:
+#             self.rpb = nn.ParameterList()
+#             for i in range(len(kernel_sizes)):
+#                 temp = nn.Parameter(torch.zeros(
+#                     num_head // self.k,
+#                     (2 * kernel_sizes[i] - 1),
+#                     (2 * kernel_sizes[i] - 1),
+#                 ))
+#                 trunc_normal_(temp, mean=0.0, std=0.02, a=-2.0, b=2.0)
+#                 self.rpb.append(temp)
+#         else:
+#             self.register_parameter("rpb", None)
+#         self.attn_drop_rate = attn_drop
+#         self.attn_drop = nn.Dropout(self.attn_drop_rate)
+#         self.proj = nn.Linear(dim, dim)
+#         self.proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, x: Tensor) -> Tensor:
-        # self.extra_repr()
-        if x.dim() != 4:
-            raise ValueError(f"NeighborhoodAttention2D expected a rank-4 input tensor; got {x.dim()=}.")
+#     def forward(self, x: Tensor) -> Tensor:
+#         # self.extra_repr()
+#         if x.dim() != 4:
+#             raise ValueError(f"NeighborhoodAttention2D expected a rank-4 input tensor; got {x.dim()=}.")
 
-        x = self.qkv(x)
-        x = torch.split(x, split_size_or_sections=self.channels, dim=3)
-        attns = []
-        for i, x_i in enumerate(x):
-            B, H, W, C = x_i.shape
-            qkv = (x_i.reshape(B, H, W, 3, self.num_head // self.k, self.head_dim).permute(3, 0, 4, 1, 2, 5))
-            q, k, v = qkv[0], qkv[1], qkv[2]
-            q = q * self.scale
-            attn = na2d_qk(
-                q,
-                k,
-                kernel_size=self.kernel_sizes[i],
-                dilation=self.dilations[i],
-                is_causal=self.is_causal,
-                rpb=self.rpb[i] if self.rpb is not None else None,
-            )
-            attn = attn.softmax(dim=-1)
-            attn = self.attn_drop(attn)
-            y = na2d_av(
-                attn,
-                v,
-                kernel_size=self.kernel_sizes[i],
-                dilation=self.dilations[i],
-                is_causal=self.is_causal,
-            )
-            y = y.permute(0, 2, 3, 1, 4).reshape(B, H, W, C // 3)
-            attns.append(y)
-        x = torch.cat(attns, dim=3)
-        return self.proj_drop(self.proj(x))
+#         x = self.qkv(x)
+#         x = torch.split(x, split_size_or_sections=self.channels, dim=3)
+#         attns = []
+#         for i, x_i in enumerate(x):
+#             B, H, W, C = x_i.shape
+#             qkv = (x_i.reshape(B, H, W, 3, self.num_head // self.k, self.head_dim).permute(3, 0, 4, 1, 2, 5))
+#             q, k, v = qkv[0], qkv[1], qkv[2]
+#             q = q * self.scale
+#             attn = na2d_qk(
+#                 q,
+#                 k,
+#                 kernel_size=self.kernel_sizes[i],
+#                 dilation=self.dilations[i],
+#                 is_causal=self.is_causal,
+#                 rpb=self.rpb[i] if self.rpb is not None else None,
+#             )
+#             attn = attn.softmax(dim=-1)
+#             attn = self.attn_drop(attn)
+#             y = na2d_av(
+#                 attn,
+#                 v,
+#                 kernel_size=self.kernel_sizes[i],
+#                 dilation=self.dilations[i],
+#                 is_causal=self.is_causal,
+#             )
+#             y = y.permute(0, 2, 3, 1, 4).reshape(B, H, W, C // 3)
+#             attns.append(y)
+#         x = torch.cat(attns, dim=3)
+#         return self.proj_drop(self.proj(x))
 
-    def extra_repr(self) -> str:
-        return (f"head_dim={self.head_dim}, num_head={self.num_head}, " + f"kernel_sizes={self.kernel_sizes}, " +
-                f"dilations={self.dilations}, " + f"is_causal={self.is_causal}, " + f"has_bias={self.rpb is not None}")
+#     def extra_repr(self) -> str:
+#         return (f"head_dim={self.head_dim}, num_head={self.num_head}, " + f"kernel_sizes={self.kernel_sizes}, " +
+#                 f"dilations={self.dilations}, " + f"is_causal={self.is_causal}, " + f"has_bias={self.rpb is not None}")
 
 
 # ============== MHLA2D Wrapper ==============
@@ -447,8 +447,8 @@ class MAB(nn.Module):
         self.attn = MHLA2D(
             dim=dim,
             heads=num_head,
-            window_size=49,       # 修改为 64 (8x8 窗口)
-            transform="cos"       # 使用余弦衰减，对超分最好
+            window_size=49,      
+            transform="cos"       
         )
         print(f"[MAB] 使用 MHLA2D (num_head={num_head})")
 

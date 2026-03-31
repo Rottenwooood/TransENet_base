@@ -37,21 +37,23 @@ Error: No valid images processed
 Average: PSNR: 28.024816 dB, SSIM: 0.771527
 Average: PSNR: 27.996185 dB, SSIM: 0.770464
 Average: PSNR: 27.996185 dB, SSIM: 0.770464
+mhla
 ori Average: PSNR: 28.005624 dB, SSIM: 0.770255
 v2 64 exp 3.0 Average: PSNR: 27.971338 dB, SSIM: 0.768990
 v3 64 exp 1.5 7.0Average: PSNR: 27.993757 dB, SSIM: 0.769753
 v4 48 exp Average: PSNR: 27.989639 dB, SSIM: 0.769786
 v5Average: PSNR: 27.951468 dB, SSIM: 0.769147
-Average: PSNR: 28.005624 dB, SSIM: 0.770255
+cos Average: PSNR: 28.005624 dB, SSIM: 0.770255
 MLLA Average: PSNR: 27.947629 dB, SSIM: 0.769023
 RALA Average: PSNR: 27.808642 dB, SSIM: 0.765324
-
+mhla_rala
 Average: PSNR: 27.937631 dB, SSIM: 0.769214
 
+lsconv
 [ptflops] FLOPs (G): 13.95 G，[ptflops] 参数量 (M): 1.25 M
 Loading model from ../experiment/s1_trans_lsconv_v2_001_s1_trans_lsconv_v2_w32/model/model_best.pt
 Average: PSNR: 27.776075 dB, SSIM: 0.763202
-Average: PSNR: 27.971147 dB, SSIM: 0.768784
+#Average: PSNR: 27.971147 dB, SSIM: 0.768784
 
 [ptflops] FLOPs (G): 15.43 G，[ptflops] 参数量 (M): 1.35 M
 Average: PSNR: 27.898962 dB, SSIM: 0.767637
@@ -63,3 +65,12 @@ Average: PSNR: 27.823294 dB, SSIM: 0.764500
 Average: PSNR: 27.940173 dB, SSIM: 0.768172
 
 v1 v2
+Average: PSNR: 27.967448 dB, SSIM: 0.769604
+Error: No valid images processed
+Average: PSNR: 27.973311 dB, SSIM: 0.769812
+64
+Average: PSNR: 27.998792 dB, SSIM: 0.769479
+49
+Average: PSNR: 27.958561 dB, SSIM: 0.769583
+mhla pad
+Average: PSNR: 27.986613 dB, SSIM: 0.769483

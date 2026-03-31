@@ -9,7 +9,7 @@ from model import common
 from typing import List, Optional
 import sys
 sys.path.append('..')
-from MHLA import MHLA_Normed_Torch_Dynamic
+from MHLA_v6 import MHLA_Normed_Torch_Dynamic
 
 #from utils.registry import ARCH_REGISTRY
 
@@ -166,7 +166,7 @@ class MHLA2D(nn.Module):
         pad_b = (self.window_len - H % self.window_len) % self.window_len
         
         if pad_r > 0 or pad_b > 0:
-            x = F.pad(x, (0, pad_r, 0, pad_b)) # 右侧和下方填充0
+            x = F.pad(x, (0, pad_r, 0, pad_b),mode='replicate') # 右侧和下方填充0
             
         H_pad, W_pad = x.shape[2:]
         pieces_h = H_pad // self.window_len
@@ -771,7 +771,7 @@ class SymUNet_Pretrain_Strip_MHLA(nn.Module):
         _, _, h, w = x.size()
         mod_pad_h = (self.padder_size - h % self.padder_size) % self.padder_size
         mod_pad_w = (self.padder_size - w % self.padder_size) % self.padder_size
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), mode='replicate')
         return x
 
     def load_state_dict(self, state_dict, strict=False):

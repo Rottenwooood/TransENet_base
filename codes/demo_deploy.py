@@ -51,7 +51,7 @@ def test_model_performance(args, sr_model, sample_input=None):
     # 2. 测试FLOPs
     print(f"\n🔢 FLOPs计算:")
     if sample_input is None:
-        sample_input = torch.randn(1, 3, 48, 48).to(device)
+        sample_input = torch.randn(1, 3, 64, 64).to(device)
 
     flops = 0
     params = 0
