@@ -2,12 +2,14 @@ import math
 import torch
 from torch import Tensor, nn
 import torch.nn.functional as F
-from natten.functional import na2d_av, na2d_qk
 from torch.nn.init import trunc_normal_
 import numbers
 from einops import rearrange
 from model import common
 from typing import List, Optional
+import sys
+sys.path.append('..')
+from MHLA_v7 import MHLA_Normed_Torch_Dynamic
 
 #from utils.registry import ARCH_REGISTRY
 
@@ -18,207 +20,9 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_Strip_ende_lsconv(args)
+    return SymUNet_Pretrain_Strip_MHLA(args)
 
-import math
-import torch
-from torch import nn
-from torch.cuda.amp import custom_fwd, custom_bwd  # 补充缺失的 AMP 导入
-import triton
-import triton.language as tl
 
-# ==========================================
-# Triton SKA (Selective Kernel Attention) 核心算子
-# ==========================================
-def _grid(numel: int, bs: int) -> tuple:
-    return (triton.cdiv(numel, bs),)
-
-@triton.jit
-def _idx(i, n: int, c: int, h: int, w: int):
-    ni = i // (c * h * w)
-    ci = (i // (h * w)) % c
-    hi = (i // w) % h
-    wi = i % w
-    m = i < (n * c * h * w)
-    return ni, ci, hi, wi, m
-    
-@triton.jit
-def ska_fwd(x_ptr, w_ptr, o_ptr, n, ic, h, w, ks, pad, wc, BS: tl.constexpr):
-    pid = tl.program_id(0)
-    start = pid * BS
-    offs = start + tl.arange(0, BS)
-
-    ni, ci, hi, wi, m = _idx(offs, n, ic, h, w)
-    val = tl.zeros((BS,), dtype=tl.float32)
-
-    for kh in range(ks):
-        hin = hi - pad + kh
-        hb = (hin >= 0) & (hin < h)
-        for kw in range(ks):
-            win = wi - pad + kw
-            b = hb & (win >= 0) & (win < w)
-
-            x_off = ((ni * ic + ci) * h + hin) * w + win
-            w_off = ((ni * wc + ci % wc) * ks * ks + (kh * ks + kw)) * h * w + hi * w + wi
-
-            x_val = tl.load(x_ptr + x_off, mask=m & b, other=0.0).to(tl.float32)
-            w_val = tl.load(w_ptr + w_off, mask=m, other=0.0).to(tl.float32)
-            val += tl.where(b & m, x_val * w_val, 0.0)
-
-    tl.store(o_ptr + offs, val.to(o_ptr.dtype.element_ty), mask=m)
-
-@triton.jit
-def ska_bwd_x(go_ptr, w_ptr, gi_ptr, n, ic, h, w, ks, pad, wc, BS: tl.constexpr):
-    pid = tl.program_id(0)
-    start = pid * BS
-    offs = start + tl.arange(0, BS)
-
-    ni, ci, hi, wi, m = _idx(offs, n, ic, h, w)
-    val = tl.zeros((BS,), dtype=tl.float32)
-
-    for kh in range(ks):
-        ho = hi + pad - kh
-        hb = (ho >= 0) & (ho < h)
-        for kw in range(ks):
-            wo = wi + pad - kw
-            b = hb & (wo >= 0) & (wo < w)
-
-            go_off = ((ni * ic + ci) * h + ho) * w + wo
-            w_off = ((ni * wc + ci % wc) * ks * ks + (kh * ks + kw)) * h * w + ho * w + wo
-
-            go_val = tl.load(go_ptr + go_off, mask=m & b, other=0.0).to(tl.float32)
-            w_val = tl.load(w_ptr + w_off, mask=m, other=0.0).to(tl.float32)
-            val += tl.where(b & m, go_val * w_val, 0.0)
-
-    tl.store(gi_ptr + offs, val.to(gi_ptr.dtype.element_ty), mask=m)
-
-@triton.jit
-def ska_bwd_w(go_ptr, x_ptr, gw_ptr, n, wc, h, w, ic, ks, pad, BS: tl.constexpr):
-    pid = tl.program_id(0)
-    start = pid * BS
-    offs = start + tl.arange(0, BS)
-
-    ni, ci, hi, wi, m = _idx(offs, n, wc, h, w)
-
-    for kh in range(ks):
-        hin = hi - pad + kh
-        hb = (hin >= 0) & (hin < h)
-        for kw in range(ks):
-            win = wi - pad + kw
-            b = hb & (win >= 0) & (win < w)
-            w_off = ((ni * wc + ci) * ks * ks + (kh * ks + kw)) * h * w + hi * w + wi
-
-            val = tl.zeros((BS,), dtype=tl.float32)
-            steps = (ic - ci + wc - 1) // wc
-            for s in range(tl.max(steps, axis=0)):
-                cc = ci + s * wc
-                cm = (cc < ic) & m & b
-
-                x_off = ((ni * ic + cc) * h + hin) * w + win
-                go_off = ((ni * ic + cc) * h + hi) * w + wi
-
-                x_val = tl.load(x_ptr + x_off, mask=cm, other=0.0).to(tl.float32)
-                go_val = tl.load(go_ptr + go_off, mask=cm, other=0.0).to(tl.float32)
-                val += tl.where(cm, x_val * go_val, 0.0)
-
-            tl.store(gw_ptr + w_off, val.to(gw_ptr.dtype.element_ty), mask=m)
-
-class SkaFn(torch.autograd.Function):
-    @staticmethod
-    @custom_fwd
-    def forward(ctx, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        # 修复：把 math_lib.sqrt 改为标准的 math.sqrt
-        ks = int(math.sqrt(w.shape[2]))
-        pad = (ks - 1) // 2
-        ctx.ks, ctx.pad = ks, pad
-        n, ic, h, width = x.shape
-        wc = w.shape[1]
-        o = torch.empty(n, ic, h, width, device=x.device, dtype=x.dtype)
-        numel = o.numel()
-
-        x = x.contiguous()
-        w = w.contiguous()
-
-        grid = lambda meta: _grid(numel, meta["BS"])
-        ska_fwd[grid](x, w, o, n, ic, h, width, ks, pad, wc, BS=1024)
-
-        ctx.save_for_backward(x, w)
-        return o
-
-    @staticmethod
-    @custom_bwd
-    def backward(ctx, go: torch.Tensor) -> tuple:
-        ks, pad = ctx.ks, ctx.pad
-        x, w = ctx.saved_tensors
-        n, ic, h, width = x.shape
-        wc = w.shape[1]
-
-        go = go.contiguous()
-        gx = gw = None
-
-        if ctx.needs_input_grad[0]:
-            gx = torch.empty_like(x)
-            numel = gx.numel()
-            ska_bwd_x[lambda meta: _grid(numel, meta["BS"])](go, w, gx, n, ic, h, width, ks, pad, wc, BS=1024)
-
-        if ctx.needs_input_grad[1]:
-            gw = torch.empty_like(w)
-            numel = gw.numel() // w.shape[2]
-            ska_bwd_w[lambda meta: _grid(numel, meta["BS"])](go, x, gw, n, wc, h, width, ic, ks, pad, BS=1024)
-
-        return gx, gw, None, None
-
-class SKA(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward(self, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        return SkaFn.apply(x, w)
-
-# ==========================================
-# LKP & LSConv
-# ==========================================
-class LKP(nn.Module):
-    def __init__(self, dim, lks=7, sks=3, groups=8):
-        super().__init__()
-        # 确保 groups 合理 (防止 dim=32 时，dim//groups = 4 等报错)
-        # 一般 SR 模型 dim=32, 48, 64，都是 8 的倍数，没问题
-        assert dim % groups == 0, f"dim {dim} must be divisible by groups {groups}"
-        
-        self.cv1 = nn.Conv2d(dim, dim // 2, 1)
-        self.act = nn.ReLU()
-        self.cv2 = nn.Conv2d(dim // 2, dim // 2, kernel_size=lks, padding=(lks - 1) // 2, groups=dim // 2)
-        self.cv3 = nn.Conv2d(dim // 2, dim // 2, 1)
-        self.cv4 = nn.Conv2d(dim // 2, sks ** 2 * dim // groups, kernel_size=1)
-        self.norm = nn.GroupNorm(num_groups=dim // groups, num_channels=sks ** 2 * dim // groups)
-
-        self.sks = sks
-        self.groups = groups
-        self.dim = dim
-
-    def forward(self, x):
-        x = self.act(self.cv3(self.cv2(self.act(self.cv1(x)))))
-        w = self.norm(self.cv4(x))
-        b, _, h, width = w.size()
-        w = w.view(b, self.dim // self.groups, self.sks ** 2, h, width)
-        return w
-
-class LSConv(nn.Module):
-    """
-    Large Selective Conv
-    修改：去掉了内部的 +x 残差，使其成为纯粹的 Attention/Mixing 模块
-    """
-    def __init__(self, dim, groups=8):
-        super(LSConv, self).__init__()
-        self.lkp = LKP(dim, lks=7, sks=3, groups=groups)
-        self.ska = SKA()
-
-    def forward(self, x):
-        # 原来是 return self.ska(x, self.lkp(x)) + x
-        # 现在直接返回混合特征，让外层的 MAB 去加残差
-        return self.ska(x, self.lkp(x)) + x
-
-    
 # ============== Channel Attention ==============
 class ChannelAttention(nn.Module):
     def __init__(self, dim, squeeze_factor=16):
@@ -332,6 +136,70 @@ class NeighborhoodAttention2D(nn.Module):
     def extra_repr(self) -> str:
         return (f"head_dim={self.head_dim}, num_head={self.num_head}, " + f"kernel_sizes={self.kernel_sizes}, " +
                 f"dilations={self.dilations}, " + f"is_causal={self.is_causal}, " + f"has_bias={self.rpb is not None}")
+
+
+# ============== MHLA2D Wrapper ==============
+class MHLA2D(nn.Module):
+    def __init__(self, dim, heads=4, window_size=49, transform="cos"):
+        super().__init__()
+        self.dim = dim
+        self.window_size = window_size
+        self.window_len = int(window_size ** 0.5)
+        
+        self.mhla = MHLA_Normed_Torch_Dynamic(
+            dim=dim,
+            heads=heads,
+            window_size=window_size,
+            transform=transform
+        )
+
+    def forward(self, x):
+        """
+        x: (B, C, H, W)
+        """
+        B, C, H, W = x.shape
+        
+        # ==========================================
+        # 1. 动态 Padding (保证宽高是 window_len 的整数倍)
+        # ==========================================
+        pad_r = (self.window_len - W % self.window_len) % self.window_len
+        pad_b = (self.window_len - H % self.window_len) % self.window_len
+        
+        if pad_r > 0 or pad_b > 0:
+            x = F.pad(x, (0, pad_r, 0, pad_b),mode='replicate') # 右侧和下方填充0
+            
+        H_pad, W_pad = x.shape[2:]
+        pieces_h = H_pad // self.window_len
+        pieces_w = W_pad // self.window_len
+        
+        # ==========================================
+        # 2. Reshape: BCHW -> B, N, WindowSize, C
+        # ==========================================
+        x = x.permute(0, 2, 3, 1).contiguous() # (B, H_pad, W_pad, C)
+        x = x.view(B, pieces_h, self.window_len, pieces_w, self.window_len, C)
+        x = x.permute(0, 1, 3, 2, 4, 5).contiguous() # (B, pieces_h, pieces_w, window_len, window_len, C)
+        x = x.view(B, pieces_h * pieces_w, self.window_size, C) # (B, N, W, C)
+        
+        # ==========================================
+        # 3. 执行 MHLA (传入动态尺寸)
+        # ==========================================
+        x = self.mhla(x, pieces_h, pieces_w)
+        
+        # ==========================================
+        # 4. Reshape Back: B, N, WindowSize, C -> BCHW
+        # ==========================================
+        x = x.view(B, pieces_h, pieces_w, self.window_len, self.window_len, C)
+        x = x.permute(0, 1, 3, 2, 4, 5).contiguous()
+        x = x.view(B, H_pad, W_pad, C)
+        x = x.permute(0, 3, 1, 2).contiguous() # (B, C, H_pad, W_pad)
+        
+        # ==========================================
+        # 5. Un-pad (恢复到原始输入尺寸，完美还原细节)
+        # ==========================================
+        if pad_r > 0 or pad_b > 0:
+            x = x[:, :, :H, :W].contiguous()
+            
+        return x
 
 # ============== LAB (Local Aggregation Block) ==============
 class LAB(nn.Module):
@@ -568,27 +436,21 @@ class StripMiddleBlock(nn.Module):
         return x
 
 
-
-# ==========================================
-# 完美的 MAB 替换
-# ==========================================
 class MAB(nn.Module):
-    """
-    Multi-head Attention Block from MAT
-    使用 LSConv 完美替换 NeighborhoodAttention2D
-    """
-    def __init__(self, dim, num_head=None, kernel_sizes=None, dilations=None):
+    def __init__(self, dim, num_head=2, kernel_sizes=[7, 11], dilations=[1, 1]):
         super().__init__()
         self.dim = dim
-
+        self.num_head = num_head
         self.norm1 = LayerNorm2d(channels=dim)
 
-        # ==========================================
-        # 核心替换：使用 LSConv
-        # LSConv 直接接受 BCHW 格式，不需要任何变形！
-        # ==========================================
-        self.attn = LSConv(dim=dim)
-        print(f"[MAB] 使用 LSConv 作为 Attention (Triton Accelerated)")
+        # ===== 更新此处的参数 =====
+        self.attn = MHLA2D(
+            dim=dim,
+            heads=num_head,
+            window_size=64,       # 修改为 64 (8x8 窗口)
+            # transform="cos"       # 使用余弦衰减，对超分最好
+        )
+        print(f"[MAB] 使用 MHLA2D (num_head={num_head})")
 
         self.norm2 = LayerNorm2d(channels=dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
@@ -597,25 +459,31 @@ class MAB(nn.Module):
         # 输入 x shape: (B, C, H, W)
 
         # ==========================================
-        # Part 1: Self-Attention (被 LSConv 替代)
+        # Part 1: Self-Attention (MHLA)
         # ==========================================
-        shortcut_attn = x  
+        shortcut_attn = x  # 保存 BCHW 格式的残差
 
+        # 1. LayerNorm2d 直接处理 BCHW，无需转换
         x_norm1 = self.norm1(x)
 
-        # LSConv 运算，输出依然是 (B, C, H, W)
+        # 2. MHLA2D 直接处理 BCHW 格式
         attn_out = self.attn(x_norm1)
 
-        # 标准残差连接
+        # 3. 加上残差
         x = shortcut_attn + attn_out
 
         # ==========================================
         # Part 2: FFN / MSConvStar
         # ==========================================
-        shortcut_ffn = x  
+        shortcut_ffn = x  # 保存 BCHW 格式的残差
 
+        # 1. LayerNorm2d 直接处理 BCHW，无需转换
         x_norm2 = self.norm2(x)
+
+        # 2. MSConvStar 直接处理 BCHW 格式
         ffn_out_bchw = self.ffn(x_norm2)
+
+        # 3. 直接在 BCHW 维度上加残差并输出
         x = shortcut_ffn + ffn_out_bchw
 
         return x
@@ -629,13 +497,21 @@ class S1_TransBlock_NoMAB1(nn.Module):
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
-        # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
-        # MAB2: num_head=2, kernel_sizes=[7, 11], dilations=[5, 3]
-        self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+        # ==========================================
+        # 核心修改：动态分配 num_heads
+        # 保证每个 head 的维度 (head_dim) 恒定为 16
+        # 浅层 c=32 -> 2个头
+        # 中层 c=64 -> 4个头
+        # 深层 c=128 -> 8个头
+        # 这样能让线性注意力在任何深度下，KV Buffer的表征能力都保持一致且满秩！
+        # ==========================================
+        dynamic_heads = c // 16  
+        
+        # MAB (如果你用 MHLA2D，必须确保内部 window_size=64)
+        self.mab2 = MAB(dim=c, num_head=dynamic_heads, kernel_sizes=[7, 11], dilations=[5, 3])
 
-        # Conv + residual (like RMAG) with zero initialization
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
         nn.init.zeros_(self.conv.weight)
         nn.init.zeros_(self.conv.bias)
@@ -798,17 +674,18 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("symunet_pretrain_Strip_ende_lsconv")
-class SymUNet_Pretrain_Strip_ende_lsconv(nn.Module):
+#@ARCH_REGISTRY.register("symunet_pretrain_strip_mhla")
+class SymUNet_Pretrain_Strip_MHLA(nn.Module):
     """
-    symunet_pretrain_Strip_ende_lsconv: Middle Blk使用StripAttention (k=47)
+    symunet_pretrain_strip_mhla: MAB使用MHLA替换NeighborhoodAttention
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
     - Middle Blk使用StripAttention (k1=1, k2=47)
+    - MAB使用MHLA替换NeighborhoodAttention2D
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_Strip_ende_lsconv, self).__init__()
+        super(SymUNet_Pretrain_Strip_MHLA, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -847,8 +724,8 @@ class SymUNet_Pretrain_Strip_ende_lsconv(nn.Module):
             chan *= 2
 
         # Strip kernel sizes
-        strip_k1 = getattr(args, 'symunet_pretrain_Strip_ende_lsconv_k1', 1)
-        strip_k2 = getattr(args, 'symunet_pretrain_Strip_ende_lsconv_k2', 47)
+        strip_k1 = getattr(args, 'symunet_pretrain_strip_k1', 1)
+        strip_k2 = getattr(args, 'symunet_pretrain_strip_k2', 47)
 
         self.middle_blks = nn.Sequential(*[
             StripMiddleBlock(
@@ -902,7 +779,7 @@ class SymUNet_Pretrain_Strip_ende_lsconv(nn.Module):
         _, _, h, w = x.size()
         mod_pad_h = (self.padder_size - h % self.padder_size) % self.padder_size
         mod_pad_w = (self.padder_size - w % self.padder_size) % self.padder_size
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), mode='replicate')
         return x
 
     def load_state_dict(self, state_dict, strict=False):
