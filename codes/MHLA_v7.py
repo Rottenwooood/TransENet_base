@@ -10,62 +10,70 @@ class DynamicBlockDistanceWeight(nn.Module):
     """
     def __init__(self, num_heads):
         super().__init__()
-        # 输入：两个块在二维网格上的相对坐标 (dy, dx)
-        # 输出：为每个 Attention Head 生成不同的特征混合权重
+        self.num_heads = num_heads
         self.mlp = nn.Sequential(
             nn.Linear(2, 32),
             nn.ReLU(inplace=True),
             nn.Linear(32, num_heads)
         )
         
-        # 缓存固定的坐标网格，避免每步重算（注意：只缓存坐标，不缓存权重！）
-        self.cache_coords = {}
+        self.cache_indices = {}
+        self.cache_rel_coords = {}
 
-        # 智能初始化：让它初始阶段类似高斯衰减，之后任由网络自己魔改
         nn.init.constant_(self.mlp[-1].bias, 0.0)
         nn.init.normal_(self.mlp[-1].weight, std=0.02)
 
     def forward(self, num_blocks_h, num_blocks_w, device, dtype):
         key = (num_blocks_h, num_blocks_w, device)
         
-        # 1. 只在分辨率改变时，重新生成相对坐标矩阵
-        if key not in self.cache_coords:
-            y = torch.arange(num_blocks_h, device=device, dtype=dtype)
-            x = torch.arange(num_blocks_w, device=device, dtype=dtype)
+        # 1. 只在分辨率改变时，预计算索引矩阵和唯一坐标
+        if key not in self.cache_indices:
+            # === A. 计算 M x M 的索引矩阵 ===
+            y = torch.arange(num_blocks_h, device=device, dtype=torch.long)
+            x = torch.arange(num_blocks_w, device=device, dtype=torch.long)
             y_coords, x_coords = torch.meshgrid(y, x, indexing='ij')
-            coords = torch.stack([y_coords.flatten(), x_coords.flatten()], dim=1)
+            coords = torch.stack([y_coords.flatten(), x_coords.flatten()], dim=1) #[M, 2]
             
-            # 计算两两之间的绝对相对坐标 (dy, dx)
-            rel_coords = coords.unsqueeze(1) - coords.unsqueeze(0)
+            rel_coords = coords.unsqueeze(1) - coords.unsqueeze(0) # [M, M, 2]
             
-            # ========================================================
-            # 核心修复：SwinV2 的 Log-Spaced Coordinates
-            # 不要除以当前的宽高！用 log 函数把距离映射到一个平滑的空间
-            # 这样无论是训练的 24x24 还是测试的 32x32，相邻块的输入永远是一样的！
-            # ========================================================
-            sign = torch.sign(rel_coords)
-            # log(1 + |x|) 既保留了相对距离的物理一致性，又防止了远距离数值过大
-            log_coords = sign * torch.log1p(rel_coords.abs())
+            # 将相对坐标平移到正数区间，方便做索引
+            rel_coords[:, :, 0] += num_blocks_h - 1
+            rel_coords[:, :, 1] += num_blocks_w - 1
             
-            # 除以一个常数 (比如 log(1 + 64)) 将输入大致缩放到 [-1, 1] 以利于 MLP 训练
-            # 这个常数必须是写死的，绝对不能随图像大小变化！
-            rel_coords = log_coords / math.log(1 + 64.0)
+            # 扁平化为 1D 索引
+            rel_position_index = rel_coords[:, :, 0] * (2 * num_blocks_w - 1) + rel_coords[:, :, 1]
+            self.cache_indices[key] = rel_position_index # [M, M]
             
-            self.cache_coords[key] = rel_coords
+            # === B. 计算 (2H-1) x (2W-1) 的唯一相对坐标 ===
+            uy = torch.arange(-(num_blocks_h - 1), num_blocks_h, device=device, dtype=dtype)
+            ux = torch.arange(-(num_blocks_w - 1), num_blocks_w, device=device, dtype=dtype)
+            uy_coords, ux_coords = torch.meshgrid(uy, ux, indexing='ij')
+            unique_coords = torch.stack([uy_coords.flatten(), ux_coords.flatten()], dim=1) # [K, 2]
             
-        rel_coords = self.cache_coords[key] # [M, M, 2]
-        
+            # SwinV2 的连续对数坐标映射
+            sign = torch.sign(unique_coords)
+            log_coords = sign * torch.log1p(unique_coords.abs())
+            unique_coords = log_coords / math.log(1 + 64.0)
+            
+            self.cache_rel_coords[key] = unique_coords
+
+        # 读取缓存
+        rel_position_index = self.cache_indices[key] # [M, M]
+        unique_coords = self.cache_rel_coords[key]   # [K, 2], K 极小
+
         # ========================================================
-        # 2. 核心：用 MLP 根据相对位置【动态且带梯度地】算出权重！
-        # weights 形状:[M, M, num_heads]
+        # 2. 性能核弹优化：
+        # 仅仅对 K 个（比如 2209 个）唯一坐标跑 MLP，而不是 M*M 个（33万个）！
+        # 避免了巨量的显存分配，前向与反向传播速度起飞。
         # ========================================================
-        weights = self.mlp(rel_coords) 
+        bias_table = self.mlp(unique_coords) # [K, num_heads]
         
-        # 转换到 [num_heads, M, M]
-        weights = weights.permute(2, 0, 1)
+        # 3. 查表：使用预存的索引矩阵，瞬间还原出 M x M 矩阵
+        weights = bias_table[rel_position_index.view(-1)].view(
+            num_blocks_h * num_blocks_w, num_blocks_h * num_blocks_w, self.num_heads
+        ) # [M, M, num_heads]
         
-        # 原论文要求：必须非负且归一化 (Softmax 保证每行和为1)
-        # 对最后一个维度 (被聚合的源块) 做 Softmax
+        weights = weights.permute(2, 0, 1) # [num_heads, M, M]
         weights = torch.softmax(weights, dim=-1)
         
         return weights
@@ -103,7 +111,7 @@ class MHLA_Normed_Torch_Dynamic(nn.Module):
     def forward(self, x, pieces_h, pieces_w):
         # x shape:[B, num_pieces, window_size, C]
         x = self.norm(x)
-        B, N, W, C = x.shape
+        B, N, W, C = x.shape # 这里的 N 就是块的数量 (M)
         H_head, D = self.num_heads, self.head_dim
 
         q, k, v, lepe = self._mlp_lepe(x, pieces_h, pieces_w)
@@ -113,23 +121,47 @@ class MHLA_Normed_Torch_Dynamic(nn.Module):
         k = torch.relu(k) + self.eps
         q = torch.relu(q) + self.eps
 
-        q, k, v = map(lambda t: rearrange(t, "b n w (h d) -> (b h) n w d", h=H_head, d=D), (q, k, v))
-        k = k.transpose(-2, -1)
+        # ==========================================
+        # 修复 1：保留独立的 Head 维度，不要压扁
+        # b n w (h d) -> b h n w d
+        # ==========================================
+        q, k, v = map(lambda t: rearrange(t, "b n w (h d) -> b h n w d", h=H_head, d=D), (q, k, v))
+        k = k.transpose(-2, -1) # [B, H_head, N, D, W]
 
-        #[B*H, num_pieces, D, D]
+        # [B, H_head, N, D, D]
         kv = torch.matmul(k, v) 
-        k_sum = k.sum(dim=-1, keepdim=True) #[B*H, num_pieces, D, 1]
+        k_sum = k.sum(dim=-1, keepdim=True) #[B, H_head, N, D, 1]
         
-        # 获取动态距离权重 [num_pieces, num_pieces]
+        # 获取动态距离权重[H_head, N, N]
         dist_weight = self.piece_attn(pieces_h, pieces_w, x.device, x.dtype)
         
-        # 替代原本的 1x1 Conv，进行动态块间信息聚合
-        # dist_weight: [M, M], kv:[B*H, M, D, D] -> [B*H, M, D, D]
-        kv_mixed = torch.einsum('m n, b n i j -> b m i j', dist_weight, kv)
-        normalizer = torch.einsum('m n, b n i j -> b m i j', dist_weight, torch.matmul(q, k_sum)) + self.eps
+        # ==========================================
+        # 修复 2：极速矩阵乘法，彻底抛弃 einsum，完美匹配多头维度
+        # ==========================================
+        # 扩展权重以匹配 Batch 维度: [1, H_head, N, N]
+        dist_w_broadcast = dist_weight.unsqueeze(0)
+        
+        # 展平 DxD 维度:[B, H_head, N, D*D]
+        kv_flat = kv.reshape(B, H_head, N, D * D)
+        
+        # [1, H_head, N, N] @[B, H_head, N, D*D] -> [B, H_head, N, D*D]
+        kv_mixed_flat = torch.matmul(dist_w_broadcast, kv_flat)
+        
+        # 还原形状: [B, H_head, N, D, D]
+        kv_mixed = kv_mixed_flat.reshape(B, H_head, N, D, D)
 
+        # Normalizer 同理处理
+        q_k_sum = torch.matmul(q, k_sum) #[B, H_head, N, W, 1]
+        q_k_sum_flat = q_k_sum.reshape(B, H_head, N, W)
+        norm_flat = torch.matmul(dist_w_broadcast, q_k_sum_flat)
+        normalizer = norm_flat.reshape(B, H_head, N, W, 1) + self.eps
+        # ==========================================
+
+        # 输出计算: [B, H_head, N, W, D]
         out = torch.matmul(q, kv_mixed) / normalizer
-        out = rearrange(out, "(b h) n w d -> b n w (h d)", b=B, h=self.num_heads)
+        
+        # 重新压扁回 [B, N, W, C]
+        out = rearrange(out, "b h n w d -> b n w (h d)")
         out = out + lepe
 
         return self.to_out(out)

@@ -10,7 +10,8 @@
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_mhla_v4_5.json
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_mhla_v3.json
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_mhla_v5.json
-python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_mhla_v6.json
+# python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_mhla_v6.json
+python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_mhla_v7.json
 
 # Inference and Evaluation
 # python demo_deploy.py --model symunet_pretrain_strip_mhla \
@@ -55,14 +56,22 @@ python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_m
 #     --scale 4 \
 #     --pre_train ../experiment/s1_trans_strip_mhla_v5_001_s1_trans_strip_mhla_v5_w32/model/model_best.pt \
 #     --dir_out ../experiment/results/s1_trans_strip_mhla_v5_46W32/x4
-python demo_deploy.py --model symunet_pretrain_strip_mhla_v6 \
+# python demo_deploy.py --model symunet_pretrain_strip_mhla_v6 \
+#     --symunet_pretrain_width 32 \
+#     --symunet_pretrain_enc_blk_nums 4,6 \
+#     --symunet_pretrain_dec_blk_nums 6,4 \
+#     --dataset UCMerced \
+#     --scale 4 \
+#     --pre_train ../experiment/s1_trans_strip_mhla_v6_001_s1_trans_strip_mhla_v6_w32/model/model_best.pt \
+#     --dir_out ../experiment/results/s1_trans_strip_mhla_v6_46W32/x4
+python demo_deploy.py --model symunet_pretrain_strip_mhla_v7 \
     --symunet_pretrain_width 32 \
     --symunet_pretrain_enc_blk_nums 4,6 \
     --symunet_pretrain_dec_blk_nums 6,4 \
     --dataset UCMerced \
     --scale 4 \
-    --pre_train ../experiment/s1_trans_strip_mhla_v6_001_s1_trans_strip_mhla_v6_w32/model/model_best.pt \
-    --dir_out ../experiment/results/s1_trans_strip_mhla_v6_46W32/x4
+    --pre_train ../experiment/s1_trans_strip_mhla_v7_001_s1_trans_strip_mhla_v7_w32/model/model_best.pt \
+    --dir_out ../experiment/results/s1_trans_strip_mhla_v7_46W32/x4
 
 # Calculate PSNR/SSIM
 # python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_v4_46W32/x4 | tail -n 1 >> results.txt
@@ -71,4 +80,5 @@ python demo_deploy.py --model symunet_pretrain_strip_mhla_v6 \
 # python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_46W32/x4 | tail -n 1 >> results.txt
 # python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_v4_46W32/x4 | tail -n 1 >> results.txt
 # python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_v4_5_46W32/x4 | tail -n 1 >> results.txt
-python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_v6_46W32/x4 | tail -n 1 >> results.txt
+# python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_v6_46W32/x4 | tail -n 1 >> results.txt
+python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_mhla_v7_46W32/x4 | tail -n 1 >> results.txt

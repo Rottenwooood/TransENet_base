@@ -74,3 +74,5 @@ Average: PSNR: 27.998792 dB, SSIM: 0.769479
 Average: PSNR: 27.958561 dB, SSIM: 0.769583
 mhla pad
 Average: PSNR: 27.986613 dB, SSIM: 0.769483
+Error: No valid images processed
+Error: No valid images processed
