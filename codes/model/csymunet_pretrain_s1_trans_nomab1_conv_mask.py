@@ -166,63 +166,65 @@ class DecomposedKernel(nn.Module):
 
 class LargeKernelMAB_Mask(nn.Module):
     """
-    基于大核分解卷积生成Mask的多尺度注意力机制
-    Branch 1 (dil=5 head): X1 -> DecomposedKernel(3,1,5,5) -> Mask1 -> X1 * Mask1 = Out1
-    Branch 2 (dil=3 head): X2 -> DecomposedKernel(5,1,7,3) -> Mask2 -> X2 * Mask2 = Out2
-    Concat(Out1, Out2) -> 1x1 mixing
+    终极版：基于大核分解卷积生成 Mask 的多尺度自门控注意力机制
     """
-    def __init__(self, dim, kernel_sizes=[7, 11], dilations=[1, 1]):
+    def __init__(self, dim): # 删除了没用的外部参数
         super().__init__()
         half = dim // 2
 
-        # ---- Mask生成分支1 (dil=5头): 3x3(dense) + 5x5(dil=5) ----
         self.norm1 = LayerNorm2d(dim)
-        # DecomposedKernel(dim, k1=3, d1=1, k2=5, d2=5)
-        self.branch1_decomp = DecomposedKernel(half, k1=3, d1=1, k2=5, d2=5)
-        # Sigmoid生成Mask
-        self.branch1_conv = nn.Sequential(
-            nn.Conv2d(half, half, 1), nn.Sigmoid()
-        )
+        
+        # 【修改点 1】增加前置 1x1 投影，让通道特征先进行混合，再对半分
+        self.proj_in = nn.Conv2d(dim, dim, 1)
 
-        # ---- Mask生成分支2 (dil=3头): 5x5(dense) + 7x7(dil=3) ----
-        self.norm2 = LayerNorm2d(dim)
-        # DecomposedKernel(dim, k1=5, d1=1, k2=7, d2=3)
+        # ---- Mask生成分支 1 (等效 dil=5 头): 3x3(dense) + 5x5(dil=5) ----
+        self.branch1_decomp = DecomposedKernel(half, k1=3, d1=1, k2=5, d2=5)
+        self.branch1_mix = nn.Conv2d(half, half, 1)
+
+        # ---- Mask生成分支 2 (等效 dil=3 头): 5x5(dense) + 7x7(dil=3) ----
         self.branch2_decomp = DecomposedKernel(half, k1=5, d1=1, k2=7, d2=3)
-        # Sigmoid生成Mask
-        self.branch2_conv = nn.Sequential(
-            nn.Conv2d(half, half, 1), nn.Sigmoid()
-        )
+
+        self.branch2_mix = nn.Conv2d(half, half, 1)
 
         # ---- 融合层 ----
-        self.mix = nn.Conv2d(dim, dim, 1)
+        self.proj_out = nn.Conv2d(dim, dim, 1)
 
         # ---- FFN 部分 ----
-        self.norm3 = LayerNorm2d(dim)
+        self.norm2 = LayerNorm2d(dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
     def forward(self, x):
+        # ==========================================
         # Part 1: Mask-based 多尺度特征提取
+        # ==========================================
         shortcut = x
-        x = self.norm1(x)
-        x1, x2 = x.chunk(2, dim=1)
+        x_norm = self.norm1(x)
+        
+        # 先 1x1 混合，再分配给两个分支
+        x_in = self.proj_in(x_norm)
+        x1, x2 = x_in.chunk(2, dim=1)
 
-        # Branch 1: DecomposedKernel(3,1,5,5) -> Mask1 -> X1 * Mask1
-        x1_feat = self.branch1_decomp(x1)
-        mask1 = self.branch1_conv(x1_feat)  # 生成Mask
-        out1 = x1 * mask1  # 应用Mask
+        # --- Branch 1: 大感受野门控 ---
+        mask1 = self.branch1_decomp(x1)
+        mask1 = self.branch1_mix(mask1)
+        # 现代 Gating 机制：Value * GELU(Mask)
+        out1 = x1 * F.gelu(mask1)
 
-        # Branch 2: DecomposedKernel(5,1,7,3) -> Mask2 -> X2 * Mask2
-        x2_feat = self.branch2_decomp(x2)
-        mask2 = self.branch2_conv(x2_feat)  # 生成Mask
-        out2 = x2 * mask2  # 应用Mask
+        # --- Branch 2: 中等感受野门控 ---
+        mask2 = self.branch2_decomp(x2)
+        mask2 = self.branch2_mix(mask2)
+        out2 = x2 * F.gelu(mask2)
 
-        # Concat + 1x1混合
-        x = torch.cat([out1, out2], dim=1)
-        x = self.mix(x)
-        x = shortcut + x
+        # --- Concat + 1x1 混合 ---
+        out_concat = torch.cat([out1, out2], dim=1)
+        x_spatial = self.proj_out(out_concat)
+        
+        x = shortcut + x_spatial
 
-        # Part 2: FFN（保持不变）
-        x = x + self.ffn(self.norm3(x))
+        # ==========================================
+        # Part 2: FFN (保持不变)
+        # ==========================================
+        x = x + self.ffn(self.norm2(x))
         return x
 
 
