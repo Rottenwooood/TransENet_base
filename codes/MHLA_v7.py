@@ -136,28 +136,20 @@ class MHLA_Normed_Torch_Dynamic(nn.Module):
         dist_weight = self.piece_attn(pieces_h, pieces_w, x.device, x.dtype)
         
         # ==========================================
-        # 修复 2：极速矩阵乘法，彻底抛弃 einsum，完美匹配多头维度
+        # 极速降阶爱因斯坦求和：把 DxD 压平，4维比5维快得多
         # ==========================================
-        # 扩展权重以匹配 Batch 维度: [1, H_head, N, N]
-        dist_w_broadcast = dist_weight.unsqueeze(0)
-        
-        # 展平 DxD 维度:[B, H_head, N, D*D]
+        # kv 原本是 [B, H_head, N, D, D]
         kv_flat = kv.reshape(B, H_head, N, D * D)
         
-        # [1, H_head, N, N] @[B, H_head, N, D*D] -> [B, H_head, N, D*D]
-        kv_mixed_flat = torch.matmul(dist_w_broadcast, kv_flat)
-        
-        # 还原形状: [B, H_head, N, D, D]
+        #[h m n] @ [b h n d] -> [b h m d]
+        kv_mixed_flat = torch.einsum('h m n, b h n d -> b h m d', dist_weight, kv_flat)
         kv_mixed = kv_mixed_flat.reshape(B, H_head, N, D, D)
 
-        # Normalizer 同理处理
         q_k_sum = torch.matmul(q, k_sum) #[B, H_head, N, W, 1]
         q_k_sum_flat = q_k_sum.reshape(B, H_head, N, W)
-        norm_flat = torch.matmul(dist_w_broadcast, q_k_sum_flat)
+        norm_flat = torch.einsum('h m n, b h n d -> b h m d', dist_weight, q_k_sum_flat)
         normalizer = norm_flat.reshape(B, H_head, N, W, 1) + self.eps
-        # ==========================================
 
-        # 输出计算: [B, H_head, N, W, D]
         out = torch.matmul(q, kv_mixed) / normalizer
         
         # 重新压扁回 [B, N, W, C]

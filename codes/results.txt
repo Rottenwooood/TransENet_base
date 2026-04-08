@@ -53,16 +53,16 @@ lsconv
 [ptflops] FLOPs (G): 13.95 G，[ptflops] 参数量 (M): 1.25 M
 Loading model from ../experiment/s1_trans_lsconv_v2_001_s1_trans_lsconv_v2_w32/model/model_best.pt
 Average: PSNR: 27.776075 dB, SSIM: 0.763202
-#Average: PSNR: 27.971147 dB, SSIM: 0.768784
+mid ori #Average: PSNR: 27.971147 dB, SSIM: 0.768784
 
 [ptflops] FLOPs (G): 15.43 G，[ptflops] 参数量 (M): 1.35 M
-Average: PSNR: 27.898962 dB, SSIM: 0.767637
+mid Average: PSNR: 27.898962 dB, SSIM: 0.767637
 
 
 [ptflops] FLOPs (G): 13.95 G，[ptflops] 参数量 (M): 1.25 M
 [ptflops] FLOPs (G): 15.43 G，[ptflops] 参数量 (M): 1.35 M
 Average: PSNR: 27.823294 dB, SSIM: 0.764500
-Average: PSNR: 27.940173 dB, SSIM: 0.768172
+# Average: PSNR: 27.940173 dB, SSIM: 0.768172
 
 v1 v2
 Average: PSNR: 27.967448 dB, SSIM: 0.769604
@@ -72,7 +72,12 @@ Average: PSNR: 27.973311 dB, SSIM: 0.769812
 Average: PSNR: 27.998792 dB, SSIM: 0.769479
 49
 Average: PSNR: 27.958561 dB, SSIM: 0.769583
-mhla pad
+mhla pad v6
 Average: PSNR: 27.986613 dB, SSIM: 0.769483
-Error: No valid images processed
-Error: No valid images processed
+
+mhla v7
+Average: PSNR: 27.997953 dB, SSIM: 0.769955
+
+Average: PSNR: 27.894782 dB, SSIM: 0.767681
+Average: PSNR: 27.892089 dB, SSIM: 0.767837
+Average: PSNR: 27.851655 dB, SSIM: 0.766767

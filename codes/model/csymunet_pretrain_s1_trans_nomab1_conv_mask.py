@@ -177,12 +177,14 @@ class LargeKernelMAB_Mask(nn.Module):
         # 【修改点 1】增加前置 1x1 投影，让通道特征先进行混合，再对半分
         self.proj_in = nn.Conv2d(dim, dim, 1)
 
+        #3 1 2 5
+        #5 1 7 3
         # ---- Mask生成分支 1 (等效 dil=5 头): 3x3(dense) + 5x5(dil=5) ----
-        self.branch1_decomp = DecomposedKernel(half, k1=3, d1=1, k2=5, d2=5)
+        self.branch1_decomp = DecomposedKernel(half, k1=7, d1=1, k2=5, d2=6)
         self.branch1_mix = nn.Conv2d(half, half, 1)
 
         # ---- Mask生成分支 2 (等效 dil=3 头): 5x5(dense) + 7x7(dil=3) ----
-        self.branch2_decomp = DecomposedKernel(half, k1=5, d1=1, k2=7, d2=3)
+        self.branch2_decomp = DecomposedKernel(half, k1=7, d1=1, k2=9, d2=3)
 
         self.branch2_mix = nn.Conv2d(half, half, 1)
 
@@ -240,7 +242,7 @@ class S1_TransBlock_NoMAB1_Conv_Mask(nn.Module):
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
 
         # 用 LargeKernelMAB_Mask 替换 MAB1
-        self.lk_mab = LargeKernelMAB_Mask(dim=c, kernel_sizes=[7, 11], dilations=[5, 3])
+        self.lk_mab = LargeKernelMAB_Mask(dim=c)
 
         # Conv + residual (like RMAG) with zero initialization
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
