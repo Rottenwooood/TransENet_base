@@ -1,0 +1,89 @@
+日期	内容	备注	模型	类别1	类别2	类别3	类别4
+Width	类别5	类别6
+Patch	类别7
+FFN_EXBAND	PSNR	SSIM	FLOPs	参数量
+1/27	训练	带着0.005 * fftloss的反而收敛得快	symunet	预上采样	fft	2,2,2	64	ADAM	48	5.32	27.941390	0.768974	62.40G	14M
+			symunet	预上采样	无fft	2,2,2	64	ADAM	48	5.32	27.938966	0.769586	/	/
+		训崩了	symunet	后上采样	fft/无fft	2,2,2	64	ADAM	48	5.32			/	/
+1/28	测试	计算FLOPs和参数量；FLOPs很高大概是因为最开始的上采样	symunet	预上采样	fft			ADAM	48	5.32			62.40G	14M
+2/6	训练	发现了代码实现中参数传递有误												
+	修改代码	添加批量训练，批量测试PSNR代码												
+2/7	训练		symunet	预上采样	无fft	4,6,6	48	ADAMW	48	5.32	27.932357	0.770743	74.14G	12.64M
+						4.6.6	32	ADAMW	48	5.32	27.892163	0.769419	33.93G	5.69M
+						4.6	48	ADAMW	48	5.32	27.894603	0.768577	48.35G	3.00M
+		BASELINE				4,6	32	ADAMW	48	5.32	27.831963	0.766283	22.32G	1.37 M
+2/8	训练	发现疑似是PixelShuffle随机初始化的问题：												
+		原因分析：当前数据集中低分辨率图大小是64*64,patch=64导致每次裁剪只有一种可能性，过拟合了	symunet	后上采样	无fft	4,6,6	48		64	5.32	大约27.2后过拟合		4.71 G	 12.66 M
+		patch调整到48,同时466->46,因为下采样最后的Bottleneck 太小可能不太好：改为两次下采样		后上采样	无fft	4,6	48		48	5.32	27.657122	0.759369	3.10 G	3.03 M
+2/9	训练	跑的时候没发现，NAFNET默认的FFN_EXBAND是2,导致性能略低	symunet	预上采样	无fft	4,6	32	ADAMW	48	2	<27.8(没测)			
+		替换encoder				4,6	32	ADAMW	48	4	27.817805	TransENet_base0.765779	19.63 G	1.29 M
+		替换decoder				4,6	32	ADAMW	48	4	27.886636	0.767879	19.63 G	1.29 M
+		替换encoder和decoder				4,6	32	ADAMW	48	4	27.837871	0.765811	16.94 G	1.21 M
+2/10	训练	BASELINE（二倍batch_size和lr）								5.32	27.880786	0.767159	22.32 G	1.37 M
+		替换encoder和decoder								5.32	27.855099	0.76628	19.62 G	1.32 M
+		替换encoder								5.32	27.84091	0.76564	20.97 G	1.34 M
+		替换decoder								5.32	27.88381	 0.76761	20.97 G	1.34 M
+2/11	训练	二倍batch_size和lr；x = x + x_first（在第一个卷积后和上采样前做残差）		后上采样	无fft	4,6	48		48	5.32	27.791032	0.763798		
+2/25	训练	CGBlock（GCE_Conv=2）	symunet	预上采样		4,6	32		48	4	27.831158	0.765171	21.70 G	2.38 M
+		bottleneck->LK ✓ （-0.03）
+NAF									27.801615	0.764297	16.76 G	1.18 M
+		LPU
+NAF									27.833773	0.765233	17.23 G	1.22 M
+		DWConv ✓ （-0.35）
+NAF				4,6	32	ADAMW	48	4	27.812910	0.763340	14.30 G	0.86 M
+		CGBlock（GCE_Conv=2）
+fix1（修复初始化权重问题）									27.831889	0.766203	21.70 G	2.38 M
+		CGBlock（GCE_Conv=2）
+fix1+fix2（sca采用分（4）组卷积）									27.844045	0.765349	21.70 G	1.69 M
+		CGBlock（GCE_Conv=2）
+fix1+fix3（交换project_out和sca的顺序（并其做对应修改））									27.831825	0.764762	21.53 G	1.51 M
+		CGBlock（GCE_Conv=2）
+fix1+fix4（GCE后的concat去除残差连接，并做对应修改（有点乱来））									27.801804	0.764514	18.84 G	1.40 M
+2/27	训练	替换FFN为MSConvStar									几乎没变			
+			num_head	kernel_sizes	dilations		切分数量	核大小	padding	dilation				
+3/1	训练	s1_trans（替换NAFBlock(LAB+MAB(MA)+MAB(SMA)+conv+残差)	2	[7,11]	[1,1],[5,3]	conv零初始化					27.983921	0.769709	37.70 G	1.83 M
+		s1_singledilated					1	5	6	3	27.698538	0.760529	10.36 G	0.66 M
+		s1_singledense					1	11	5		27.686603	0.760524	13.17 G	0.76 M
+		s1_mrdilated					3	5,5,5	2,4,6	1,2,3	27.751723（差了55epoch，比真实略低）	0.762779	11.70 G	0.72 M
+		s1_mrdense					3	5,7,11	2,3,5		27.740473	0.761665	12.94 G	0.76 M
+3/2	训练	s1_trans（去除MAB2）	2	[7,11]	[1,1]	conv零初始化					27.859141	0.766788	27.07 G	1.38 M
+		s1_trans（去除MAB1）	2	[7,11]	[5,3]	conv零初始化					28.002547	0.770354	27.07 G	1.38 M
+		s1_trans（去除MAB2+使用大卷积核替换MA）					2	[7,11]	[3,5]	[1,1]	27.871387	0.766917	25.54 G	1.29 M
+3/3	训练	s1_trans（去除MAB1+使用大卷积核替换SMA）					2	[7,11]	[3,5]	[5,3]	27.855609	0.766662		
+		s1_trans（去除MAB1+使用strip_block替换SMA）19
+（这里没实现对）									27.859286	0.766084	24.89 G	1.27 M
+		s1_trans（去除MAB1+使用strip_block替换SMA）31									27.863048	0.766386	25.60 G	1.30 M
+3/5	训练	s1_trans（去除MAB1+使用strip_block替换SMA）19（V3）	strip_block(正确实现)	k=19							不怎么样		27.58 G	1.39 M
+		s1_trans_nomab1（middle_blk为channel attention）	CA		squeeze_factor=4						27.979308	0.766084	26.79 G	1.31 M
+		s1_trans_nomab1（middle_blk为channel attention）（V2）	空间注意力+CA		squeeze_factor=4						27.992524	0.769870	26.79 G	1.32 M
+3/6	训练	s1_trans_nomab1（middle_blk为strip）	strip	k=1,47							27.990974	0.770813	27.05 G	1.38 M
+		s1_trans_nomab1（middle_blk为strip）（V2）
+(layer_scale_init = 1e-2)	strip	k=1,47							28.033203	0.771414	27.59 G	1.38 M
+		s1_trans_nomab1（middle_blk为strip+cam）	strip+cam	k=1,47	squeeze_factor=4						28.039041	0.771001	27.59 G	1.40 M
+3/7	训练	s1_trans_nomab1（middle_blk为lsconv）	lsconv		lks=7	sks=3	groups=8				 27.971147	0.768784	27.43 G	1.35 M
+		s1_trans_nomab1（middle_blk为lsconv+strip）	lsconv+
+strip	k=1,47	lks=7	sks=3	groups=8				27.997071	0.769678	27.70 G	1.42 M
+		s1_trans_nomab1（middle_blk为pki）	pki		kernel_sizes=(3, 5, 7, 9, 11)						27.951335	0.769254	27.72 G	1.42 M
+		s1_trans_nomab1（middle_blk为mab2）	2	[7,11]	[6,4]						28.017900	0.771241	28.01 G	1.50 M
+			window_size	tranform	exp_sigma	num_head								
+3/22		baseline+MHLA	49	cos		2					28.005624	0.770255	29.99G	1.41M
+		baseline+MHLA	64	exp	2,2	2					27.971338	0.768990	27.91G	1.40M
+		baseline+MHLA	64	exp	1.5,7（两个分支）	2					27.993757	0.769753	29.67G	1.41M
+		baseline+MHLA	49	exp		2					27.989639	0.769786	29.99G	1.41M
+		baseline+MHLA	36	cos							27.951468	0.769147		
+		baseline+MLLA									27.808642 	0.765324	22.19G	1.28M
+		baseline+RALA									27.947629	0.769023	29.84G	1.47M
+		baseline+MHLA（末尾加上基于门控的残差）									27.937631	0.769214		
+		baseline+MHLA（末尾加上基于门控的残差）v2									27.965206	0.769173		
+		baseline+lsconv(无双重残差)									27.776075	0.763202		
+		baseline+lsconv(有双重残差)（修复了某些东西）									27.823294	0.764500	13.95 G	1.25 M
+		下面四个记不太清楚了												
+		v4 权重可训练									27.967448	0.769604		
+		v4 权重可训练									27.973311	0.769812		
+		v4 权重可训练	window_size=64								27.998792	0.769479		
+		v4_5	49								27.958561	0.769583		
+3/31		v6(尝试修复因训练，测试图片尺寸差异导致的误差)									27.986613	0.769483		
+		v7(尝试修复因训练，测试图片尺寸差异导致的误差)（另一种方法）									27.997953	0.769955		
+4/1		大卷积核分解	3,1（k,dil）	2,5	5,1	7,3					27.894782	0.767681		
+		大卷积核分解	7,1	5,6	7,1	9,3					27.892089 	0.766767		
+4/2														
