@@ -2,6 +2,7 @@ import math
 import torch
 from torch import Tensor, nn
 import torch.nn.functional as F
+from natten.functional import na2d_av, na2d_qk
 from torch.nn.init import trunc_normal_
 import numbers
 from einops import rearrange
@@ -20,7 +21,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_Strip_MHLA(args)
+    return SymUNet_Pretrain_Strip_MHLA_Parallel(args)
 
 
 # ============== Channel Attention ==============
@@ -140,12 +141,24 @@ class NeighborhoodAttention2D(nn.Module):
 
 # ============== MHLA2D Wrapper ==============
 class MHLA2D(nn.Module):
-    def __init__(self, dim, heads=4, window_size=49, transform="cos"):
+    def __init__(self, dim, heads=4, window_size=49, transform="cos", overlap_size=2, shift_size=3):
         super().__init__()
         self.dim = dim
         self.window_size = window_size
         self.window_len = int(window_size ** 0.5)
-        
+        if self.window_len * self.window_len != window_size:
+            raise ValueError(f"window_size must be a square number, got {window_size}")
+        if not 0 <= overlap_size < self.window_len:
+            raise ValueError(f"overlap_size must be in [0, {self.window_len}), got {overlap_size}")
+        if not 0 <= shift_size < self.window_len:
+            raise ValueError(f"shift_size must be in [0, {self.window_len}), got {shift_size}")
+
+        self.overlap_size = overlap_size
+        self.shift_size = shift_size
+        self.stride = self.window_len - overlap_size
+        if self.stride <= 0:
+            raise ValueError("overlap_size makes MHLA window stride non-positive")
+
         self.mhla = MHLA_Normed_Torch_Dynamic(
             dim=dim,
             heads=heads,
@@ -153,52 +166,52 @@ class MHLA2D(nn.Module):
             transform=transform
         )
 
+    def _get_pad(self, length):
+        if length <= self.window_len:
+            return self.window_len - length
+
+        residual = (length - self.window_len) % self.stride
+        if residual == 0:
+            return 0
+        return self.stride - residual
+
     def forward(self, x):
-        """
-        x: (B, C, H, W)
-        """
         B, C, H, W = x.shape
-        
-        # ==========================================
-        # 1. 动态 Padding (保证宽高是 window_len 的整数倍)
-        # ==========================================
-        pad_r = (self.window_len - W % self.window_len) % self.window_len
-        pad_b = (self.window_len - H % self.window_len) % self.window_len
-        
+
+        if self.shift_size > 0:
+            x = torch.roll(x, shifts=(-self.shift_size, -self.shift_size), dims=(2, 3))
+
+        pad_r = self._get_pad(W)
+        pad_b = self._get_pad(H)
         if pad_r > 0 or pad_b > 0:
-            x = F.pad(x, (0, pad_r, 0, pad_b)) # 右侧和下方填充0
-            
+            x = F.pad(x, (0, pad_r, 0, pad_b), mode='replicate')
+
         H_pad, W_pad = x.shape[2:]
-        pieces_h = H_pad // self.window_len
-        pieces_w = W_pad // self.window_len
-        
-        # ==========================================
-        # 2. Reshape: BCHW -> B, N, WindowSize, C
-        # ==========================================
-        x = x.permute(0, 2, 3, 1).contiguous() # (B, H_pad, W_pad, C)
-        x = x.view(B, pieces_h, self.window_len, pieces_w, self.window_len, C)
-        x = x.permute(0, 1, 3, 2, 4, 5).contiguous() # (B, pieces_h, pieces_w, window_len, window_len, C)
-        x = x.view(B, pieces_h * pieces_w, self.window_size, C) # (B, N, W, C)
-        
-        # ==========================================
-        # 3. 执行 MHLA (传入动态尺寸)
-        # ==========================================
-        x = self.mhla(x, pieces_h, pieces_w)
-        
-        # ==========================================
-        # 4. Reshape Back: B, N, WindowSize, C -> BCHW
-        # ==========================================
-        x = x.view(B, pieces_h, pieces_w, self.window_len, self.window_len, C)
-        x = x.permute(0, 1, 3, 2, 4, 5).contiguous()
-        x = x.view(B, H_pad, W_pad, C)
-        x = x.permute(0, 3, 1, 2).contiguous() # (B, C, H_pad, W_pad)
-        
-        # ==========================================
-        # 5. Un-pad (恢复到原始输入尺寸，完美还原细节)
-        # ==========================================
-        if pad_r > 0 or pad_b > 0:
-            x = x[:, :, :H, :W].contiguous()
-            
+        pieces_h = (H_pad - self.window_len) // self.stride + 1
+        pieces_w = (W_pad - self.window_len) // self.stride + 1
+        num_pieces = pieces_h * pieces_w
+
+        windows = F.unfold(x, kernel_size=self.window_len, stride=self.stride)
+        windows = windows.transpose(1, 2).contiguous()
+        windows = windows.view(B, num_pieces, C, self.window_len, self.window_len)
+        windows = windows.permute(0, 1, 3, 4, 2).contiguous()
+        windows = windows.view(B, num_pieces, self.window_size, C)
+
+        windows = self.mhla(windows, pieces_h, pieces_w)
+
+        windows = windows.view(B, num_pieces, self.window_len, self.window_len, C)
+        windows = windows.permute(0, 4, 2, 3, 1).contiguous()
+        windows = windows.view(B, C * self.window_size, num_pieces)
+
+        x = F.fold(windows, output_size=(H_pad, W_pad), kernel_size=self.window_len, stride=self.stride)
+        norm = windows.new_ones(B, self.window_size, num_pieces)
+        norm = F.fold(norm, output_size=(H_pad, W_pad), kernel_size=self.window_len, stride=self.stride)
+        x = x / norm.clamp_min(1e-6)
+
+        x = x[:, :, :H, :W].contiguous()
+        if self.shift_size > 0:
+            x = torch.roll(x, shifts=(self.shift_size, self.shift_size), dims=(2, 3))
+
         return x
 
 # ============== LAB (Local Aggregation Block) ==============
@@ -442,48 +455,45 @@ class MAB(nn.Module):
         self.dim = dim
         self.num_head = num_head
         self.norm1 = LayerNorm2d(channels=dim)
-
-        # ===== 更新此处的参数 =====
-        self.attn = MHLA2D(
+        self.attn_nat = NeighborhoodAttention2D(
+            dim=dim,
+            num_head=num_head,
+            kernel_sizes=kernel_sizes,
+            dilations=dilations,
+            rel_pos_bias=True,
+            qkv_bias=True,
+            qk_scale=None,
+            attn_drop=0.0,
+            proj_drop=0.0
+        )
+        self.attn_mhla = MHLA2D(
             dim=dim,
             heads=num_head,
-            window_size=49,       # 修改为 64 (8x8 窗口)
-            transform="cos"       # 使用余弦衰减，对超分最好
+            window_size=49,
+            transform="cos",
+            overlap_size=2,
+            shift_size=3
         )
-        print(f"[MAB] 使用 MHLA2D (num_head={num_head})")
+        self.attn_mhla_proj = nn.Conv2d(dim, dim, kernel_size=1, bias=True)
+        nn.init.zeros_(self.attn_mhla_proj.weight)
+        nn.init.zeros_(self.attn_mhla_proj.bias)
+        print(f"[MAB] 使用 NAT 主分支 + MHLA 并联残差支路 (num_head={num_head})")
 
         self.norm2 = LayerNorm2d(channels=dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
 
     def forward(self, x):
-        # 输入 x shape: (B, C, H, W)
-
-        # ==========================================
-        # Part 1: Self-Attention (MHLA)
-        # ==========================================
-        shortcut_attn = x  # 保存 BCHW 格式的残差
-
-        # 1. LayerNorm2d 直接处理 BCHW，无需转换
+        shortcut_attn = x
         x_norm1 = self.norm1(x)
+        nat_out = self.attn_nat(x_norm1.permute(0, 2, 3, 1).contiguous())
+        nat_out = nat_out.permute(0, 3, 1, 2).contiguous()
+        mhla_out = self.attn_mhla(x_norm1)
+        mhla_out = self.attn_mhla_proj(mhla_out)
+        x = shortcut_attn + nat_out + mhla_out
 
-        # 2. MHLA2D 直接处理 BCHW 格式
-        attn_out = self.attn(x_norm1)
-
-        # 3. 加上残差
-        x = shortcut_attn + attn_out
-
-        # ==========================================
-        # Part 2: FFN / MSConvStar
-        # ==========================================
-        shortcut_ffn = x  # 保存 BCHW 格式的残差
-
-        # 1. LayerNorm2d 直接处理 BCHW，无需转换
+        shortcut_ffn = x
         x_norm2 = self.norm2(x)
-
-        # 2. MSConvStar 直接处理 BCHW 格式
         ffn_out_bchw = self.ffn(x_norm2)
-
-        # 3. 直接在 BCHW 维度上加残差并输出
         x = shortcut_ffn + ffn_out_bchw
 
         return x
@@ -667,17 +677,16 @@ class UpsampleDW(nn.Module):
 
 
 #@ARCH_REGISTRY.register("symunet_pretrain_strip_mhla")
-class SymUNet_Pretrain_Strip_MHLA(nn.Module):
+class SymUNet_Pretrain_Strip_MHLA_Parallel(nn.Module):
     """
-    symunet_pretrain_strip_mhla: MAB使用MHLA替换NeighborhoodAttention
-    - 使用 LAB (Local Aggregation Block)
-    - 仅使用 MAB2 (dilations=[5,3])
-    - 使用 MSConvStar
-    - Middle Blk使用StripAttention (k1=1, k2=47)
-    - MAB使用MHLA替换NeighborhoodAttention2D
+    symunet_pretrain_strip_mhla_parallel:
+    - 保留 strip baseline 的 NAT 主分支
+    - 增加 zero-init 的 MHLA 并联残差支路
+    - MHLA 使用 overlap + shift 的窗口划分
+    - middle block 仍然使用 strip attention
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_Strip_MHLA, self).__init__()
+        super(SymUNet_Pretrain_Strip_MHLA_Parallel, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -803,7 +812,7 @@ class SymUNet_Pretrain_Strip_MHLA(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_S1_Trans(args)
+    model = SymUNet_Pretrain_Strip_MHLA_Parallel(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)

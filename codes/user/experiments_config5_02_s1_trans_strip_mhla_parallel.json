@@ -1,6 +1,6 @@
 {
   "base_config": {
-    "model": "symunet_pretrain_strip_mhla",
+    "model": "symunet_pretrain_strip_mhla_parallel",
     "dataset": "UCMerced",
     "scale": 4,
     "epochs": 300,
@@ -11,14 +11,14 @@
   },
   "hyperparameter_grid": {
     "optimizer": ["ADAMW"],
-    "scheduler": ["cosine"],
+    "scheduler": ["step"],
     "lr": [2e-4],
     "loss": ["1*L1"],
     "symunet_pretrain_width": [32],
     "symunet_pretrain_enc_blk_nums": ["4,6"],
     "symunet_pretrain_dec_blk_nums": ["6,4"]
   },
-  "experiment_prefix": "s1_trans_strip_mhla_cos",
+  "experiment_prefix": "s1_trans_strip_mhla_parallel",
   "max_experiments": 1,
   "use_wandb": true,
   "wandb_project": "SymUNet-Pretrain-Variants",

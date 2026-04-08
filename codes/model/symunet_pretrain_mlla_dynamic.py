@@ -17,7 +17,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_MLLA(args)
+    return SymUNet_Pretrain_MLLA_Dynamic(args)
 
 
 # ============== Channel Attention ==============
@@ -36,114 +36,129 @@ class ChannelAttention(nn.Module):
         return x * self.attention(x)
 
 
-# ============== RoPE (Rotary Position Embedding) ==============
-class RoPE(nn.Module):
-    r"""Rotary Positional Embedding."""
-    def __init__(self, shape, base=10000):
-        super(RoPE, self).__init__()
-        channel_dims, feature_dim = shape[:-1], shape[-1]
-        k_max = feature_dim // (2 * len(channel_dims))
-        assert feature_dim % k_max == 0
-        theta_ks = 1 / (base ** (torch.arange(k_max) / k_max))
-        angles = torch.cat([t.unsqueeze(-1) * theta_ks for t in torch.meshgrid([torch.arange(d) for d in channel_dims], indexing='ij')], dim=-1)
-        rotations_re = torch.cos(angles).unsqueeze(dim=-1)
-        rotations_im = torch.sin(angles).unsqueeze(dim=-1)
-        rotations = torch.cat([rotations_re, rotations_im], dim=-1)
-        self.register_buffer('rotations', rotations)
+# ============== Dynamic RoPE (Rotary Position Embedding) ==============
+class DynamicRoPE(nn.Module):
+    r"""Rotary positional embedding with spatial-shape cache."""
+    def __init__(self, base=10000):
+        super().__init__()
+        self.base = base
+        self.cache = {}
 
-    def forward(self, x):
-        if x.dtype != torch.float32:
-            x = x.to(torch.float32)
+    def _get_rotations(self, h, w, feature_dim, device):
+        if feature_dim % 4 != 0:
+            raise ValueError(f"RoPE expects feature_dim divisible by 4, got {feature_dim}")
+
+        key = (h, w, feature_dim, device)
+        if key not in self.cache:
+            k_max = feature_dim // 4
+            theta_ks = 1 / (self.base ** (torch.arange(k_max, device=device, dtype=torch.float32) / k_max))
+            yy = torch.arange(h, device=device, dtype=torch.float32)
+            xx = torch.arange(w, device=device, dtype=torch.float32)
+            yy, xx = torch.meshgrid(yy, xx, indexing='ij')
+            angles = torch.cat([yy.unsqueeze(-1) * theta_ks, xx.unsqueeze(-1) * theta_ks], dim=-1)
+            rotations = torch.stack([torch.cos(angles), torch.sin(angles)], dim=-1)
+            self.cache[key] = rotations
+        return self.cache[key]
+
+    def forward(self, x, h, w):
+        rotations = self._get_rotations(h, w, x.shape[-1], x.device)
+        original_dtype = x.dtype
+        x = x.to(torch.float32)
         x = torch.view_as_complex(x.reshape(*x.shape[:-1], -1, 2))
-        pe_x = torch.view_as_complex(self.rotations) * x
-        return torch.view_as_real(pe_x).flatten(-2)
+        pe_x = torch.view_as_complex(rotations).unsqueeze(0) * x
+        return torch.view_as_real(pe_x).flatten(-2).to(original_dtype)
 
 
 # ============== MLLA Linear Attention ==============
 class MLLA(nn.Module):
-    r""" MLLA: Linear Attention with LePE and RoPE """
-    def __init__(self, dim, input_resolution, num_heads, qkv_bias=True, **kwargs):
+    r"""MLLA with dynamic RoPE and output projection."""
+    def __init__(self, dim, num_heads, qkv_bias=True, **kwargs):
         super().__init__()
         self.dim = dim
-        self.input_resolution = input_resolution
         self.num_heads = num_heads
         self.qk = nn.Linear(dim, dim * 2, bias=qkv_bias)
         self.elu = nn.ELU()
         self.lepe = nn.Conv2d(dim, dim, 3, padding=1, groups=dim)
-        self.rope = RoPE(shape=(input_resolution[0], input_resolution[1], dim))
+        self.rope = DynamicRoPE()
+        self.out_proj = nn.Linear(dim, dim)
 
-    def forward(self, x):
-        """
-        Args:
-            x: input features with shape of (B, N, C) where N = H * W
-        """
+    def forward(self, x, h, w):
         b, n, c = x.shape
-        h = int(n ** 0.5)
-        w = int(n ** 0.5)
-        num_heads = self.num_heads
-        head_dim = c // num_heads
+        if n != h * w:
+            raise ValueError(f"MLLA expected n == h * w, got n={n}, h={h}, w={w}")
+        if c % self.num_heads != 0:
+            raise ValueError(f"MLLA expected dim divisible by num_heads, got dim={c}, heads={self.num_heads}")
 
+        head_dim = c // self.num_heads
         qk = self.qk(x).reshape(b, n, 2, c).permute(2, 0, 1, 3)
         q, k, v = qk[0], qk[1], x
 
         q = self.elu(q) + 1.0
         k = self.elu(k) + 1.0
-        q_rope = self.rope(q.reshape(b, h, w, c)).reshape(b, n, num_heads, head_dim).permute(0, 2, 1, 3)
-        k_rope = self.rope(k.reshape(b, h, w, c)).reshape(b, n, num_heads, head_dim).permute(0, 2, 1, 3)
-        q = q.reshape(b, n, num_heads, head_dim).permute(0, 2, 1, 3)
-        k = k.reshape(b, n, num_heads, head_dim).permute(0, 2, 1, 3)
-        v = v.reshape(b, n, num_heads, head_dim).permute(0, 2, 1, 3)
+        q_rope = self.rope(q.reshape(b, h, w, c), h, w).reshape(b, n, self.num_heads, head_dim).permute(0, 2, 1, 3)
+        k_rope = self.rope(k.reshape(b, h, w, c), h, w).reshape(b, n, self.num_heads, head_dim).permute(0, 2, 1, 3)
+        q = q.reshape(b, n, self.num_heads, head_dim).permute(0, 2, 1, 3)
+        k = k.reshape(b, n, self.num_heads, head_dim).permute(0, 2, 1, 3)
+        v = v.reshape(b, n, self.num_heads, head_dim).permute(0, 2, 1, 3)
 
         z = 1 / (q @ k.mean(dim=-2, keepdim=True).transpose(-2, -1) + 1e-6)
         kv = (k_rope.transpose(-2, -1) * (n ** -0.5)) @ (v * (n ** -0.5))
         x = q_rope @ kv * z
 
         x = x.transpose(1, 2).reshape(b, n, c)
-        v = v.transpose(1, 2).reshape(b, h, w, c).permute(0, 3, 1, 2)
-        x = x + self.lepe(v).permute(0, 2, 3, 1).reshape(b, n, c)
-
-        return x
+        local_v = v.transpose(1, 2).reshape(b, h, w, c).permute(0, 3, 1, 2)
+        x = x + self.lepe(local_v).permute(0, 2, 3, 1).reshape(b, n, c)
+        return self.out_proj(x)
 
 
 # ============== MLLA2D Wrapper ==============
 class MLLA2D(nn.Module):
-    """
-    MLLA 2D Wrapper - 将 MLLA 适配到 BCHW 格式
-    MLLA 期望输入: (B, N, C) 其中 N = H*W (空间位置数)
-    """
-    def __init__(self, dim, num_heads=4, input_resolution=14):
+    """MLLA 2D wrapper with dynamic latent resolution instead of a fixed 14x14 grid."""
+    def __init__(self, dim, num_heads=2, max_tokens=256, min_tokens=64):
         super().__init__()
         self.dim = dim
         self.num_heads = num_heads
-        self.resolution = input_resolution
+        self.max_tokens = max_tokens
+        self.min_tokens = min_tokens
+        self.mlla = MLLA(dim=dim, num_heads=num_heads, qkv_bias=True)
 
-        self.mlla = MLLA(
-            dim=dim,
-            input_resolution=(input_resolution, input_resolution),
-            num_heads=num_heads,
-            qkv_bias=True
-        )
+    def _get_latent_size(self, h, w):
+        if self.max_tokens <= 0 or h * w <= self.max_tokens:
+            return h, w
+
+        pool_stride = max(1, math.ceil(math.sqrt((h * w) / self.max_tokens)))
+        target_h = max(1, math.ceil(h / pool_stride))
+        target_w = max(1, math.ceil(w / pool_stride))
+
+        min_side = int(math.sqrt(self.min_tokens)) if self.min_tokens > 0 else 1
+        target_h = min(h, max(min_side if h >= min_side else 1, target_h))
+        target_w = min(w, max(min_side if w >= min_side else 1, target_w))
+
+        while target_h * target_w > self.max_tokens:
+            if target_h >= target_w and target_h > 1:
+                target_h -= 1
+            elif target_w > 1:
+                target_w -= 1
+            else:
+                break
+
+        return target_h, target_w
 
     def forward(self, x):
-        # x: (B, C, H, W)
-        B, C, H, W = x.shape
+        b, c, h, w = x.shape
+        latent_h, latent_w = self._get_latent_size(h, w)
 
-        # 池化到固定分辨率
-        if H != self.resolution or W != self.resolution:
-            x = F.adaptive_avg_pool2d(x, (self.resolution, self.resolution))
+        if latent_h != h or latent_w != w:
+            pooled = F.adaptive_avg_pool2d(x, (latent_h, latent_w))
+        else:
+            pooled = x
 
-        # 转换 BCHW -> (B, H*W, C)
-        x_flat = x.view(B, C, self.resolution * self.resolution).permute(0, 2, 1).contiguous()
+        x_flat = pooled.view(b, c, latent_h * latent_w).permute(0, 2, 1).contiguous()
+        x_flat = self.mlla(x_flat, latent_h, latent_w)
+        x = x_flat.permute(0, 2, 1).contiguous().view(b, c, latent_h, latent_w)
 
-        # MLLA 处理
-        x_flat = self.mlla(x_flat)
-
-        # 转换回 BCHW
-        x = x_flat.permute(0, 2, 1).contiguous().view(B, C, self.resolution, self.resolution)
-
-        # 上采样回原始尺寸
-        if H != self.resolution or W != self.resolution:
-            x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=False)
+        if latent_h != h or latent_w != w:
+            x = F.interpolate(x, size=(h, w), mode='bilinear', align_corners=False)
 
         return x
 
@@ -326,15 +341,15 @@ class StripMiddleBlock(nn.Module):
 
 # ============== MAB with MLLA ==============
 class MAB(nn.Module):
-    """Multi-head Attention Block using MLLA"""
-    def __init__(self, dim, num_head=4):
+    """Multi-head Attention Block using dynamic MLLA."""
+    def __init__(self, dim, num_head=2):
         super().__init__()
         self.dim = dim
         self.num_head = num_head
 
         self.norm1 = LayerNorm2d(channels=dim)
-        self.attn = MLLA2D(dim=dim, num_heads=num_head, input_resolution=14)
-        print(f"[MAB] 使用 MLLA2D (num_head={num_head})")
+        self.attn = MLLA2D(dim=dim, num_heads=num_head, max_tokens=256, min_tokens=64)
+        print(f"[MAB] 使用动态 MLLA2D (num_head={num_head}, max_tokens=256)")
 
         self.norm2 = LayerNorm2d(channels=dim)
         self.ffn = MSConvStar(dim=dim, mlp_ratio=2., dw_sizes=[1, 3, 5, 7])
@@ -358,7 +373,7 @@ class S1_TransBlock_NoMAB1(nn.Module):
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
-        self.mab2 = MAB(dim=c, num_head=4)
+        self.mab2 = MAB(dim=c, num_head=2)
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
         nn.init.zeros_(self.conv.weight)
         nn.init.zeros_(self.conv.bias)
@@ -400,10 +415,10 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-class SymUNet_Pretrain_MLLA(nn.Module):
-    """symunet_pretrain_mlla: MAB使用MLLA Linear Attention"""
+class SymUNet_Pretrain_MLLA_Dynamic(nn.Module):
+    """symunet_pretrain_mlla_dynamic: MAB使用动态 latent 分辨率的 MLLA"""
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_MLLA, self).__init__()
+        super(SymUNet_Pretrain_MLLA_Dynamic, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -523,7 +538,7 @@ class SymUNet_Pretrain_MLLA(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_MLLA(args)
+    model = SymUNet_Pretrain_MLLA_Dynamic(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)
