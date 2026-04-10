@@ -15,7 +15,7 @@ MIN_NUM_PATCHES = 12
 
 
 def make_model(args, parent=False):
-    return SymUNet_Pretrain_Strip_CAM(args)
+    return SymUNet_Pretrain_Strip_CAM_Parallel(args)
 
 
 # ============== Channel Attention ==============
@@ -291,33 +291,45 @@ class StripModule(nn.Module):
         return x * attn
 
 
-# ============== StripAttention ==============
-class StripAttention(nn.Module):
+# ============== Parallel Strip/CAM Attention ==============
+class StripCAMParallelAttention(nn.Module):
     """
-    条形注意力 + 通道注意力 (融合版)
+    仿照 EfficientMixAttn 的并联思路:
+    共享输入投影后拆成 strip/cam 两个分支，并联计算后 concat，再做输出投影。
     """
-    def __init__(self, dim, k1=1, k2=47):
+    def __init__(self, dim, k1=1, k2=47, squeeze_factor=4):
         super().__init__()
+        self.dim = dim
+        self.branch_dims = self._split_channels(dim, 2)
+
         self.proj_1 = nn.Conv2d(dim, dim, 1)
         self.activation = nn.GELU()
-        
-        # 核心：空间门控
-        self.spatial_gating_unit = StripModule(dim, k1=k1, k2=k2)
-        
-        # 核心：通道门控 (接在空间门控后面)
-        self.channel_gating = ChannelAttention(dim=dim, squeeze_factor=4)
-        
+
+        self.strip_branch = StripModule(self.branch_dims[0], k1=k1, k2=k2)
+        self.cam_branch = ChannelAttention(dim=self.branch_dims[1], squeeze_factor=squeeze_factor)
+
         self.proj_2 = nn.Conv2d(dim, dim, 1)
 
+    @staticmethod
+    def _split_channels(dim, num_branches):
+        branch_dims = []
+        for idx in range(num_branches):
+            if idx == 0:
+                branch_dim = dim - dim // num_branches * (num_branches - 1)
+            else:
+                branch_dim = dim // num_branches
+            branch_dims.append(branch_dim)
+        return branch_dims
+
     def forward(self, x):
-        # 保持外层不再做残差，内部纯净的变换流
         x = self.proj_1(x)
         x = self.activation(x)
-        
-        # 空间与通道的双重提纯
-        x = self.spatial_gating_unit(x)
-        x = self.channel_gating(x)  # 直接串联，不需要 norm_cam !
-        
+
+        x_strip, x_cam = torch.split(x, self.branch_dims, dim=1)
+        x_strip = self.strip_branch(x_strip)
+        x_cam = self.cam_branch(x_cam)
+
+        x = torch.cat([x_strip, x_cam], dim=1)
         x = self.proj_2(x)
         return x
 
@@ -337,14 +349,14 @@ class StripAttention(nn.Module):
 #     def forward(self, x):
 #         return x * self.attention(x)
 
-class StripCAMiddleBlock(nn.Module):
+class StripCAMParallelMiddleBlock(nn.Module):
     def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47):
         super().__init__()
         self.dim = dim
 
-        # Part 1: Spatial-Channel Mixer (融合了 Strip 和 CA)
+        # Part 1: Parallel Strip/CAM Attention
         self.norm1 = LayerNorm2d(channels=dim)
-        self.strip_ca_attn = StripAttention(dim=dim, k1=k1, k2=k2)
+        self.parallel_attn = StripCAMParallelAttention(dim=dim, k1=k1, k2=k2)
         
         # Part 2: FFN
         self.norm2 = LayerNorm2d(channels=dim)
@@ -360,9 +372,9 @@ class StripCAMiddleBlock(nn.Module):
         self.layer_scale_2 = nn.Parameter(layer_scale_init * torch.ones(dim), requires_grad=True)
 
     def forward(self, x):
-        # 1. Mixer Path (包含了 Strip空间 和 CA通道)
+        # 1. Parallel attention path
         x = x + self.layer_scale_1.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) * \
-            self.strip_ca_attn(self.norm1(x))
+            self.parallel_attn(self.norm1(x))
 
         # 2. FFN path
         shortcut = x
@@ -499,17 +511,18 @@ class UpsampleDW(nn.Module):
         return self.body(x)
 
 
-#@ARCH_REGISTRY.register("symunet_pretrain_strip_cam")
-class SymUNet_Pretrain_Strip_CAM(nn.Module):
+#@ARCH_REGISTRY.register("symunet_pretrain_strip_cam_parallel")
+class SymUNet_Pretrain_Strip_CAM_Parallel(nn.Module):
     """
-    symunet_pretrain_strip_cam: Middle Blk使用StripAttention + ChannelAttention
+    symunet_pretrain_strip_cam_parallel:
+    Middle Blk 使用 Strip 和 Channel Attention 并联的混合注意力
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
-    - Middle Blk使用StripAttention (k1=1, k2=47) + ChannelAttention
+    - Middle Blk 使用共享前投影 + Strip/CAM 并联分支 + 输出投影
     """
     def __init__(self, args, conv=common.default_conv):
-        super(SymUNet_Pretrain_Strip_CAM, self).__init__()
+        super(SymUNet_Pretrain_Strip_CAM_Parallel, self).__init__()
 
         self.args = args
         self.scale = args.scale[0]
@@ -552,7 +565,7 @@ class SymUNet_Pretrain_Strip_CAM(nn.Module):
         strip_k2 = getattr(args, 'symunet_pretrain_strip_k2', 47)
 
         self.middle_blks = nn.Sequential(*[
-            StripCAMiddleBlock(
+            StripCAMParallelMiddleBlock(
                 dim=chan,
                 ffn_expansion_factor=ffn_expansion_factor,
                 bias=bias,
@@ -635,7 +648,7 @@ class SymUNet_Pretrain_Strip_CAM(nn.Module):
 
 if __name__ == "__main__":
     from option import args
-    model = SymUNet_Pretrain_S1_Trans(args)
+    model = SymUNet_Pretrain_Strip_CAM_Parallel(args)
     model.eval()
     input_lr = torch.rand(1, 3, 48, 48)
     sr = model(input_lr)

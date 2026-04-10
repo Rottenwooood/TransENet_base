@@ -1,9 +1,11 @@
 #!/bin/bash
 # Training script for symunet_pretrain_strip_cam_parallel
 
+set -e
+
 export http_proxy="http://127.0.0.1:7890"
 export https_proxy="http://127.0.0.1:7890"
-# cd /home/c6h4o2/dev/TransENet_base/codes
+cd "$(dirname "$0")"
 
 # # Training
 # # python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_c.json
@@ -15,7 +17,7 @@ export https_proxy="http://127.0.0.1:7890"
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_pki.json
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip.json
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_lsconv_strip.json
-# python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel.json
+python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel.json
 # python user/batch_train.py --config user/experiments_config5_02_s1_trans_nomab1_middle.json
 
 # Inference and Evaluation
