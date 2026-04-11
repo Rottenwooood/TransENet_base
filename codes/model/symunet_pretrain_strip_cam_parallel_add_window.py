@@ -16,6 +16,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 MIN_NUM_PATCHES = 12
 
 
+def _lcm(a, b):
+    return abs(a * b) // math.gcd(a, b)
+
+
 def make_model(args, parent=False):
     return SymUNet_Pretrain_Strip_CAM_Parallel_Add_Window(args)
 
@@ -765,7 +769,7 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_Window(nn.Module):
             ]))
 
         down_factor = 2 ** len(self.encoders)
-        self.padder_size = down_factor * math.lcm(4, window_size)
+        self.padder_size = down_factor * _lcm(4, window_size)
 
     def forward(self, inp):
         B, C, H, W = inp.shape
