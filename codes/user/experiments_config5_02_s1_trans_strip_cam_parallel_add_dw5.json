@@ -7,7 +7,7 @@
     "batch_size": 4,
     "ext": "img",
     "patch_size": 192,
-    "resume": 1
+    "resume": 0
   },
   "hyperparameter_grid": {
     "optimizer": ["ADAMW"],

@@ -291,18 +291,77 @@ class StripModule(nn.Module):
         return x * attn
 
 
-# ============== Parallel Strip/CAM Attention (Add Fusion) ==============
-class StripCAMParallelAddAttention(nn.Module):
-    """
-    不做通道 split，strip/cam 两个分支都处理完整通道，
-    最后直接逐元素相加，再做输出投影。
-    """
-    def __init__(self, dim, k1=1, k2=47, squeeze_factor=4):
+class WindowSelfAttention2D(nn.Module):
+    def __init__(self, dim, window_size=8, num_heads=4, qkv_bias=True):
         super().__init__()
+        self.window_size = window_size
+        self.num_heads = self._resolve_num_heads(dim, num_heads)
+        self.head_dim = dim // self.num_heads
+        self.scale = self.head_dim ** -0.5
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
+        self.proj = nn.Linear(dim, dim)
+
+    @staticmethod
+    def _resolve_num_heads(dim, num_heads):
+        heads = max(1, min(dim, num_heads))
+        while dim % heads != 0 and heads > 1:
+            heads -= 1
+        return heads
+
+    def forward(self, x):
+        b, c, h, w = x.shape
+        ws = self.window_size
+        pad_h = (ws - h % ws) % ws
+        pad_w = (ws - w % ws) % ws
+        if pad_h or pad_w:
+            x = F.pad(x, (0, pad_w, 0, pad_h))
+
+        hp, wp = x.shape[-2:]
+        x = x.permute(0, 2, 3, 1).contiguous()
+        x = x.view(b, hp // ws, ws, wp // ws, ws, c)
+        x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, ws * ws, c)
+
+        qkv = self.qkv(x).view(-1, ws * ws, 3, self.num_heads, self.head_dim)
+        qkv = qkv.permute(2, 0, 3, 1, 4)
+        q, k, v = qkv[0], qkv[1], qkv[2]
+
+        attn = (q * self.scale) @ k.transpose(-2, -1)
+        attn = attn.softmax(dim=-1)
+        x = (attn @ v).transpose(1, 2).contiguous().view(-1, ws * ws, c)
+        x = self.proj(x)
+
+        x = x.view(b, hp // ws, wp // ws, ws, ws, c)
+        x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, hp, wp, c)
+        return x[:, :h, :w, :].permute(0, 3, 1, 2).contiguous()
+
+
+def split_channels(dim, num_splits):
+    channels = []
+    for idx in range(num_splits):
+        if idx == 0:
+            split_dim = dim - dim // num_splits * (num_splits - 1)
+        else:
+            split_dim = dim // num_splits
+        channels.append(split_dim)
+    return channels
+
+
+# ============== Parallel Strip/Window + CAM Attention ==============
+class StripCAMParallelAddWindowAttention(nn.Module):
+    """
+    split 后让 strip 与 window self-attention 两个空间分支并联并 concat，
+    再与 full-width CAM 分支并联相加。
+    """
+    def __init__(self, dim, k1=1, k2=47, squeeze_factor=4, window_size=8, num_heads=4):
+        super().__init__()
+        self.branch_dims = split_channels(dim, 2)
         self.proj_1 = nn.Conv2d(dim, dim, 1)
         self.activation = nn.GELU()
 
-        self.strip_branch = StripModule(dim, k1=k1, k2=k2)
+        self.strip_branch = StripModule(self.branch_dims[0], k1=k1, k2=k2)
+        self.window_branch = WindowSelfAttention2D(
+            dim=self.branch_dims[1], window_size=window_size, num_heads=num_heads
+        )
         self.cam_branch = ChannelAttention(dim=dim, squeeze_factor=squeeze_factor)
 
         self.proj_2 = nn.Conv2d(dim, dim, 1)
@@ -311,10 +370,13 @@ class StripCAMParallelAddAttention(nn.Module):
         x = self.proj_1(x)
         x = self.activation(x)
 
-        x_strip = self.strip_branch(x)
+        x_strip, x_window = torch.split(x, self.branch_dims, dim=1)
+        x_strip = self.strip_branch(x_strip)
+        x_window = self.window_branch(x_window)
+        x_spatial = torch.cat([x_strip, x_window], dim=1)
         x_cam = self.cam_branch(x)
 
-        x = x_strip + x_cam
+        x = x_spatial + x_cam
         x = self.proj_2(x)
         return x
 
@@ -334,14 +396,16 @@ class StripCAMParallelAddAttention(nn.Module):
 #     def forward(self, x):
 #         return x * self.attention(x)
 
-class StripCAMParallelAddMiddleBlock(nn.Module):
-    def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47):
+class StripCAMParallelAddWindowMiddleBlock(nn.Module):
+    def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47, window_size=8, num_heads=4):
         super().__init__()
         self.dim = dim
 
-        # Part 1: Full-width parallel Strip/CAM Attention with add fusion
+        # Part 1: Split spatial branches (strip + window) and full-width CAM branch
         self.norm1 = LayerNorm2d(channels=dim)
-        self.parallel_attn = StripCAMParallelAddAttention(dim=dim, k1=k1, k2=k2)
+        self.parallel_attn = StripCAMParallelAddWindowAttention(
+            dim=dim, k1=k1, k2=k2, window_size=window_size, num_heads=num_heads
+        )
         
         # Part 2: FFN
         self.norm2 = LayerNorm2d(channels=dim)
@@ -500,11 +564,12 @@ class UpsampleDW(nn.Module):
 class SymUNet_Pretrain_Strip_CAM_Parallel_Add_Window(nn.Module):
     """
     symunet_pretrain_strip_cam_parallel_add_window:
-    预留 window 分支的 strip/cam hybrid variant.
+    Middle Blk 使用:
+    split(strip + window self-attention) -> concat -> + full-width CAM -> proj
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
-    - Middle Blk 使用共享前投影 + Strip/CAM 双 full-width 分支 + add 融合 + 输出投影
+    - Middle Blk 使用共享前投影 + split 空间并联 + CAM 并联 + add 融合 + 输出投影
     """
     def __init__(self, args, conv=common.default_conv):
         super(SymUNet_Pretrain_Strip_CAM_Parallel_Add_Window, self).__init__()
@@ -548,14 +613,18 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_Window(nn.Module):
         # Strip kernel sizes
         strip_k1 = getattr(args, 'symunet_pretrain_strip_k1', 1)
         strip_k2 = getattr(args, 'symunet_pretrain_strip_k2', 47)
+        window_size = getattr(args, 'symunet_pretrain_window_size', 8)
+        window_heads = getattr(args, 'symunet_pretrain_window_heads', 4)
 
         self.middle_blks = nn.Sequential(*[
-            StripCAMParallelAddMiddleBlock(
+            StripCAMParallelAddWindowMiddleBlock(
                 dim=chan,
                 ffn_expansion_factor=ffn_expansion_factor,
                 bias=bias,
                 k1=strip_k1,
-                k2=strip_k2
+                k2=strip_k2,
+                window_size=window_size,
+                num_heads=window_heads,
             ) for _ in range(middle_blk_num)
         ])
 

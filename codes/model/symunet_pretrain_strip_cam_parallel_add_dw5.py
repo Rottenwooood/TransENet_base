@@ -291,18 +291,40 @@ class StripModule(nn.Module):
         return x * attn
 
 
-# ============== Parallel Strip/CAM Attention (Add Fusion) ==============
-class StripCAMParallelAddAttention(nn.Module):
+class DWConv5x5Branch(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        self.dwconv = nn.Conv2d(dim, dim, kernel_size=5, padding=2, groups=dim)
+
+    def forward(self, x):
+        return self.dwconv(x)
+
+
+def split_channels(dim, num_splits):
+    channels = []
+    for idx in range(num_splits):
+        if idx == 0:
+            split_dim = dim - dim // num_splits * (num_splits - 1)
+        else:
+            split_dim = dim // num_splits
+        channels.append(split_dim)
+    return channels
+
+
+# ============== Parallel Strip/DW5 + CAM Attention ==============
+class StripCAMParallelAddDW5Attention(nn.Module):
     """
-    不做通道 split，strip/cam 两个分支都处理完整通道，
-    最后直接逐元素相加，再做输出投影。
+    split 后让 strip 与 5x5 depthwise conv 两个空间分支并联并 concat，
+    再与 full-width CAM 分支并联相加。
     """
     def __init__(self, dim, k1=1, k2=47, squeeze_factor=4):
         super().__init__()
+        self.branch_dims = split_channels(dim, 2)
         self.proj_1 = nn.Conv2d(dim, dim, 1)
         self.activation = nn.GELU()
 
-        self.strip_branch = StripModule(dim, k1=k1, k2=k2)
+        self.strip_branch = StripModule(self.branch_dims[0], k1=k1, k2=k2)
+        self.dw5_branch = DWConv5x5Branch(self.branch_dims[1])
         self.cam_branch = ChannelAttention(dim=dim, squeeze_factor=squeeze_factor)
 
         self.proj_2 = nn.Conv2d(dim, dim, 1)
@@ -311,10 +333,13 @@ class StripCAMParallelAddAttention(nn.Module):
         x = self.proj_1(x)
         x = self.activation(x)
 
-        x_strip = self.strip_branch(x)
+        x_strip, x_dw5 = torch.split(x, self.branch_dims, dim=1)
+        x_strip = self.strip_branch(x_strip)
+        x_dw5 = self.dw5_branch(x_dw5)
+        x_spatial = torch.cat([x_strip, x_dw5], dim=1)
         x_cam = self.cam_branch(x)
 
-        x = x_strip + x_cam
+        x = x_spatial + x_cam
         x = self.proj_2(x)
         return x
 
@@ -334,14 +359,14 @@ class StripCAMParallelAddAttention(nn.Module):
 #     def forward(self, x):
 #         return x * self.attention(x)
 
-class StripCAMParallelAddMiddleBlock(nn.Module):
+class StripCAMParallelAddDW5MiddleBlock(nn.Module):
     def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47):
         super().__init__()
         self.dim = dim
 
-        # Part 1: Full-width parallel Strip/CAM Attention with add fusion
+        # Part 1: Split spatial branches (strip + dw5) and full-width CAM branch
         self.norm1 = LayerNorm2d(channels=dim)
-        self.parallel_attn = StripCAMParallelAddAttention(dim=dim, k1=k1, k2=k2)
+        self.parallel_attn = StripCAMParallelAddDW5Attention(dim=dim, k1=k1, k2=k2)
         
         # Part 2: FFN
         self.norm2 = LayerNorm2d(channels=dim)
@@ -500,11 +525,12 @@ class UpsampleDW(nn.Module):
 class SymUNet_Pretrain_Strip_CAM_Parallel_Add_DW5(nn.Module):
     """
     symunet_pretrain_strip_cam_parallel_add_dw5:
-    预留 5x5 dwconv 分支的 strip/cam hybrid variant.
+    Middle Blk 使用:
+    split(strip + 5x5 DWConv) -> concat -> + full-width CAM -> proj
     - 使用 LAB (Local Aggregation Block)
     - 仅使用 MAB2 (dilations=[5,3])
     - 使用 MSConvStar
-    - Middle Blk 使用共享前投影 + Strip/CAM 双 full-width 分支 + add 融合 + 输出投影
+    - Middle Blk 使用共享前投影 + split 空间并联 + CAM 并联 + add 融合 + 输出投影
     """
     def __init__(self, args, conv=common.default_conv):
         super(SymUNet_Pretrain_Strip_CAM_Parallel_Add_DW5, self).__init__()
@@ -550,7 +576,7 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_DW5(nn.Module):
         strip_k2 = getattr(args, 'symunet_pretrain_strip_k2', 47)
 
         self.middle_blks = nn.Sequential(*[
-            StripCAMParallelAddMiddleBlock(
+            StripCAMParallelAddDW5MiddleBlock(
                 dim=chan,
                 ffn_expansion_factor=ffn_expansion_factor,
                 bias=bias,

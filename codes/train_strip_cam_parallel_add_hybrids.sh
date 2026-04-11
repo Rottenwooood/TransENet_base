@@ -1,5 +1,5 @@
 #!/bin/bash
-# Training script for strip-cam parallel add hybrid variants
+# Training script for strip-cam parallel add window/dw5 variants
 
 set -e
 
@@ -17,7 +17,6 @@ COMMON_ARGS=(
 
 python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel_add_window.json
 python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel_add_dw5.json
-python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel_add_window_dw5.json
 
 python demo_deploy.py \
     --model symunet_pretrain_strip_cam_parallel_add_window \
@@ -31,12 +30,5 @@ python demo_deploy.py \
     --pre_train ../experiment/s1_trans_strip_cam_parallel_add_dw5_v1_001_s1_trans_strip_cam_parallel_add_dw5_v1_w32/model/model_best.pt \
     --dir_out ../experiment/results/s1_trans_strip_cam_parallel_add_dw5_v1_46W32/x4
 
-python demo_deploy.py \
-    --model symunet_pretrain_strip_cam_parallel_add_window_dw5 \
-    "${COMMON_ARGS[@]}" \
-    --pre_train ../experiment/s1_trans_strip_cam_parallel_add_window_dw5_v1_001_s1_trans_strip_cam_parallel_add_window_dw5_v1_w32/model/model_best.pt \
-    --dir_out ../experiment/results/s1_trans_strip_cam_parallel_add_window_dw5_v1_46W32/x4
-
 python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_cam_parallel_add_window_v1_46W32/x4 | tail -n 1 >> results.txt
 python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_cam_parallel_add_dw5_v1_46W32/x4 | tail -n 1 >> results.txt
-python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_cam_parallel_add_window_dw5_v1_46W32/x4 | tail -n 1 >> results.txt
