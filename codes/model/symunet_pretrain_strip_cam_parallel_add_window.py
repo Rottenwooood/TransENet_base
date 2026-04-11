@@ -1,9 +1,11 @@
+import math
 import torch
 from torch import Tensor, nn
 import torch.nn.functional as F
 from natten.functional import na2d_av, na2d_qk
 from torch.nn.init import trunc_normal_
 from model import common
+from math import prod
 from typing import List, Optional
 
 #from utils.registry import ARCH_REGISTRY
@@ -291,15 +293,125 @@ class StripModule(nn.Module):
         return x * attn
 
 
-class WindowSelfAttention2D(nn.Module):
-    def __init__(self, dim, window_size=8, num_heads=4, qkv_bias=True):
+class CPB_MLP(nn.Sequential):
+    def __init__(self, in_channels, out_channels, channels=512):
+        modules = [
+            nn.Linear(in_channels, channels, bias=True),
+            nn.ReLU(inplace=True),
+            nn.Linear(channels, out_channels, bias=False),
+        ]
+        super().__init__(*modules)
+
+
+def window_partition(x, window_size):
+    b, h, w, c = x.shape
+    x = x.view(
+        b, h // window_size[0], window_size[0], w // window_size[1], window_size[1], c
+    )
+    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous()
+    return windows.view(-1, window_size[0], window_size[1], c)
+
+
+def window_reverse(windows, window_size, img_size):
+    h, w = img_size
+    b = int(windows.shape[0] / (h * w / window_size[0] / window_size[1]))
+    x = windows.view(
+        b, h // window_size[0], w // window_size[1], window_size[0], window_size[1], -1
+    )
+    return x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, h, w, -1)
+
+
+def calculate_mask(input_resolution, window_size, shift_size):
+    img_mask = torch.zeros((1, *input_resolution, 1))
+    h_slices = (
+        slice(0, -window_size[0]),
+        slice(-window_size[0], -shift_size),
+        slice(-shift_size, None),
+    )
+    w_slices = (
+        slice(0, -window_size[1]),
+        slice(-window_size[1], -shift_size),
+        slice(-shift_size, None),
+    )
+    cnt = 0
+    for h in h_slices:
+        for w in w_slices:
+            img_mask[:, h, w, :] = cnt
+            cnt += 1
+
+    mask_windows = window_partition(img_mask, window_size)
+    mask_windows = mask_windows.view(-1, prod(window_size))
+    attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
+    attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0))
+    attn_mask = attn_mask.masked_fill(attn_mask == 0, float(0.0))
+    return attn_mask
+
+
+def get_relative_coords_table(window_size):
+    coord_h = torch.arange(-(window_size[0] - 1), window_size[0], dtype=torch.float32)
+    coord_w = torch.arange(-(window_size[1] - 1), window_size[1], dtype=torch.float32)
+    table = torch.stack(torch.meshgrid([coord_h, coord_w], indexing="ij")).permute(1, 2, 0)
+    table = table.contiguous().unsqueeze(0)
+    table[:, :, :, 0] /= max(window_size[0] - 1, 1)
+    table[:, :, :, 1] /= max(window_size[1] - 1, 1)
+    table *= 8
+    table = torch.sign(table) * torch.log2(torch.abs(table) + 1.0) / math.log2(8)
+    return table
+
+
+def get_relative_position_index(window_size):
+    coord_h = torch.arange(window_size[0])
+    coord_w = torch.arange(window_size[1])
+    coords = torch.stack(torch.meshgrid([coord_h, coord_w], indexing="ij"))
+    coords = torch.flatten(coords, 1)
+    coords = coords[:, :, None] - coords[:, None, :]
+    coords = coords.permute(1, 2, 0).contiguous()
+    coords[:, :, 0] += window_size[0] - 1
+    coords[:, :, 1] += window_size[1] - 1
+    coords[:, :, 0] *= 2 * window_size[1] - 1
+    return coords.sum(-1)
+
+
+class AffineTransform(nn.Module):
+    def __init__(self, num_heads):
         super().__init__()
-        self.window_size = window_size
+        logit_scale = torch.log(10 * torch.ones((num_heads, 1, 1)))
+        self.logit_scale = nn.Parameter(logit_scale, requires_grad=True)
+        self.cpb_mlp = CPB_MLP(2, num_heads)
+
+    def forward(self, attn, relative_coords_table, relative_position_index, mask):
+        b_, h, n1, n2 = attn.shape
+        attn = attn * torch.clamp(self.logit_scale, max=math.log(1.0 / 0.01)).exp()
+
+        bias_table = self.cpb_mlp(relative_coords_table).view(-1, h)
+        bias = bias_table[relative_position_index.view(-1)]
+        bias = bias.view(n1, n2, -1).permute(2, 0, 1).contiguous()
+        bias = 16 * torch.sigmoid(bias)
+        attn = attn + bias.unsqueeze(0)
+
+        if mask is not None:
+            n_w = mask.shape[0]
+            mask = mask.unsqueeze(1).unsqueeze(0)
+            attn = attn.view(b_ // n_w, n_w, h, n1, n2) + mask
+            attn = attn.view(-1, h, n1, n2)
+
+        return attn
+
+
+class WindowSelfAttention2D(nn.Module):
+    def __init__(self, dim, window_size=8, num_heads=4, qkv_bias=True, window_shift=False):
+        super().__init__()
+        self.window_size = (window_size, window_size)
         self.num_heads = self._resolve_num_heads(dim, num_heads)
-        self.head_dim = dim // self.num_heads
-        self.scale = self.head_dim ** -0.5
+        self.shift_size = self.window_size[0] // 2 if window_shift else 0
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.proj = nn.Linear(dim, dim)
+        self.attn_transform = AffineTransform(self.num_heads)
+        self.attn_drop = nn.Dropout(0.0)
+        self.softmax = nn.Softmax(dim=-1)
+
+        self.register_buffer("relative_coords_table", get_relative_coords_table(self.window_size))
+        self.register_buffer("relative_position_index", get_relative_position_index(self.window_size))
 
     @staticmethod
     def _resolve_num_heads(dim, num_heads):
@@ -310,29 +422,43 @@ class WindowSelfAttention2D(nn.Module):
 
     def forward(self, x):
         b, c, h, w = x.shape
-        ws = self.window_size
-        pad_h = (ws - h % ws) % ws
-        pad_w = (ws - w % ws) % ws
-        if pad_h or pad_w:
-            x = F.pad(x, (0, pad_w, 0, pad_h))
+        if h % self.window_size[0] != 0 or w % self.window_size[1] != 0:
+            raise ValueError(
+                f"WindowSelfAttention2D requires feature size divisible by window_size, got {(h, w)} and {self.window_size}."
+            )
 
-        hp, wp = x.shape[-2:]
         x = x.permute(0, 2, 3, 1).contiguous()
-        x = x.view(b, hp // ws, ws, wp // ws, ws, c)
-        x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, ws * ws, c)
+        if self.shift_size > 0:
+            x = torch.roll(x, shifts=(-self.shift_size, -self.shift_size), dims=(1, 2))
 
-        qkv = self.qkv(x).view(-1, ws * ws, 3, self.num_heads, self.head_dim)
-        qkv = qkv.permute(2, 0, 3, 1, 4)
+        windows = window_partition(x, self.window_size)
+        windows = windows.view(-1, prod(self.window_size), c)
+
+        b_, n, _ = windows.shape
+        qkv = self.qkv(windows).reshape(b_, n, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        attn = (q * self.scale) @ k.transpose(-2, -1)
-        attn = attn.softmax(dim=-1)
-        x = (attn @ v).transpose(1, 2).contiguous().view(-1, ws * ws, c)
-        x = self.proj(x)
+        attn = F.normalize(q, dim=-1) @ F.normalize(k, dim=-1).transpose(-2, -1)
+        mask = None
+        if self.shift_size > 0:
+            mask = calculate_mask((h, w), self.window_size, self.shift_size).to(x.device)
+        attn = self.attn_transform(
+            attn,
+            self.relative_coords_table.to(x.device),
+            self.relative_position_index.to(x.device),
+            mask,
+        )
+        attn = self.softmax(attn)
+        attn = self.attn_drop(attn)
 
-        x = x.view(b, hp // ws, wp // ws, ws, ws, c)
-        x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(b, hp, wp, c)
-        return x[:, :h, :w, :].permute(0, 3, 1, 2).contiguous()
+        out = (attn @ v).transpose(1, 2).reshape(b_, n, c)
+        out = self.proj(out)
+        out = out.view(-1, *self.window_size, c)
+        out = window_reverse(out, self.window_size, (h, w))
+
+        if self.shift_size > 0:
+            out = torch.roll(out, shifts=(self.shift_size, self.shift_size), dims=(1, 2))
+        return out.permute(0, 3, 1, 2).contiguous()
 
 
 def split_channels(dim, num_splits):
@@ -352,7 +478,7 @@ class StripCAMParallelAddWindowAttention(nn.Module):
     split 后让 strip 与 window self-attention 两个空间分支并联并 concat，
     再与 full-width CAM 分支并联相加。
     """
-    def __init__(self, dim, k1=1, k2=47, squeeze_factor=4, window_size=8, num_heads=4):
+    def __init__(self, dim, k1=1, k2=47, squeeze_factor=4, window_size=8, num_heads=4, window_shift=False):
         super().__init__()
         self.branch_dims = split_channels(dim, 2)
         self.proj_1 = nn.Conv2d(dim, dim, 1)
@@ -360,7 +486,7 @@ class StripCAMParallelAddWindowAttention(nn.Module):
 
         self.strip_branch = StripModule(self.branch_dims[0], k1=k1, k2=k2)
         self.window_branch = WindowSelfAttention2D(
-            dim=self.branch_dims[1], window_size=window_size, num_heads=num_heads
+            dim=self.branch_dims[1], window_size=window_size, num_heads=num_heads, window_shift=window_shift
         )
         self.cam_branch = ChannelAttention(dim=dim, squeeze_factor=squeeze_factor)
 
@@ -397,14 +523,14 @@ class StripCAMParallelAddWindowAttention(nn.Module):
 #         return x * self.attention(x)
 
 class StripCAMParallelAddWindowMiddleBlock(nn.Module):
-    def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47, window_size=8, num_heads=4):
+    def __init__(self, dim, ffn_expansion_factor=2., bias=False, k1=1, k2=47, window_size=8, num_heads=4, window_shift=False):
         super().__init__()
         self.dim = dim
 
         # Part 1: Split spatial branches (strip + window) and full-width CAM branch
         self.norm1 = LayerNorm2d(channels=dim)
         self.parallel_attn = StripCAMParallelAddWindowAttention(
-            dim=dim, k1=k1, k2=k2, window_size=window_size, num_heads=num_heads
+            dim=dim, k1=k1, k2=k2, window_size=window_size, num_heads=num_heads, window_shift=window_shift
         )
         
         # Part 2: FFN
@@ -615,6 +741,7 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_Window(nn.Module):
         strip_k2 = getattr(args, 'symunet_pretrain_strip_k2', 47)
         window_size = getattr(args, 'symunet_pretrain_window_size', 8)
         window_heads = getattr(args, 'symunet_pretrain_window_heads', 4)
+        window_shift = getattr(args, 'symunet_pretrain_window_shift', False)
 
         self.middle_blks = nn.Sequential(*[
             StripCAMParallelAddWindowMiddleBlock(
@@ -625,6 +752,7 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_Window(nn.Module):
                 k2=strip_k2,
                 window_size=window_size,
                 num_heads=window_heads,
+                window_shift=window_shift,
             ) for _ in range(middle_blk_num)
         ])
 
@@ -636,7 +764,8 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_Window(nn.Module):
                 S1_TransBlock_NoMAB1(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
             ]))
 
-        self.padder_size = (2 ** len(self.encoders)) * 4
+        down_factor = 2 ** len(self.encoders)
+        self.padder_size = down_factor * math.lcm(4, window_size)
 
     def forward(self, inp):
         B, C, H, W = inp.shape
