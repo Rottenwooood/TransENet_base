@@ -479,7 +479,7 @@ class MAB(nn.Module):
 class S1_TransBlock_NoMAB1(nn.Module):
     """
     S1 Series Block (去掉MAB1):
-    x = LAB(x) -> MAB(dilations=[5,3]) + PA(shortcut) -> Conv -> +shortcut
+    x = LAB(x) -> MAB(dilations=[5,3]) + PA(LAB(x)) -> Conv -> +shortcut
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
@@ -497,10 +497,10 @@ class S1_TransBlock_NoMAB1(nn.Module):
 
     def forward(self, x):
         shortcut = x  # 保存输入用于残差连接
-        pa_out = self.pa(shortcut)
 
-        # LAB -> MAB2 + PA(shortcut) -> Conv (去掉MAB1)
+        # LAB -> MAB2 + PA(LAB(x)) -> Conv (去掉MAB1)
         x = self.lab(x)
+        pa_out = self.pa(x)
         x = self.mab2(x)
         x = x + pa_out
         x = self.conv(x)

@@ -38,7 +38,7 @@ class PA(nn.Module):
     """Pixel attention."""
     def __init__(self, nf):
         super().__init__()
-        self.conv = nn.Conv2d(nf, nf, 1)
+        self.conv = nn.Conv2d(nf, nf, 5, padding=2, groups=nf)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
