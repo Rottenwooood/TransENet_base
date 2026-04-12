@@ -3,8 +3,8 @@
 
 set -e
 
-export http_proxy="http://127.0.0.1:7890"
-export https_proxy="http://127.0.0.1:7890"
+# export http_proxy="http://127.0.0.1:7890"
+# export https_proxy="http://127.0.0.1:7890"
 cd "$(dirname "$0")"
 
 COMMON_ARGS=(
@@ -15,8 +15,8 @@ COMMON_ARGS=(
     --scale 4
 )
 
-python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel.json
-python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel_add.json
+# python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel.json
+# python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel_add.json
 
 python demo_deploy.py \
     --model symunet_pretrain_strip_cam_parallel \

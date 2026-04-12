@@ -3,8 +3,9 @@
 
 set -e
 
-export http_proxy="http://127.0.0.1:7890"
-export https_proxy="http://127.0.0.1:7890"
+# export http_proxy="http://127.0.0.1:7890"
+# export https_proxy="http://127.0.0.1:7890"
+export WANDB_MODE=offline
 cd "$(dirname "$0")"
 
 COMMON_ARGS=(
@@ -16,19 +17,19 @@ COMMON_ARGS=(
 )
 
 python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel_add_window.json
-python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel_add_dw5.json
+# python user/batch_train.py --config user/experiments_config5_02_s1_trans_strip_cam_parallel_add_dw5.json
 
 python demo_deploy.py \
     --model symunet_pretrain_strip_cam_parallel_add_window \
     "${COMMON_ARGS[@]}" \
-    --pre_train ../experiment/s1_trans_strip_cam_parallel_add_window_v1_001_s1_trans_strip_cam_parallel_add_window_v1_w32/model/model_best.pt \
-    --dir_out ../experiment/results/s1_trans_strip_cam_parallel_add_window_v1_46W32/x4
+    --pre_train ../experiment/s1_trans_strip_cam_parallel_add_window_v2_001_s1_trans_strip_cam_parallel_add_window_v2_w32/model/model_best.pt \
+    --dir_out ../experiment/results/s1_trans_strip_cam_parallel_add_window_v2_46W32/x4
 
-python demo_deploy.py \
-    --model symunet_pretrain_strip_cam_parallel_add_dw5 \
-    "${COMMON_ARGS[@]}" \
-    --pre_train ../experiment/s1_trans_strip_cam_parallel_add_dw5_v1_001_s1_trans_strip_cam_parallel_add_dw5_v1_w32/model/model_best.pt \
-    --dir_out ../experiment/results/s1_trans_strip_cam_parallel_add_dw5_v1_46W32/x4
+# python demo_deploy.py \
+#     --model symunet_pretrain_strip_cam_parallel_add_dw5 \
+#     "${COMMON_ARGS[@]}" \
+#     --pre_train ../experiment/s1_trans_strip_cam_parallel_add_dw5_v1_001_s1_trans_strip_cam_parallel_add_dw5_v1_w32/model/model_best.pt \
+#     --dir_out ../experiment/results/s1_trans_strip_cam_parallel_add_dw5_v1_46W32/x4
 
-python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_cam_parallel_add_window_v1_46W32/x4 | tail -n 1 >> results.txt
-python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_cam_parallel_add_dw5_v1_46W32/x4 | tail -n 1 >> results.txt
+python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_cam_parallel_add_window_v2_46W32/x4 | tail -n 1 >> results.txt
+# python calculate_PSNR_SSIM.py --folder_Gen ../experiment/results/s1_trans_strip_cam_parallel_add_dw5_v1_46W32/x4 | tail -n 1 >> results.txt
