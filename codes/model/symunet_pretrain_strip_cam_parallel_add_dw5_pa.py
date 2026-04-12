@@ -34,6 +34,19 @@ class ChannelAttention(nn.Module):
         return x * self.attention(x)
 
 
+class PA(nn.Module):
+    """Pixel attention."""
+    def __init__(self, nf):
+        super().__init__()
+        self.conv = nn.Conv2d(nf, nf, 1)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        y = self.conv(x)
+        y = self.sigmoid(y)
+        return x * y
+
+
 class NeighborhoodAttention2D(nn.Module):
     """
     Neighborhood Attention 2D Module
@@ -466,12 +479,13 @@ class MAB(nn.Module):
 class S1_TransBlock_NoMAB1(nn.Module):
     """
     S1 Series Block (去掉MAB1):
-    x = LAB(x) -> MAB(dilations=[5,3]) -> Conv -> +shortcut
+    x = LAB(x) -> MAB(dilations=[5,3]) + PA(shortcut) -> Conv -> +shortcut
     """
     def __init__(self, c, drop_out_rate=0.):
         super().__init__()
         # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
+        self.pa = PA(c)
 
         # MAB2: num_head=2, kernel_sizes=[7, 11], dilations=[5, 3]
         self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
@@ -483,10 +497,12 @@ class S1_TransBlock_NoMAB1(nn.Module):
 
     def forward(self, x):
         shortcut = x  # 保存输入用于残差连接
+        pa_out = self.pa(shortcut)
 
-        # LAB -> MAB2 -> Conv (去掉MAB1)
+        # LAB -> MAB2 + PA(shortcut) -> Conv (去掉MAB1)
         x = self.lab(x)
         x = self.mab2(x)
+        x = x + pa_out
         x = self.conv(x)
 
         return shortcut + x  # 整体残差连接
