@@ -245,7 +245,9 @@ parser.add_argument('--cosine_t_max', type=int, default=300,
 parser.add_argument('--cosine_eta_min', type=float, default=1e-5,
                     help='minimum learning rate for cosine annealing')
 parser.add_argument('--save_every_n_steps', type=int, default=100,
-                    help='save checkpoint every n steps')
+                    help='deprecated: legacy checkpoint interval, interpreted as epochs when save_every_n_epochs is 0')
+parser.add_argument('--save_every_n_epochs', type=int, default=0,
+                    help='save checkpoint every n epochs (overrides legacy step setting when > 0)')
 parser.add_argument('--val_every', type=int, default=1,
                     help='run validation every N epochs')
 

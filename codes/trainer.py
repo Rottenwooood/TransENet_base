@@ -47,6 +47,19 @@ class Trainer():
 
         self.error_last = 1e8
 
+    def save_epoch_checkpoint(self, epoch):
+        checkpoint_path = os.path.join(self.ckp.dir, f'checkpoint_epoch_{epoch}.pt')
+        torch.save({
+            'global_step': self.global_step,
+            'epoch': epoch,
+            'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'scheduler_state_dict': self.scheduler.state_dict(),
+            'loss': self.loss.log[-1] if hasattr(self.loss, 'log') else None,
+            'psnr_log': self.ckp.log,
+        }, checkpoint_path)
+        print(f"Saved epoch checkpoint at epoch {epoch}")
+
     def train(self):
         self.loss.step()
         epoch = self.scheduler.last_epoch + 1
@@ -235,21 +248,6 @@ class Trainer():
             # Regular epoch-based saving
             is_best = self.ckp.get_best_epoch(0) == epoch
             self.ckp.save(self, epoch, is_best=is_best)
-
-            # Step-based checkpoint saving for cosine annealing
-            if hasattr(self.args, 'save_every_n_steps') and self.args.save_every_n_steps > 0:
-                if self.global_step % self.args.save_every_n_steps == 0:
-                    # Save step-based checkpoint
-                    checkpoint_path = os.path.join(self.ckp.dir, f'checkpoint_step_{self.global_step}.pt')
-                    torch.save({
-                        'global_step': self.global_step,
-                        'epoch': epoch,
-                        'model_state_dict': self.model.state_dict(),
-                        'optimizer_state_dict': self.optimizer.state_dict(),
-                        'scheduler_state_dict': self.scheduler.state_dict(),
-                        'loss': self.loss.log[-1] if hasattr(self.loss, 'log') else None,
-                    }, checkpoint_path)
-                    print(f"💾 Saved step checkpoint at step {self.global_step}")
 
             # Model artifacts are saved separately by the training loop
 

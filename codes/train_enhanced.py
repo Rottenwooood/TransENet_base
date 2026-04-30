@@ -61,6 +61,13 @@ import torch
 args.use_wandb = False
 
 
+def get_epoch_checkpoint_interval(parsed_args):
+    interval = getattr(parsed_args, 'save_every_n_epochs', 0)
+    if interval > 0:
+        return interval
+    return max(0, getattr(parsed_args, 'save_every_n_steps', 0))
+
+
 if __name__ == '__main__':
     if torch.cuda.is_available() and not args.cpu:
         torch.backends.cudnn.benchmark = True
@@ -80,8 +87,7 @@ if __name__ == '__main__':
     print(f"WandB Enabled: {getattr(args, 'use_wandb', False)}")
     print(f"AMP Enabled: {getattr(args, 'amp', False)}")
     print(f"Validation Every: {getattr(args, 'val_every', 1)}")
-    if hasattr(args, 'save_every_n_steps'):
-        print(f"Save Every N Steps: {args.save_every_n_steps}")
+    print(f"Save Every N Epochs: {get_epoch_checkpoint_interval(args)}")
     print(f"DataLoader Threads: {args.n_threads}")
 
     # Model-specific parameters
@@ -119,6 +125,9 @@ if __name__ == '__main__':
         while not t.terminate():
             t.train()
             current_epoch = t.scheduler.last_epoch
+            save_every_n_epochs = get_epoch_checkpoint_interval(args)
+            if save_every_n_epochs > 0 and current_epoch % save_every_n_epochs == 0:
+                t.save_epoch_checkpoint(current_epoch)
             if current_epoch % max(1, args.val_every) == 0 or current_epoch >= args.epochs:
                 t.test()
 
