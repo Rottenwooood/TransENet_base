@@ -13,8 +13,9 @@ class UCMercedDataset(srdata.SRData):
     def _set_filesystem(self):
         # For .pt files, we don't need to set up directory paths
         if self.args.ext != 'pt':
-            self.dir_hr = os.path.join(self.root_dir, 'HR_x4')
-            self.dir_lr = os.path.join(self.root_dir, 'LR_x4' )
+            scale = self.scale if hasattr(self, 'scale') else self.args.scale[0]
+            self.dir_hr = os.path.join(self.root_dir, f'HR_x{scale}')
+            self.dir_lr = os.path.join(self.root_dir, f'LR_x{scale}')
             self.ext = '.tif'
 
     def _scan(self):
@@ -30,4 +31,3 @@ class UCMercedDataset(srdata.SRData):
         return list_hr, list_lr
     def __len__(self):
         return len(self.hr_img_dirs)
-

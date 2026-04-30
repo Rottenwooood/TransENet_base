@@ -13,6 +13,12 @@ import glob
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--folder_Gen', type=str, required=True, help='Generated images folder')
+    parser.add_argument('--folder_GT', type=str, default=None, help='Ground-truth images folder')
+    parser.add_argument('--dataset', type=str, default='UCMerced', choices=['UCMerced', 'AID'],
+                        help='Dataset name, used to infer default GT path and extension')
+    parser.add_argument('--scale', type=int, default=4, help='Super-resolution scale')
+    parser.add_argument('--img_ext', type=str, default=None, help='Image extension, e.g. .tif or .png')
+    parser.add_argument('--crop_border', type=int, default=None, help='Crop border for metric calculation')
     return parser.parse_args()
 
 
@@ -20,10 +26,15 @@ def main():
     args = parse_args()
 
     # Hardcoded configurations
-    folder_GT = '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset/test/HR_x4'
+    if args.folder_GT is not None:
+        folder_GT = args.folder_GT
+    else:
+        dataset_root = '/root/autodl-tmp/TransENet_base/datasets/AID-dataset' if args.dataset == 'AID' \
+            else '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset'
+        folder_GT = os.path.join(dataset_root, 'test', f'HR_x{args.scale}')
     folder_Gen = args.folder_Gen
-    img_ext = '.tif'
-    crop_border = 4
+    img_ext = args.img_ext or ('.png' if args.dataset == 'AID' else '.tif')
+    crop_border = args.crop_border if args.crop_border is not None else args.scale
     suffix = ''
     test_Y = False
 

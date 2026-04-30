@@ -262,14 +262,13 @@ class Trainer():
         if self.args.test_only:
             self.test()
             # Finish WandB if in test mode
-            if hasattr(self, 'wandb_logger'):
+            if hasattr(self, 'wandb_logger') and self.wandb_logger is not None:
                 self.wandb_logger.finish()
             return True
         else:
             epoch = self.scheduler.last_epoch + 1
             finished = epoch >= self.args.epochs
-            if finished and hasattr(self, 'wandb_logger'):
+            if finished and hasattr(self, 'wandb_logger') and self.wandb_logger is not None:
                 # Finish WandB when training is complete
                 self.wandb_logger.finish()
             return finished
-

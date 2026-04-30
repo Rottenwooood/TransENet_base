@@ -1,0 +1,1056 @@
+GT folder: /root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset/test/HR_x2
+Gen folder: ../experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_UCMerced_x2_w32/x2
+Image extension: .tif
+Found 1050 images
+Testing RGB channels.
+  1 - agricultural50           . 	PSNR: 40.905067 dB, 	SSIM: 0.974680
+  2 - agricultural51           . 	PSNR: 40.837271 dB, 	SSIM: 0.966663
+  3 - agricultural52           . 	PSNR: 39.266583 dB, 	SSIM: 0.959799
+  4 - agricultural53           . 	PSNR: 39.646364 dB, 	SSIM: 0.968875
+  5 - agricultural54           . 	PSNR: 39.798078 dB, 	SSIM: 0.963099
+  6 - agricultural55           . 	PSNR: 41.570484 dB, 	SSIM: 0.952866
+  7 - agricultural56           . 	PSNR: 43.449704 dB, 	SSIM: 0.979100
+  8 - agricultural57           . 	PSNR: 42.795651 dB, 	SSIM: 0.986735
+  9 - agricultural58           . 	PSNR: 41.796804 dB, 	SSIM: 0.974993
+ 10 - agricultural59           . 	PSNR: 41.307866 dB, 	SSIM: 0.977727
+ 11 - agricultural60           . 	PSNR: 39.256547 dB, 	SSIM: 0.975985
+ 12 - agricultural61           . 	PSNR: 40.803517 dB, 	SSIM: 0.991175
+ 13 - agricultural62           . 	PSNR: 24.282633 dB, 	SSIM: 0.630546
+ 14 - agricultural63           . 	PSNR: 28.103234 dB, 	SSIM: 0.680493
+ 15 - agricultural64           . 	PSNR: 29.506925 dB, 	SSIM: 0.724184
+ 16 - agricultural65           . 	PSNR: 36.334394 dB, 	SSIM: 0.962969
+ 17 - agricultural66           . 	PSNR: 24.482379 dB, 	SSIM: 0.702836
+ 18 - agricultural67           . 	PSNR: 28.011830 dB, 	SSIM: 0.940378
+ 19 - agricultural68           . 	PSNR: 28.167474 dB, 	SSIM: 0.948379
+ 20 - agricultural69           . 	PSNR: 28.423534 dB, 	SSIM: 0.951641
+ 21 - agricultural70           . 	PSNR: 26.940491 dB, 	SSIM: 0.937051
+ 22 - agricultural71           . 	PSNR: 27.246990 dB, 	SSIM: 0.939790
+ 23 - agricultural72           . 	PSNR: 27.525299 dB, 	SSIM: 0.930894
+ 24 - agricultural73           . 	PSNR: 32.780597 dB, 	SSIM: 0.935477
+ 25 - agricultural74           . 	PSNR: 34.565110 dB, 	SSIM: 0.925206
+ 26 - agricultural75           . 	PSNR: 34.896990 dB, 	SSIM: 0.793959
+ 27 - agricultural76           . 	PSNR: 36.693393 dB, 	SSIM: 0.967042
+ 28 - agricultural77           . 	PSNR: 32.666061 dB, 	SSIM: 0.979540
+ 29 - agricultural78           . 	PSNR: 29.038580 dB, 	SSIM: 0.498106
+ 30 - agricultural79           . 	PSNR: 31.419574 dB, 	SSIM: 0.905866
+ 31 - agricultural80           . 	PSNR: 26.898181 dB, 	SSIM: 0.793902
+ 32 - agricultural81           . 	PSNR: 26.741889 dB, 	SSIM: 0.784251
+ 33 - agricultural82           . 	PSNR: 27.392514 dB, 	SSIM: 0.799616
+ 34 - agricultural83           . 	PSNR: 29.602587 dB, 	SSIM: 0.897152
+ 35 - agricultural84           . 	PSNR: 26.969870 dB, 	SSIM: 0.884456
+ 36 - agricultural85           . 	PSNR: 25.852172 dB, 	SSIM: 0.874539
+ 37 - agricultural86           . 	PSNR: 30.305184 dB, 	SSIM: 0.766498
+ 38 - agricultural87           . 	PSNR: 25.065540 dB, 	SSIM: 0.699350
+ 39 - agricultural88           . 	PSNR: 30.431239 dB, 	SSIM: 0.843880
+ 40 - agricultural89           . 	PSNR: 29.078287 dB, 	SSIM: 0.726431
+ 41 - agricultural90           . 	PSNR: 30.920622 dB, 	SSIM: 0.915511
+ 42 - agricultural91           . 	PSNR: 33.650912 dB, 	SSIM: 0.858288
+ 43 - agricultural92           . 	PSNR: 28.684045 dB, 	SSIM: 0.877976
+ 44 - agricultural93           . 	PSNR: 32.886704 dB, 	SSIM: 0.875507
+ 45 - agricultural94           . 	PSNR: 30.565922 dB, 	SSIM: 0.912888
+ 46 - agricultural95           . 	PSNR: 32.936943 dB, 	SSIM: 0.900062
+ 47 - agricultural96           . 	PSNR: 28.949020 dB, 	SSIM: 0.828722
+ 48 - agricultural97           . 	PSNR: 26.524894 dB, 	SSIM: 0.772141
+ 49 - agricultural98           . 	PSNR: 32.349566 dB, 	SSIM: 0.945274
+ 50 - agricultural99           . 	PSNR: 34.447645 dB, 	SSIM: 0.983209
+ 51 - airplane50               . 	PSNR: 33.822313 dB, 	SSIM: 0.934374
+ 52 - airplane51               . 	PSNR: 33.238046 dB, 	SSIM: 0.911133
+ 53 - airplane52               . 	PSNR: 35.848853 dB, 	SSIM: 0.932045
+ 54 - airplane53               . 	PSNR: 35.745541 dB, 	SSIM: 0.946000
+ 55 - airplane54               . 	PSNR: 35.100235 dB, 	SSIM: 0.933664
+ 56 - airplane55               . 	PSNR: 35.627562 dB, 	SSIM: 0.946117
+ 57 - airplane56               . 	PSNR: 36.474790 dB, 	SSIM: 0.932360
+ 58 - airplane57               . 	PSNR: 35.886428 dB, 	SSIM: 0.921731
+ 59 - airplane58               . 	PSNR: 34.755063 dB, 	SSIM: 0.888364
+ 60 - airplane59               . 	PSNR: 34.111747 dB, 	SSIM: 0.937823
+ 61 - airplane60               . 	PSNR: 35.143521 dB, 	SSIM: 0.935995
+ 62 - airplane61               . 	PSNR: 34.942019 dB, 	SSIM: 0.931367
+ 63 - airplane62               . 	PSNR: 34.123929 dB, 	SSIM: 0.927776
+ 64 - airplane63               . 	PSNR: 33.898272 dB, 	SSIM: 0.928732
+ 65 - airplane64               . 	PSNR: 33.691967 dB, 	SSIM: 0.922738
+ 66 - airplane65               . 	PSNR: 34.415002 dB, 	SSIM: 0.936762
+ 67 - airplane66               . 	PSNR: 33.259281 dB, 	SSIM: 0.924476
+ 68 - airplane67               . 	PSNR: 33.109704 dB, 	SSIM: 0.942157
+ 69 - airplane68               . 	PSNR: 34.717064 dB, 	SSIM: 0.935644
+ 70 - airplane69               . 	PSNR: 35.122415 dB, 	SSIM: 0.934437
+ 71 - airplane70               . 	PSNR: 34.390458 dB, 	SSIM: 0.929365
+ 72 - airplane71               . 	PSNR: 34.054173 dB, 	SSIM: 0.932788
+ 73 - airplane72               . 	PSNR: 36.486743 dB, 	SSIM: 0.924784
+ 74 - airplane73               . 	PSNR: 35.069086 dB, 	SSIM: 0.950363
+ 75 - airplane74               . 	PSNR: 35.604596 dB, 	SSIM: 0.965247
+ 76 - airplane75               . 	PSNR: 34.771739 dB, 	SSIM: 0.965641
+ 77 - airplane76               . 	PSNR: 35.103862 dB, 	SSIM: 0.968853
+ 78 - airplane77               . 	PSNR: 33.494380 dB, 	SSIM: 0.930365
+ 79 - airplane78               . 	PSNR: 31.342532 dB, 	SSIM: 0.917297
+ 80 - airplane79               . 	PSNR: 34.660585 dB, 	SSIM: 0.954169
+ 81 - airplane80               . 	PSNR: 38.530627 dB, 	SSIM: 0.977260
+ 82 - airplane81               . 	PSNR: 33.974962 dB, 	SSIM: 0.942556
+ 83 - airplane82               . 	PSNR: 34.640110 dB, 	SSIM: 0.943536
+ 84 - airplane83               . 	PSNR: 36.096101 dB, 	SSIM: 0.938882
+ 85 - airplane84               . 	PSNR: 35.374197 dB, 	SSIM: 0.964749
+ 86 - airplane85               . 	PSNR: 33.831989 dB, 	SSIM: 0.950391
+ 87 - airplane86               . 	PSNR: 32.505464 dB, 	SSIM: 0.895304
+ 88 - airplane87               . 	PSNR: 30.888911 dB, 	SSIM: 0.918603
+ 89 - airplane88               . 	PSNR: 34.086020 dB, 	SSIM: 0.935193
+ 90 - airplane89               . 	PSNR: 35.879874 dB, 	SSIM: 0.946756
+ 91 - airplane90               . 	PSNR: 34.518780 dB, 	SSIM: 0.958938
+ 92 - airplane91               . 	PSNR: 33.879796 dB, 	SSIM: 0.940060
+ 93 - airplane92               . 	PSNR: 37.307515 dB, 	SSIM: 0.969486
+ 94 - airplane93               . 	PSNR: 36.672108 dB, 	SSIM: 0.963118
+ 95 - airplane94               . 	PSNR: 35.766539 dB, 	SSIM: 0.973703
+ 96 - airplane95               . 	PSNR: 36.528566 dB, 	SSIM: 0.960653
+ 97 - airplane96               . 	PSNR: 32.388936 dB, 	SSIM: 0.935805
+ 98 - airplane97               . 	PSNR: 31.398732 dB, 	SSIM: 0.921756
+ 99 - airplane98               . 	PSNR: 33.555326 dB, 	SSIM: 0.944095
+100 - airplane99               . 	PSNR: 30.781479 dB, 	SSIM: 0.910719
+101 - baseballdiamond50        . 	PSNR: 35.437791 dB, 	SSIM: 0.932056
+102 - baseballdiamond51        . 	PSNR: 35.438668 dB, 	SSIM: 0.933353
+103 - baseballdiamond52        . 	PSNR: 35.471219 dB, 	SSIM: 0.915854
+104 - baseballdiamond53        . 	PSNR: 41.665079 dB, 	SSIM: 0.966151
+105 - baseballdiamond54        . 	PSNR: 41.353199 dB, 	SSIM: 0.963877
+106 - baseballdiamond55        . 	PSNR: 39.639797 dB, 	SSIM: 0.948256
+107 - baseballdiamond56        . 	PSNR: 40.225230 dB, 	SSIM: 0.951279
+108 - baseballdiamond57        . 	PSNR: 40.162451 dB, 	SSIM: 0.959740
+109 - baseballdiamond58        . 	PSNR: 41.103370 dB, 	SSIM: 0.970400
+110 - baseballdiamond59        . 	PSNR: 31.020244 dB, 	SSIM: 0.828053
+111 - baseballdiamond60        . 	PSNR: 31.624760 dB, 	SSIM: 0.830249
+112 - baseballdiamond61        . 	PSNR: 30.584454 dB, 	SSIM: 0.834909
+113 - baseballdiamond62        . 	PSNR: 31.507825 dB, 	SSIM: 0.822429
+114 - baseballdiamond63        . 	PSNR: 31.528060 dB, 	SSIM: 0.815850
+115 - baseballdiamond64        . 	PSNR: 30.317717 dB, 	SSIM: 0.817427
+116 - baseballdiamond65        . 	PSNR: 30.896021 dB, 	SSIM: 0.800179
+117 - baseballdiamond66        . 	PSNR: 43.562145 dB, 	SSIM: 0.979930
+118 - baseballdiamond67        . 	PSNR: 43.811496 dB, 	SSIM: 0.980841
+119 - baseballdiamond68        . 	PSNR: 44.094263 dB, 	SSIM: 0.979594
+120 - baseballdiamond69        . 	PSNR: 42.668958 dB, 	SSIM: 0.973107
+121 - baseballdiamond70        . 	PSNR: 41.704898 dB, 	SSIM: 0.969907
+122 - baseballdiamond71        . 	PSNR: 40.404144 dB, 	SSIM: 0.948929
+123 - baseballdiamond72        . 	PSNR: 41.450916 dB, 	SSIM: 0.964655
+124 - baseballdiamond73        . 	PSNR: 44.475967 dB, 	SSIM: 0.982155
+125 - baseballdiamond74        . 	PSNR: 42.893217 dB, 	SSIM: 0.981724
+126 - baseballdiamond75        . 	PSNR: 44.725065 dB, 	SSIM: 0.984662
+127 - baseballdiamond76        . 	PSNR: 44.971648 dB, 	SSIM: 0.983947
+128 - baseballdiamond77        . 	PSNR: 43.198724 dB, 	SSIM: 0.970279
+129 - baseballdiamond78        . 	PSNR: 44.144999 dB, 	SSIM: 0.980375
+130 - baseballdiamond79        . 	PSNR: 26.916767 dB, 	SSIM: 0.796414
+131 - baseballdiamond80        . 	PSNR: 39.488436 dB, 	SSIM: 0.947126
+132 - baseballdiamond81        . 	PSNR: 37.549889 dB, 	SSIM: 0.934929
+133 - baseballdiamond82        . 	PSNR: 37.350813 dB, 	SSIM: 0.936988
+134 - baseballdiamond83        . 	PSNR: 39.494880 dB, 	SSIM: 0.936909
+135 - baseballdiamond84        . 	PSNR: 39.193450 dB, 	SSIM: 0.934580
+136 - baseballdiamond85        . 	PSNR: 38.963179 dB, 	SSIM: 0.928893
+137 - baseballdiamond86        . 	PSNR: 40.185840 dB, 	SSIM: 0.951911
+138 - baseballdiamond87        . 	PSNR: 38.870530 dB, 	SSIM: 0.934731
+139 - baseballdiamond88        . 	PSNR: 37.651713 dB, 	SSIM: 0.936538
+140 - baseballdiamond89        . 	PSNR: 38.596622 dB, 	SSIM: 0.943913
+141 - baseballdiamond90        . 	PSNR: 40.207045 dB, 	SSIM: 0.936617
+142 - baseballdiamond91        . 	PSNR: 39.233330 dB, 	SSIM: 0.969370
+143 - baseballdiamond92        . 	PSNR: 38.508365 dB, 	SSIM: 0.965028
+144 - baseballdiamond93        . 	PSNR: 37.917039 dB, 	SSIM: 0.964673
+145 - baseballdiamond94        . 	PSNR: 42.002147 dB, 	SSIM: 0.975406
+146 - baseballdiamond95        . 	PSNR: 37.198669 dB, 	SSIM: 0.973005
+147 - baseballdiamond96        . 	PSNR: 37.962646 dB, 	SSIM: 0.974127
+148 - baseballdiamond97        . 	PSNR: 41.114615 dB, 	SSIM: 0.976364
+149 - baseballdiamond98        . 	PSNR: 39.719469 dB, 	SSIM: 0.975877
+150 - baseballdiamond99        . 	PSNR: 40.107162 dB, 	SSIM: 0.976467
+151 - beach50                  . 	PSNR: 39.977207 dB, 	SSIM: 0.975820
+152 - beach51                  . 	PSNR: 42.037655 dB, 	SSIM: 0.976082
+153 - beach52                  . 	PSNR: 44.561692 dB, 	SSIM: 0.986089
+154 - beach53                  . 	PSNR: 44.501345 dB, 	SSIM: 0.983193
+155 - beach54                  . 	PSNR: 43.602504 dB, 	SSIM: 0.981493
+156 - beach55                  . 	PSNR: 41.988187 dB, 	SSIM: 0.978443
+157 - beach56                  . 	PSNR: 39.472207 dB, 	SSIM: 0.966558
+158 - beach57                  . 	PSNR: 41.676732 dB, 	SSIM: 0.967967
+159 - beach58                  . 	PSNR: 42.461861 dB, 	SSIM: 0.974671
+160 - beach59                  . 	PSNR: 42.122911 dB, 	SSIM: 0.975249
+161 - beach60                  . 	PSNR: 41.511776 dB, 	SSIM: 0.970709
+162 - beach61                  . 	PSNR: 41.858228 dB, 	SSIM: 0.975246
+163 - beach62                  . 	PSNR: 42.412175 dB, 	SSIM: 0.976277
+164 - beach63                  . 	PSNR: 42.871946 dB, 	SSIM: 0.974949
+165 - beach64                  . 	PSNR: 42.333456 dB, 	SSIM: 0.972628
+166 - beach65                  . 	PSNR: 42.771200 dB, 	SSIM: 0.972156
+167 - beach66                  . 	PSNR: 42.538375 dB, 	SSIM: 0.974162
+168 - beach67                  . 	PSNR: 38.026844 dB, 	SSIM: 0.945882
+169 - beach68                  . 	PSNR: 38.157167 dB, 	SSIM: 0.945808
+170 - beach69                  . 	PSNR: 38.245839 dB, 	SSIM: 0.944649
+171 - beach70                  . 	PSNR: 39.160858 dB, 	SSIM: 0.946680
+172 - beach71                  . 	PSNR: 39.387016 dB, 	SSIM: 0.949191
+173 - beach72                  . 	PSNR: 39.407376 dB, 	SSIM: 0.947775
+174 - beach73                  . 	PSNR: 33.386353 dB, 	SSIM: 0.942993
+175 - beach74                  . 	PSNR: 32.515685 dB, 	SSIM: 0.940950
+176 - beach75                  . 	PSNR: 43.867859 dB, 	SSIM: 0.984080
+177 - beach76                  . 	PSNR: 43.728126 dB, 	SSIM: 0.983348
+178 - beach77                  . 	PSNR: 41.483616 dB, 	SSIM: 0.980153
+179 - beach78                  . 	PSNR: 45.759552 dB, 	SSIM: 0.985534
+180 - beach79                  . 	PSNR: 45.882784 dB, 	SSIM: 0.982195
+181 - beach80                  . 	PSNR: 44.558414 dB, 	SSIM: 0.976058
+182 - beach81                  . 	PSNR: 44.288028 dB, 	SSIM: 0.976568
+183 - beach82                  . 	PSNR: 46.092868 dB, 	SSIM: 0.982784
+184 - beach83                  . 	PSNR: 45.542455 dB, 	SSIM: 0.980704
+185 - beach84                  . 	PSNR: 46.379947 dB, 	SSIM: 0.982991
+186 - beach85                  . 	PSNR: 40.175705 dB, 	SSIM: 0.944644
+187 - beach86                  . 	PSNR: 41.028565 dB, 	SSIM: 0.944895
+188 - beach87                  . 	PSNR: 41.051389 dB, 	SSIM: 0.945199
+189 - beach88                  . 	PSNR: 40.738504 dB, 	SSIM: 0.948666
+190 - beach89                  . 	PSNR: 41.369273 dB, 	SSIM: 0.948042
+191 - beach90                  . 	PSNR: 41.239765 dB, 	SSIM: 0.952131
+192 - beach91                  . 	PSNR: 40.801574 dB, 	SSIM: 0.941901
+193 - beach92                  . 	PSNR: 40.408003 dB, 	SSIM: 0.942630
+194 - beach93                  . 	PSNR: 43.644238 dB, 	SSIM: 0.980507
+195 - beach94                  . 	PSNR: 42.118689 dB, 	SSIM: 0.978054
+196 - beach95                  . 	PSNR: 42.911086 dB, 	SSIM: 0.979939
+197 - beach96                  . 	PSNR: 42.975363 dB, 	SSIM: 0.981097
+198 - beach97                  . 	PSNR: 42.420863 dB, 	SSIM: 0.980314
+199 - beach98                  . 	PSNR: 42.142601 dB, 	SSIM: 0.979961
+200 - beach99                  . 	PSNR: 42.618334 dB, 	SSIM: 0.979785
+201 - buildings50              . 	PSNR: 36.804888 dB, 	SSIM: 0.984423
+202 - buildings51              . 	PSNR: 34.509430 dB, 	SSIM: 0.981199
+203 - buildings52              . 	PSNR: 43.420904 dB, 	SSIM: 0.983154
+204 - buildings53              . 	PSNR: 32.826994 dB, 	SSIM: 0.939239
+205 - buildings54              . 	PSNR: 32.894441 dB, 	SSIM: 0.938699
+206 - buildings55              . 	PSNR: 37.569967 dB, 	SSIM: 0.972504
+207 - buildings56              . 	PSNR: 32.851198 dB, 	SSIM: 0.910240
+208 - buildings57              . 	PSNR: 32.728411 dB, 	SSIM: 0.900943
+209 - buildings58              . 	PSNR: 33.848272 dB, 	SSIM: 0.948554
+210 - buildings59              . 	PSNR: 35.388778 dB, 	SSIM: 0.958338
+211 - buildings60              . 	PSNR: 36.563301 dB, 	SSIM: 0.959285
+212 - buildings61              . 	PSNR: 37.267630 dB, 	SSIM: 0.964496
+213 - buildings62              . 	PSNR: 37.309138 dB, 	SSIM: 0.967597
+214 - buildings63              . 	PSNR: 33.825773 dB, 	SSIM: 0.941362
+215 - buildings64              . 	PSNR: 36.335920 dB, 	SSIM: 0.950231
+216 - buildings65              . 	PSNR: 36.914550 dB, 	SSIM: 0.921960
+217 - buildings66              . 	PSNR: 35.215166 dB, 	SSIM: 0.918492
+218 - buildings67              . 	PSNR: 34.630272 dB, 	SSIM: 0.916093
+219 - buildings68              . 	PSNR: 34.530209 dB, 	SSIM: 0.954148
+220 - buildings69              . 	PSNR: 37.129785 dB, 	SSIM: 0.960994
+221 - buildings70              . 	PSNR: 37.983862 dB, 	SSIM: 0.965823
+222 - buildings71              . 	PSNR: 39.427493 dB, 	SSIM: 0.971271
+223 - buildings72              . 	PSNR: 38.748162 dB, 	SSIM: 0.979188
+224 - buildings73              . 	PSNR: 37.321111 dB, 	SSIM: 0.972316
+225 - buildings74              . 	PSNR: 37.258147 dB, 	SSIM: 0.969721
+226 - buildings75              . 	PSNR: 36.447700 dB, 	SSIM: 0.966801
+227 - buildings76              . 	PSNR: 36.092840 dB, 	SSIM: 0.957509
+228 - buildings77              . 	PSNR: 36.473003 dB, 	SSIM: 0.967798
+229 - buildings78              . 	PSNR: 28.281698 dB, 	SSIM: 0.828734
+230 - buildings79              . 	PSNR: 27.491969 dB, 	SSIM: 0.841932
+231 - buildings80              . 	PSNR: 27.453185 dB, 	SSIM: 0.826311
+232 - buildings81              . 	PSNR: 24.429828 dB, 	SSIM: 0.895200
+233 - buildings82              . 	PSNR: 21.244775 dB, 	SSIM: 0.879829
+234 - buildings83              . 	PSNR: 28.621781 dB, 	SSIM: 0.860642
+235 - buildings84              . 	PSNR: 21.903350 dB, 	SSIM: 0.882713
+236 - buildings85              . 	PSNR: 35.520605 dB, 	SSIM: 0.920500
+237 - buildings86              . 	PSNR: 42.197920 dB, 	SSIM: 0.981341
+238 - buildings87              . 	PSNR: 37.401709 dB, 	SSIM: 0.979087
+239 - buildings88              . 	PSNR: 33.723600 dB, 	SSIM: 0.961780
+240 - buildings89              . 	PSNR: 33.543931 dB, 	SSIM: 0.967146
+241 - buildings90              . 	PSNR: 31.629489 dB, 	SSIM: 0.958822
+242 - buildings91              . 	PSNR: 29.872016 dB, 	SSIM: 0.934189
+243 - buildings92              . 	PSNR: 33.489990 dB, 	SSIM: 0.955518
+244 - buildings93              . 	PSNR: 31.417708 dB, 	SSIM: 0.966380
+245 - buildings94              . 	PSNR: 26.389166 dB, 	SSIM: 0.912796
+246 - buildings95              . 	PSNR: 29.547139 dB, 	SSIM: 0.943620
+247 - buildings96              . 	PSNR: 32.732509 dB, 	SSIM: 0.973456
+248 - buildings97              . 	PSNR: 30.071653 dB, 	SSIM: 0.913998
+249 - buildings98              . 	PSNR: 32.040450 dB, 	SSIM: 0.924776
+250 - buildings99              . 	PSNR: 33.615116 dB, 	SSIM: 0.932028
+251 - chaparral50              . 	PSNR: 30.090819 dB, 	SSIM: 0.905051
+252 - chaparral51              . 	PSNR: 30.572393 dB, 	SSIM: 0.949809
+253 - chaparral52              . 	PSNR: 31.169054 dB, 	SSIM: 0.954288
+254 - chaparral53              . 	PSNR: 31.185471 dB, 	SSIM: 0.949399
+255 - chaparral54              . 	PSNR: 29.358033 dB, 	SSIM: 0.918951
+256 - chaparral55              . 	PSNR: 32.068456 dB, 	SSIM: 0.959453
+257 - chaparral56              . 	PSNR: 31.131547 dB, 	SSIM: 0.952717
+258 - chaparral57              . 	PSNR: 31.110408 dB, 	SSIM: 0.949549
+259 - chaparral58              . 	PSNR: 32.277424 dB, 	SSIM: 0.958834
+260 - chaparral59              . 	PSNR: 35.193589 dB, 	SSIM: 0.968436
+261 - chaparral60              . 	PSNR: 23.210782 dB, 	SSIM: 0.777533
+262 - chaparral61              . 	PSNR: 21.676075 dB, 	SSIM: 0.707849
+263 - chaparral62              . 	PSNR: 21.557734 dB, 	SSIM: 0.669093
+264 - chaparral63              . 	PSNR: 21.411654 dB, 	SSIM: 0.711670
+265 - chaparral64              . 	PSNR: 21.711803 dB, 	SSIM: 0.763151
+266 - chaparral65              . 	PSNR: 25.236244 dB, 	SSIM: 0.815635
+267 - chaparral66              . 	PSNR: 25.386494 dB, 	SSIM: 0.820339
+268 - chaparral67              . 	PSNR: 33.305688 dB, 	SSIM: 0.958056
+269 - chaparral68              . 	PSNR: 32.316627 dB, 	SSIM: 0.942305
+270 - chaparral69              . 	PSNR: 30.654799 dB, 	SSIM: 0.911197
+271 - chaparral70              . 	PSNR: 32.262869 dB, 	SSIM: 0.919118
+272 - chaparral71              . 	PSNR: 31.222371 dB, 	SSIM: 0.932393
+273 - chaparral72              . 	PSNR: 31.163899 dB, 	SSIM: 0.891256
+274 - chaparral73              . 	PSNR: 30.766854 dB, 	SSIM: 0.890000
+275 - chaparral74              . 	PSNR: 31.790548 dB, 	SSIM: 0.919786
+276 - chaparral75              . 	PSNR: 34.122408 dB, 	SSIM: 0.943134
+277 - chaparral76              . 	PSNR: 33.876203 dB, 	SSIM: 0.942457
+278 - chaparral77              . 	PSNR: 29.499326 dB, 	SSIM: 0.894439
+279 - chaparral78              . 	PSNR: 30.544372 dB, 	SSIM: 0.900994
+280 - chaparral79              . 	PSNR: 30.081181 dB, 	SSIM: 0.901990
+281 - chaparral80              . 	PSNR: 28.933163 dB, 	SSIM: 0.877690
+282 - chaparral81              . 	PSNR: 30.938268 dB, 	SSIM: 0.889133
+283 - chaparral82              . 	PSNR: 30.052779 dB, 	SSIM: 0.904410
+284 - chaparral83              . 	PSNR: 29.095357 dB, 	SSIM: 0.871876
+285 - chaparral84              . 	PSNR: 30.025931 dB, 	SSIM: 0.914609
+286 - chaparral85              . 	PSNR: 31.846473 dB, 	SSIM: 0.926243
+287 - chaparral86              . 	PSNR: 28.426218 dB, 	SSIM: 0.887589
+288 - chaparral87              . 	PSNR: 27.435582 dB, 	SSIM: 0.884542
+289 - chaparral88              . 	PSNR: 33.647942 dB, 	SSIM: 0.922550
+290 - chaparral89              . 	PSNR: 32.538358 dB, 	SSIM: 0.907421
+291 - chaparral90              . 	PSNR: 25.869983 dB, 	SSIM: 0.818649
+292 - chaparral91              . 	PSNR: 25.608934 dB, 	SSIM: 0.796877
+293 - chaparral92              . 	PSNR: 33.653567 dB, 	SSIM: 0.937200
+294 - chaparral93              . 	PSNR: 32.304974 dB, 	SSIM: 0.927821
+295 - chaparral94              . 	PSNR: 27.533826 dB, 	SSIM: 0.852455
+296 - chaparral95              . 	PSNR: 27.482720 dB, 	SSIM: 0.894499
+297 - chaparral96              . 	PSNR: 27.844299 dB, 	SSIM: 0.882104
+298 - chaparral97              . 	PSNR: 30.826145 dB, 	SSIM: 0.910522
+299 - chaparral98              . 	PSNR: 26.457203 dB, 	SSIM: 0.840202
+300 - chaparral99              . 	PSNR: 29.596487 dB, 	SSIM: 0.914444
+301 - denseresidential50       . 	PSNR: 40.651895 dB, 	SSIM: 0.974248
+302 - denseresidential51       . 	PSNR: 32.863178 dB, 	SSIM: 0.930705
+303 - denseresidential52       . 	PSNR: 34.755313 dB, 	SSIM: 0.951109
+304 - denseresidential53       . 	PSNR: 31.802403 dB, 	SSIM: 0.928769
+305 - denseresidential54       . 	PSNR: 31.390741 dB, 	SSIM: 0.936347
+306 - denseresidential55       . 	PSNR: 32.306544 dB, 	SSIM: 0.939420
+307 - denseresidential56       . 	PSNR: 33.201260 dB, 	SSIM: 0.931193
+308 - denseresidential57       . 	PSNR: 32.986178 dB, 	SSIM: 0.941030
+309 - denseresidential58       . 	PSNR: 34.490412 dB, 	SSIM: 0.965179
+310 - denseresidential59       . 	PSNR: 34.531565 dB, 	SSIM: 0.961136
+311 - denseresidential60       . 	PSNR: 35.677238 dB, 	SSIM: 0.958858
+312 - denseresidential61       . 	PSNR: 34.514199 dB, 	SSIM: 0.940657
+313 - denseresidential62       . 	PSNR: 35.141880 dB, 	SSIM: 0.952180
+314 - denseresidential63       . 	PSNR: 35.636900 dB, 	SSIM: 0.952154
+315 - denseresidential64       . 	PSNR: 34.679797 dB, 	SSIM: 0.958709
+316 - denseresidential65       . 	PSNR: 33.130951 dB, 	SSIM: 0.925503
+317 - denseresidential66       . 	PSNR: 33.058688 dB, 	SSIM: 0.922604
+318 - denseresidential67       . 	PSNR: 34.960832 dB, 	SSIM: 0.939630
+319 - denseresidential68       . 	PSNR: 32.845632 dB, 	SSIM: 0.942168
+320 - denseresidential69       . 	PSNR: 33.929724 dB, 	SSIM: 0.918108
+321 - denseresidential70       . 	PSNR: 33.519565 dB, 	SSIM: 0.921507
+322 - denseresidential71       . 	PSNR: 32.896722 dB, 	SSIM: 0.928150
+323 - denseresidential72       . 	PSNR: 33.443307 dB, 	SSIM: 0.937032
+324 - denseresidential73       . 	PSNR: 32.404464 dB, 	SSIM: 0.923187
+325 - denseresidential74       . 	PSNR: 34.802453 dB, 	SSIM: 0.955236
+326 - denseresidential75       . 	PSNR: 33.551199 dB, 	SSIM: 0.937666
+327 - denseresidential76       . 	PSNR: 34.429116 dB, 	SSIM: 0.952370
+328 - denseresidential77       . 	PSNR: 34.060664 dB, 	SSIM: 0.951143
+329 - denseresidential78       . 	PSNR: 32.868077 dB, 	SSIM: 0.948117
+330 - denseresidential79       . 	PSNR: 33.177450 dB, 	SSIM: 0.957369
+331 - denseresidential80       . 	PSNR: 38.493976 dB, 	SSIM: 0.970346
+332 - denseresidential81       . 	PSNR: 38.458561 dB, 	SSIM: 0.969584
+333 - denseresidential82       . 	PSNR: 26.686450 dB, 	SSIM: 0.839820
+334 - denseresidential83       . 	PSNR: 26.713072 dB, 	SSIM: 0.831776
+335 - denseresidential84       . 	PSNR: 39.121290 dB, 	SSIM: 0.982842
+336 - denseresidential85       . 	PSNR: 37.885187 dB, 	SSIM: 0.982234
+337 - denseresidential86       . 	PSNR: 38.401141 dB, 	SSIM: 0.983784
+338 - denseresidential87       . 	PSNR: 34.543481 dB, 	SSIM: 0.970429
+339 - denseresidential88       . 	PSNR: 31.909394 dB, 	SSIM: 0.917632
+340 - denseresidential89       . 	PSNR: 30.984154 dB, 	SSIM: 0.907948
+341 - denseresidential90       . 	PSNR: 33.622329 dB, 	SSIM: 0.942082
+342 - denseresidential91       . 	PSNR: 34.265683 dB, 	SSIM: 0.940796
+343 - denseresidential92       . 	PSNR: 30.384235 dB, 	SSIM: 0.909082
+344 - denseresidential93       . 	PSNR: 30.610166 dB, 	SSIM: 0.903462
+345 - denseresidential94       . 	PSNR: 31.045444 dB, 	SSIM: 0.934128
+346 - denseresidential95       . 	PSNR: 31.166630 dB, 	SSIM: 0.932709
+347 - denseresidential96       . 	PSNR: 30.514388 dB, 	SSIM: 0.911143
+348 - denseresidential97       . 	PSNR: 30.287454 dB, 	SSIM: 0.902652
+349 - denseresidential98       . 	PSNR: 36.034760 dB, 	SSIM: 0.955486
+350 - denseresidential99       . 	PSNR: 33.275342 dB, 	SSIM: 0.956908
+351 - forest50                 . 	PSNR: 34.690990 dB, 	SSIM: 0.941878
+352 - forest51                 . 	PSNR: 35.495175 dB, 	SSIM: 0.948469
+353 - forest52                 . 	PSNR: 35.623163 dB, 	SSIM: 0.952054
+354 - forest53                 . 	PSNR: 37.196454 dB, 	SSIM: 0.962569
+355 - forest54                 . 	PSNR: 35.459709 dB, 	SSIM: 0.942400
+356 - forest55                 . 	PSNR: 34.563330 dB, 	SSIM: 0.946778
+357 - forest56                 . 	PSNR: 34.801928 dB, 	SSIM: 0.951367
+358 - forest57                 . 	PSNR: 34.252509 dB, 	SSIM: 0.949999
+359 - forest58                 . 	PSNR: 34.966989 dB, 	SSIM: 0.956438
+360 - forest59                 . 	PSNR: 40.980542 dB, 	SSIM: 0.972065
+361 - forest60                 . 	PSNR: 35.028938 dB, 	SSIM: 0.977208
+362 - forest61                 . 	PSNR: 37.185942 dB, 	SSIM: 0.975789
+363 - forest62                 . 	PSNR: 37.057769 dB, 	SSIM: 0.975962
+364 - forest63                 . 	PSNR: 34.049052 dB, 	SSIM: 0.907966
+365 - forest64                 . 	PSNR: 32.774689 dB, 	SSIM: 0.887738
+366 - forest65                 . 	PSNR: 28.350806 dB, 	SSIM: 0.875528
+367 - forest66                 . 	PSNR: 30.000249 dB, 	SSIM: 0.884487
+368 - forest67                 . 	PSNR: 34.066054 dB, 	SSIM: 0.919172
+369 - forest68                 . 	PSNR: 35.681503 dB, 	SSIM: 0.921071
+370 - forest69                 . 	PSNR: 32.758142 dB, 	SSIM: 0.918730
+371 - forest70                 . 	PSNR: 32.881465 dB, 	SSIM: 0.923071
+372 - forest71                 . 	PSNR: 31.556236 dB, 	SSIM: 0.905793
+373 - forest72                 . 	PSNR: 31.269426 dB, 	SSIM: 0.900797
+374 - forest73                 . 	PSNR: 31.338708 dB, 	SSIM: 0.901050
+375 - forest74                 . 	PSNR: 29.737375 dB, 	SSIM: 0.833125
+376 - forest75                 . 	PSNR: 31.552990 dB, 	SSIM: 0.907781
+377 - forest76                 . 	PSNR: 31.149538 dB, 	SSIM: 0.907122
+378 - forest77                 . 	PSNR: 31.090384 dB, 	SSIM: 0.898262
+379 - forest78                 . 	PSNR: 28.612747 dB, 	SSIM: 0.878195
+380 - forest79                 . 	PSNR: 30.724686 dB, 	SSIM: 0.899123
+381 - forest80                 . 	PSNR: 33.728633 dB, 	SSIM: 0.924547
+382 - forest81                 . 	PSNR: 33.116772 dB, 	SSIM: 0.922403
+383 - forest82                 . 	PSNR: 32.054698 dB, 	SSIM: 0.912563
+384 - forest83                 . 	PSNR: 31.156139 dB, 	SSIM: 0.905066
+385 - forest84                 . 	PSNR: 30.862070 dB, 	SSIM: 0.895557
+386 - forest85                 . 	PSNR: 31.874121 dB, 	SSIM: 0.912876
+387 - forest86                 . 	PSNR: 31.928518 dB, 	SSIM: 0.905621
+388 - forest87                 . 	PSNR: 30.304009 dB, 	SSIM: 0.893435
+389 - forest88                 . 	PSNR: 30.460904 dB, 	SSIM: 0.896378
+390 - forest89                 . 	PSNR: 30.596404 dB, 	SSIM: 0.893563
+391 - forest90                 . 	PSNR: 31.350589 dB, 	SSIM: 0.898876
+392 - forest91                 . 	PSNR: 33.118014 dB, 	SSIM: 0.919233
+393 - forest92                 . 	PSNR: 32.654364 dB, 	SSIM: 0.914141
+394 - forest93                 . 	PSNR: 30.810922 dB, 	SSIM: 0.896123
+395 - forest94                 . 	PSNR: 31.863552 dB, 	SSIM: 0.914503
+396 - forest95                 . 	PSNR: 33.624102 dB, 	SSIM: 0.928796
+397 - forest96                 . 	PSNR: 35.633950 dB, 	SSIM: 0.944536
+398 - forest97                 . 	PSNR: 36.773289 dB, 	SSIM: 0.946602
+399 - forest98                 . 	PSNR: 34.109641 dB, 	SSIM: 0.923128
+400 - forest99                 . 	PSNR: 33.577946 dB, 	SSIM: 0.932027
+401 - freeway50                . 	PSNR: 35.173446 dB, 	SSIM: 0.940149
+402 - freeway51                . 	PSNR: 34.862786 dB, 	SSIM: 0.925617
+403 - freeway52                . 	PSNR: 34.909254 dB, 	SSIM: 0.936129
+404 - freeway53                . 	PSNR: 34.872943 dB, 	SSIM: 0.952610
+405 - freeway54                . 	PSNR: 35.968905 dB, 	SSIM: 0.950461
+406 - freeway55                . 	PSNR: 36.347890 dB, 	SSIM: 0.947889
+407 - freeway56                . 	PSNR: 31.717906 dB, 	SSIM: 0.890479
+408 - freeway57                . 	PSNR: 31.900842 dB, 	SSIM: 0.883657
+409 - freeway58                . 	PSNR: 30.729556 dB, 	SSIM: 0.905248
+410 - freeway59                . 	PSNR: 31.697652 dB, 	SSIM: 0.883752
+411 - freeway60                . 	PSNR: 31.144058 dB, 	SSIM: 0.919387
+412 - freeway61                . 	PSNR: 31.458246 dB, 	SSIM: 0.919999
+413 - freeway62                . 	PSNR: 32.231676 dB, 	SSIM: 0.920433
+414 - freeway63                . 	PSNR: 31.938310 dB, 	SSIM: 0.915875
+415 - freeway64                . 	PSNR: 37.654541 dB, 	SSIM: 0.970189
+416 - freeway65                . 	PSNR: 35.918791 dB, 	SSIM: 0.960823
+417 - freeway66                . 	PSNR: 35.286787 dB, 	SSIM: 0.949891
+418 - freeway67                . 	PSNR: 39.248326 dB, 	SSIM: 0.975008
+419 - freeway68                . 	PSNR: 40.986481 dB, 	SSIM: 0.981771
+420 - freeway69                . 	PSNR: 40.074943 dB, 	SSIM: 0.981557
+421 - freeway70                . 	PSNR: 40.777992 dB, 	SSIM: 0.981036
+422 - freeway71                . 	PSNR: 36.926688 dB, 	SSIM: 0.968815
+423 - freeway72                . 	PSNR: 37.579270 dB, 	SSIM: 0.966695
+424 - freeway73                . 	PSNR: 36.680699 dB, 	SSIM: 0.964955
+425 - freeway74                . 	PSNR: 40.273240 dB, 	SSIM: 0.971195
+426 - freeway75                . 	PSNR: 39.892492 dB, 	SSIM: 0.973480
+427 - freeway76                . 	PSNR: 35.109831 dB, 	SSIM: 0.961203
+428 - freeway77                . 	PSNR: 39.077828 dB, 	SSIM: 0.975307
+429 - freeway78                . 	PSNR: 39.477011 dB, 	SSIM: 0.969377
+430 - freeway79                . 	PSNR: 40.147653 dB, 	SSIM: 0.975558
+431 - freeway80                . 	PSNR: 40.113573 dB, 	SSIM: 0.977722
+432 - freeway81                . 	PSNR: 39.153471 dB, 	SSIM: 0.973466
+433 - freeway82                . 	PSNR: 30.763268 dB, 	SSIM: 0.856307
+434 - freeway83                . 	PSNR: 30.579617 dB, 	SSIM: 0.800471
+435 - freeway84                . 	PSNR: 31.621053 dB, 	SSIM: 0.789752
+436 - freeway85                . 	PSNR: 34.626866 dB, 	SSIM: 0.929147
+437 - freeway86                . 	PSNR: 24.204315 dB, 	SSIM: 0.821394
+438 - freeway87                . 	PSNR: 26.042329 dB, 	SSIM: 0.873670
+439 - freeway88                . 	PSNR: 25.528055 dB, 	SSIM: 0.824298
+440 - freeway89                . 	PSNR: 38.125070 dB, 	SSIM: 0.973441
+441 - freeway90                . 	PSNR: 39.294356 dB, 	SSIM: 0.965972
+442 - freeway91                . 	PSNR: 36.975157 dB, 	SSIM: 0.965686
+443 - freeway92                . 	PSNR: 40.013145 dB, 	SSIM: 0.975323
+444 - freeway93                . 	PSNR: 29.499237 dB, 	SSIM: 0.864336
+445 - freeway94                . 	PSNR: 28.417578 dB, 	SSIM: 0.851377
+446 - freeway95                . 	PSNR: 29.586091 dB, 	SSIM: 0.857592
+447 - freeway96                . 	PSNR: 37.107750 dB, 	SSIM: 0.959474
+448 - freeway97                . 	PSNR: 36.731235 dB, 	SSIM: 0.962554
+449 - freeway98                . 	PSNR: 29.573495 dB, 	SSIM: 0.920657
+450 - freeway99                . 	PSNR: 34.341194 dB, 	SSIM: 0.940267
+451 - golfcourse50             . 	PSNR: 36.634196 dB, 	SSIM: 0.931907
+452 - golfcourse51             . 	PSNR: 37.705599 dB, 	SSIM: 0.948000
+453 - golfcourse52             . 	PSNR: 34.422362 dB, 	SSIM: 0.909918
+454 - golfcourse53             . 	PSNR: 40.504121 dB, 	SSIM: 0.949882
+455 - golfcourse54             . 	PSNR: 41.556785 dB, 	SSIM: 0.963054
+456 - golfcourse55             . 	PSNR: 41.787292 dB, 	SSIM: 0.968935
+457 - golfcourse56             . 	PSNR: 39.730003 dB, 	SSIM: 0.951300
+458 - golfcourse57             . 	PSNR: 42.034774 dB, 	SSIM: 0.962188
+459 - golfcourse58             . 	PSNR: 41.978836 dB, 	SSIM: 0.962108
+460 - golfcourse59             . 	PSNR: 40.989034 dB, 	SSIM: 0.958210
+461 - golfcourse60             . 	PSNR: 41.757121 dB, 	SSIM: 0.959830
+462 - golfcourse61             . 	PSNR: 42.833744 dB, 	SSIM: 0.965130
+463 - golfcourse62             . 	PSNR: 40.932656 dB, 	SSIM: 0.957295
+464 - golfcourse63             . 	PSNR: 40.826940 dB, 	SSIM: 0.956026
+465 - golfcourse64             . 	PSNR: 41.642966 dB, 	SSIM: 0.953285
+466 - golfcourse65             . 	PSNR: 40.459961 dB, 	SSIM: 0.958288
+467 - golfcourse66             . 	PSNR: 41.563728 dB, 	SSIM: 0.955448
+468 - golfcourse67             . 	PSNR: 41.302001 dB, 	SSIM: 0.955606
+469 - golfcourse68             . 	PSNR: 41.699612 dB, 	SSIM: 0.966971
+470 - golfcourse69             . 	PSNR: 41.818896 dB, 	SSIM: 0.958605
+471 - golfcourse70             . 	PSNR: 39.304605 dB, 	SSIM: 0.945924
+472 - golfcourse71             . 	PSNR: 39.914509 dB, 	SSIM: 0.951358
+473 - golfcourse72             . 	PSNR: 40.014863 dB, 	SSIM: 0.948994
+474 - golfcourse73             . 	PSNR: 40.250124 dB, 	SSIM: 0.952113
+475 - golfcourse74             . 	PSNR: 37.542673 dB, 	SSIM: 0.942457
+476 - golfcourse75             . 	PSNR: 38.731654 dB, 	SSIM: 0.942860
+477 - golfcourse76             . 	PSNR: 37.374351 dB, 	SSIM: 0.939487
+478 - golfcourse77             . 	PSNR: 37.510549 dB, 	SSIM: 0.936668
+479 - golfcourse78             . 	PSNR: 37.529721 dB, 	SSIM: 0.938630
+480 - golfcourse79             . 	PSNR: 36.003480 dB, 	SSIM: 0.930760
+481 - golfcourse80             . 	PSNR: 35.378406 dB, 	SSIM: 0.922824
+482 - golfcourse81             . 	PSNR: 35.846658 dB, 	SSIM: 0.920063
+483 - golfcourse82             . 	PSNR: 35.292887 dB, 	SSIM: 0.937920
+484 - golfcourse83             . 	PSNR: 35.918269 dB, 	SSIM: 0.933174
+485 - golfcourse84             . 	PSNR: 35.849839 dB, 	SSIM: 0.922801
+486 - golfcourse85             . 	PSNR: 35.546705 dB, 	SSIM: 0.932606
+487 - golfcourse86             . 	PSNR: 34.661700 dB, 	SSIM: 0.925291
+488 - golfcourse87             . 	PSNR: 40.981831 dB, 	SSIM: 0.946797
+489 - golfcourse88             . 	PSNR: 41.230636 dB, 	SSIM: 0.954694
+490 - golfcourse89             . 	PSNR: 41.934376 dB, 	SSIM: 0.957127
+491 - golfcourse90             . 	PSNR: 39.348649 dB, 	SSIM: 0.942710
+492 - golfcourse91             . 	PSNR: 40.027076 dB, 	SSIM: 0.938609
+493 - golfcourse92             . 	PSNR: 38.441793 dB, 	SSIM: 0.932032
+494 - golfcourse93             . 	PSNR: 39.897802 dB, 	SSIM: 0.939066
+495 - golfcourse94             . 	PSNR: 39.446966 dB, 	SSIM: 0.933245
+496 - golfcourse95             . 	PSNR: 38.778471 dB, 	SSIM: 0.941283
+497 - golfcourse96             . 	PSNR: 45.494850 dB, 	SSIM: 0.985256
+498 - golfcourse97             . 	PSNR: 45.555335 dB, 	SSIM: 0.986130
+499 - golfcourse98             . 	PSNR: 46.444606 dB, 	SSIM: 0.986545
+500 - golfcourse99             . 	PSNR: 46.217120 dB, 	SSIM: 0.986453
+501 - harbor50                 . 	PSNR: 30.348801 dB, 	SSIM: 0.973575
+502 - harbor51                 . 	PSNR: 28.045600 dB, 	SSIM: 0.963739
+503 - harbor52                 . 	PSNR: 28.022344 dB, 	SSIM: 0.965186
+504 - harbor53                 . 	PSNR: 29.013348 dB, 	SSIM: 0.964248
+505 - harbor54                 . 	PSNR: 28.743093 dB, 	SSIM: 0.964689
+506 - harbor55                 . 	PSNR: 27.284435 dB, 	SSIM: 0.957073
+507 - harbor56                 . 	PSNR: 27.966949 dB, 	SSIM: 0.958966
+508 - harbor57                 . 	PSNR: 28.265305 dB, 	SSIM: 0.962708
+509 - harbor58                 . 	PSNR: 29.019585 dB, 	SSIM: 0.963823
+510 - harbor59                 . 	PSNR: 26.377261 dB, 	SSIM: 0.957540
+511 - harbor60                 . 	PSNR: 27.704201 dB, 	SSIM: 0.968108
+512 - harbor61                 . 	PSNR: 27.657405 dB, 	SSIM: 0.961478
+513 - harbor62                 . 	PSNR: 29.074651 dB, 	SSIM: 0.945300
+514 - harbor63                 . 	PSNR: 29.677866 dB, 	SSIM: 0.971164
+515 - harbor64                 . 	PSNR: 29.112033 dB, 	SSIM: 0.965583
+516 - harbor65                 . 	PSNR: 29.130096 dB, 	SSIM: 0.960117
+517 - harbor66                 . 	PSNR: 29.072543 dB, 	SSIM: 0.956936
+518 - harbor67                 . 	PSNR: 32.180445 dB, 	SSIM: 0.980849
+519 - harbor68                 . 	PSNR: 32.710830 dB, 	SSIM: 0.984312
+520 - harbor69                 . 	PSNR: 31.376625 dB, 	SSIM: 0.974247
+521 - harbor70                 . 	PSNR: 32.031854 dB, 	SSIM: 0.974466
+522 - harbor71                 . 	PSNR: 36.838951 dB, 	SSIM: 0.978896
+523 - harbor72                 . 	PSNR: 37.113299 dB, 	SSIM: 0.979738
+524 - harbor73                 . 	PSNR: 37.166456 dB, 	SSIM: 0.979543
+525 - harbor74                 . 	PSNR: 36.948349 dB, 	SSIM: 0.978823
+526 - harbor75                 . 	PSNR: 36.808226 dB, 	SSIM: 0.979461
+527 - harbor76                 . 	PSNR: 37.399467 dB, 	SSIM: 0.982413
+528 - harbor77                 . 	PSNR: 36.671657 dB, 	SSIM: 0.980160
+529 - harbor78                 . 	PSNR: 36.345616 dB, 	SSIM: 0.979063
+530 - harbor79                 . 	PSNR: 36.762313 dB, 	SSIM: 0.980110
+531 - harbor80                 . 	PSNR: 37.174381 dB, 	SSIM: 0.980267
+532 - harbor81                 . 	PSNR: 36.446861 dB, 	SSIM: 0.980819
+533 - harbor82                 . 	PSNR: 28.855585 dB, 	SSIM: 0.976675
+534 - harbor83                 . 	PSNR: 28.784264 dB, 	SSIM: 0.974295
+535 - harbor84                 . 	PSNR: 30.417052 dB, 	SSIM: 0.979493
+536 - harbor85                 . 	PSNR: 30.479581 dB, 	SSIM: 0.977723
+537 - harbor86                 . 	PSNR: 29.456852 dB, 	SSIM: 0.972450
+538 - harbor87                 . 	PSNR: 28.386035 dB, 	SSIM: 0.972229
+539 - harbor88                 . 	PSNR: 29.062263 dB, 	SSIM: 0.972944
+540 - harbor89                 . 	PSNR: 29.146500 dB, 	SSIM: 0.971976
+541 - harbor90                 . 	PSNR: 28.309652 dB, 	SSIM: 0.967223
+542 - harbor91                 . 	PSNR: 28.632639 dB, 	SSIM: 0.973707
+543 - harbor92                 . 	PSNR: 27.824438 dB, 	SSIM: 0.971353
+544 - harbor93                 . 	PSNR: 27.968045 dB, 	SSIM: 0.972625
+545 - harbor94                 . 	PSNR: 27.821071 dB, 	SSIM: 0.972866
+546 - harbor95                 . 	PSNR: 28.360746 dB, 	SSIM: 0.973555
+547 - harbor96                 . 	PSNR: 29.647895 dB, 	SSIM: 0.976879
+548 - harbor97                 . 	PSNR: 32.689074 dB, 	SSIM: 0.980931
+549 - harbor98                 . 	PSNR: 28.339533 dB, 	SSIM: 0.971884
+550 - harbor99                 . 	PSNR: 29.010634 dB, 	SSIM: 0.973992
+551 - intersection50           . 	PSNR: 32.795287 dB, 	SSIM: 0.942004
+552 - intersection51           . 	PSNR: 34.439454 dB, 	SSIM: 0.945925
+553 - intersection52           . 	PSNR: 31.020437 dB, 	SSIM: 0.919956
+554 - intersection53           . 	PSNR: 31.439462 dB, 	SSIM: 0.929987
+555 - intersection54           . 	PSNR: 31.894522 dB, 	SSIM: 0.928486
+556 - intersection55           . 	PSNR: 30.729838 dB, 	SSIM: 0.930553
+557 - intersection56           . 	PSNR: 34.369856 dB, 	SSIM: 0.959477
+558 - intersection57           . 	PSNR: 32.599887 dB, 	SSIM: 0.947495
+559 - intersection58           . 	PSNR: 32.924003 dB, 	SSIM: 0.933526
+560 - intersection59           . 	PSNR: 28.529377 dB, 	SSIM: 0.926052
+561 - intersection60           . 	PSNR: 41.957520 dB, 	SSIM: 0.981079
+562 - intersection61           . 	PSNR: 42.715089 dB, 	SSIM: 0.984389
+563 - intersection62           . 	PSNR: 33.243507 dB, 	SSIM: 0.941402
+564 - intersection63           . 	PSNR: 34.953857 dB, 	SSIM: 0.953075
+565 - intersection64           . 	PSNR: 36.059127 dB, 	SSIM: 0.952869
+566 - intersection65           . 	PSNR: 35.742610 dB, 	SSIM: 0.957272
+567 - intersection66           . 	PSNR: 34.479348 dB, 	SSIM: 0.950405
+568 - intersection67           . 	PSNR: 34.847787 dB, 	SSIM: 0.955708
+569 - intersection68           . 	PSNR: 31.975361 dB, 	SSIM: 0.922029
+570 - intersection69           . 	PSNR: 33.237765 dB, 	SSIM: 0.949645
+571 - intersection70           . 	PSNR: 39.096924 dB, 	SSIM: 0.977752
+572 - intersection71           . 	PSNR: 36.566725 dB, 	SSIM: 0.971696
+573 - intersection72           . 	PSNR: 38.301473 dB, 	SSIM: 0.975458
+574 - intersection73           . 	PSNR: 38.002085 dB, 	SSIM: 0.974173
+575 - intersection74           . 	PSNR: 38.191893 dB, 	SSIM: 0.973396
+576 - intersection75           . 	PSNR: 39.789600 dB, 	SSIM: 0.976150
+577 - intersection76           . 	PSNR: 41.964371 dB, 	SSIM: 0.984113
+578 - intersection77           . 	PSNR: 41.237640 dB, 	SSIM: 0.983193
+579 - intersection78           . 	PSNR: 35.709616 dB, 	SSIM: 0.950650
+580 - intersection79           . 	PSNR: 24.203554 dB, 	SSIM: 0.886097
+581 - intersection80           . 	PSNR: 24.417267 dB, 	SSIM: 0.868325
+582 - intersection81           . 	PSNR: 25.426647 dB, 	SSIM: 0.877329
+583 - intersection82           . 	PSNR: 25.118570 dB, 	SSIM: 0.890786
+584 - intersection83           . 	PSNR: 23.927274 dB, 	SSIM: 0.854098
+585 - intersection84           . 	PSNR: 39.614108 dB, 	SSIM: 0.971265
+586 - intersection85           . 	PSNR: 40.431370 dB, 	SSIM: 0.984143
+587 - intersection86           . 	PSNR: 33.017630 dB, 	SSIM: 0.929948
+588 - intersection87           . 	PSNR: 33.161702 dB, 	SSIM: 0.933590
+589 - intersection88           . 	PSNR: 32.368607 dB, 	SSIM: 0.928314
+590 - intersection89           . 	PSNR: 31.859231 dB, 	SSIM: 0.911693
+591 - intersection90           . 	PSNR: 30.835003 dB, 	SSIM: 0.892099
+592 - intersection91           . 	PSNR: 28.777846 dB, 	SSIM: 0.904530
+593 - intersection92           . 	PSNR: 30.282339 dB, 	SSIM: 0.913303
+594 - intersection93           . 	PSNR: 32.973595 dB, 	SSIM: 0.933847
+595 - intersection94           . 	PSNR: 34.174666 dB, 	SSIM: 0.957793
+596 - intersection95           . 	PSNR: 33.213632 dB, 	SSIM: 0.955446
+597 - intersection96           . 	PSNR: 32.047747 dB, 	SSIM: 0.945678
+598 - intersection97           . 	PSNR: 33.470955 dB, 	SSIM: 0.948049
+599 - intersection98           . 	PSNR: 33.266358 dB, 	SSIM: 0.960680
+600 - intersection99           . 	PSNR: 34.889508 dB, 	SSIM: 0.961214
+601 - mediumresidential50      . 	PSNR: 28.907333 dB, 	SSIM: 0.915602
+602 - mediumresidential51      . 	PSNR: 28.976469 dB, 	SSIM: 0.920867
+603 - mediumresidential52      . 	PSNR: 30.636989 dB, 	SSIM: 0.921949
+604 - mediumresidential53      . 	PSNR: 31.234540 dB, 	SSIM: 0.934949
+605 - mediumresidential54      . 	PSNR: 31.393535 dB, 	SSIM: 0.935390
+606 - mediumresidential55      . 	PSNR: 31.537193 dB, 	SSIM: 0.925491
+607 - mediumresidential56      . 	PSNR: 27.349117 dB, 	SSIM: 0.860418
+608 - mediumresidential57      . 	PSNR: 27.651538 dB, 	SSIM: 0.860963
+609 - mediumresidential58      . 	PSNR: 28.503680 dB, 	SSIM: 0.880482
+610 - mediumresidential59      . 	PSNR: 30.853711 dB, 	SSIM: 0.937204
+611 - mediumresidential60      . 	PSNR: 31.183011 dB, 	SSIM: 0.940795
+612 - mediumresidential61      . 	PSNR: 31.784069 dB, 	SSIM: 0.949416
+613 - mediumresidential62      . 	PSNR: 32.222895 dB, 	SSIM: 0.953521
+614 - mediumresidential63      . 	PSNR: 31.941180 dB, 	SSIM: 0.944589
+615 - mediumresidential64      . 	PSNR: 33.552496 dB, 	SSIM: 0.962931
+616 - mediumresidential65      . 	PSNR: 31.357524 dB, 	SSIM: 0.944604
+617 - mediumresidential66      . 	PSNR: 31.355574 dB, 	SSIM: 0.941778
+618 - mediumresidential67      . 	PSNR: 33.179126 dB, 	SSIM: 0.955465
+619 - mediumresidential68      . 	PSNR: 32.919480 dB, 	SSIM: 0.951377
+620 - mediumresidential69      . 	PSNR: 28.876206 dB, 	SSIM: 0.928501
+621 - mediumresidential70      . 	PSNR: 31.316988 dB, 	SSIM: 0.945814
+622 - mediumresidential71      . 	PSNR: 28.878176 dB, 	SSIM: 0.932013
+623 - mediumresidential72      . 	PSNR: 28.921764 dB, 	SSIM: 0.942170
+624 - mediumresidential73      . 	PSNR: 29.018358 dB, 	SSIM: 0.931901
+625 - mediumresidential74      . 	PSNR: 29.989710 dB, 	SSIM: 0.939708
+626 - mediumresidential75      . 	PSNR: 29.004105 dB, 	SSIM: 0.936058
+627 - mediumresidential76      . 	PSNR: 40.204345 dB, 	SSIM: 0.976793
+628 - mediumresidential77      . 	PSNR: 40.559755 dB, 	SSIM: 0.972334
+629 - mediumresidential78      . 	PSNR: 40.849393 dB, 	SSIM: 0.972827
+630 - mediumresidential79      . 	PSNR: 40.483643 dB, 	SSIM: 0.971173
+631 - mediumresidential80      . 	PSNR: 39.889751 dB, 	SSIM: 0.962217
+632 - mediumresidential81      . 	PSNR: 32.872779 dB, 	SSIM: 0.945396
+633 - mediumresidential82      . 	PSNR: 33.119955 dB, 	SSIM: 0.939853
+634 - mediumresidential83      . 	PSNR: 33.055411 dB, 	SSIM: 0.949973
+635 - mediumresidential84      . 	PSNR: 33.800674 dB, 	SSIM: 0.941828
+636 - mediumresidential85      . 	PSNR: 34.491370 dB, 	SSIM: 0.946473
+637 - mediumresidential86      . 	PSNR: 32.665314 dB, 	SSIM: 0.928443
+638 - mediumresidential87      . 	PSNR: 33.966939 dB, 	SSIM: 0.937491
+639 - mediumresidential88      . 	PSNR: 38.864393 dB, 	SSIM: 0.964432
+640 - mediumresidential89      . 	PSNR: 39.112032 dB, 	SSIM: 0.958453
+641 - mediumresidential90      . 	PSNR: 38.533612 dB, 	SSIM: 0.968480
+642 - mediumresidential91      . 	PSNR: 37.701495 dB, 	SSIM: 0.969445
+643 - mediumresidential92      . 	PSNR: 27.968647 dB, 	SSIM: 0.824564
+644 - mediumresidential93      . 	PSNR: 36.396854 dB, 	SSIM: 0.944994
+645 - mediumresidential94      . 	PSNR: 34.853000 dB, 	SSIM: 0.957115
+646 - mediumresidential95      . 	PSNR: 37.018766 dB, 	SSIM: 0.966764
+647 - mediumresidential96      . 	PSNR: 36.697406 dB, 	SSIM: 0.971583
+648 - mediumresidential97      . 	PSNR: 31.212133 dB, 	SSIM: 0.936753
+649 - mediumresidential98      . 	PSNR: 31.006910 dB, 	SSIM: 0.861708
+650 - mediumresidential99      . 	PSNR: 31.035023 dB, 	SSIM: 0.874621
+651 - mobilehomepark50         . 	PSNR: 37.466346 dB, 	SSIM: 0.977617
+652 - mobilehomepark51         . 	PSNR: 36.932753 dB, 	SSIM: 0.973882
+653 - mobilehomepark52         . 	PSNR: 37.642850 dB, 	SSIM: 0.974845
+654 - mobilehomepark53         . 	PSNR: 38.415695 dB, 	SSIM: 0.981532
+655 - mobilehomepark54         . 	PSNR: 39.070714 dB, 	SSIM: 0.982006
+656 - mobilehomepark55         . 	PSNR: 39.245134 dB, 	SSIM: 0.981550
+657 - mobilehomepark56         . 	PSNR: 38.274810 dB, 	SSIM: 0.977685
+658 - mobilehomepark57         . 	PSNR: 38.705617 dB, 	SSIM: 0.977563
+659 - mobilehomepark58         . 	PSNR: 37.667070 dB, 	SSIM: 0.976171
+660 - mobilehomepark59         . 	PSNR: 38.110686 dB, 	SSIM: 0.978201
+661 - mobilehomepark60         . 	PSNR: 37.587045 dB, 	SSIM: 0.973539
+662 - mobilehomepark61         . 	PSNR: 39.715095 dB, 	SSIM: 0.983241
+663 - mobilehomepark62         . 	PSNR: 38.180447 dB, 	SSIM: 0.981907
+664 - mobilehomepark63         . 	PSNR: 38.004913 dB, 	SSIM: 0.978218
+665 - mobilehomepark64         . 	PSNR: 37.563106 dB, 	SSIM: 0.979655
+666 - mobilehomepark65         . 	PSNR: 37.390253 dB, 	SSIM: 0.978904
+667 - mobilehomepark66         . 	PSNR: 37.973572 dB, 	SSIM: 0.976233
+668 - mobilehomepark67         . 	PSNR: 38.079761 dB, 	SSIM: 0.981111
+669 - mobilehomepark68         . 	PSNR: 38.449299 dB, 	SSIM: 0.980206
+670 - mobilehomepark69         . 	PSNR: 38.996567 dB, 	SSIM: 0.979303
+671 - mobilehomepark70         . 	PSNR: 38.620250 dB, 	SSIM: 0.980878
+672 - mobilehomepark71         . 	PSNR: 28.694188 dB, 	SSIM: 0.849801
+673 - mobilehomepark72         . 	PSNR: 30.546918 dB, 	SSIM: 0.883147
+674 - mobilehomepark73         . 	PSNR: 29.148034 dB, 	SSIM: 0.877777
+675 - mobilehomepark74         . 	PSNR: 28.473547 dB, 	SSIM: 0.869304
+676 - mobilehomepark75         . 	PSNR: 26.931366 dB, 	SSIM: 0.820715
+677 - mobilehomepark76         . 	PSNR: 27.177808 dB, 	SSIM: 0.827784
+678 - mobilehomepark77         . 	PSNR: 28.509245 dB, 	SSIM: 0.890546
+679 - mobilehomepark78         . 	PSNR: 23.928305 dB, 	SSIM: 0.882645
+680 - mobilehomepark79         . 	PSNR: 23.469382 dB, 	SSIM: 0.885283
+681 - mobilehomepark80         . 	PSNR: 23.388004 dB, 	SSIM: 0.908492
+682 - mobilehomepark81         . 	PSNR: 23.811714 dB, 	SSIM: 0.907214
+683 - mobilehomepark82         . 	PSNR: 22.268285 dB, 	SSIM: 0.858542
+684 - mobilehomepark83         . 	PSNR: 22.709968 dB, 	SSIM: 0.885192
+685 - mobilehomepark84         . 	PSNR: 22.402716 dB, 	SSIM: 0.852192
+686 - mobilehomepark85         . 	PSNR: 22.057697 dB, 	SSIM: 0.865040
+687 - mobilehomepark86         . 	PSNR: 22.233038 dB, 	SSIM: 0.877885
+688 - mobilehomepark87         . 	PSNR: 23.131607 dB, 	SSIM: 0.874143
+689 - mobilehomepark88         . 	PSNR: 22.483081 dB, 	SSIM: 0.865897
+690 - mobilehomepark89         . 	PSNR: 23.616481 dB, 	SSIM: 0.854061
+691 - mobilehomepark90         . 	PSNR: 23.545813 dB, 	SSIM: 0.861203
+692 - mobilehomepark91         . 	PSNR: 23.025603 dB, 	SSIM: 0.855787
+693 - mobilehomepark92         . 	PSNR: 23.376446 dB, 	SSIM: 0.883060
+694 - mobilehomepark93         . 	PSNR: 23.047915 dB, 	SSIM: 0.896788
+695 - mobilehomepark94         . 	PSNR: 20.821308 dB, 	SSIM: 0.870216
+696 - mobilehomepark95         . 	PSNR: 20.390800 dB, 	SSIM: 0.859628
+697 - mobilehomepark96         . 	PSNR: 22.207263 dB, 	SSIM: 0.874467
+698 - mobilehomepark97         . 	PSNR: 22.088606 dB, 	SSIM: 0.879740
+699 - mobilehomepark98         . 	PSNR: 22.137308 dB, 	SSIM: 0.884733
+700 - mobilehomepark99         . 	PSNR: 21.936431 dB, 	SSIM: 0.832063
+701 - overpass50               . 	PSNR: 36.004843 dB, 	SSIM: 0.959010
+702 - overpass51               . 	PSNR: 32.042026 dB, 	SSIM: 0.903779
+703 - overpass52               . 	PSNR: 30.906552 dB, 	SSIM: 0.902173
+704 - overpass53               . 	PSNR: 32.949960 dB, 	SSIM: 0.933702
+705 - overpass54               . 	PSNR: 28.615360 dB, 	SSIM: 0.905263
+706 - overpass55               . 	PSNR: 37.535138 dB, 	SSIM: 0.973469
+707 - overpass56               . 	PSNR: 38.114403 dB, 	SSIM: 0.975678
+708 - overpass57               . 	PSNR: 37.084791 dB, 	SSIM: 0.974282
+709 - overpass58               . 	PSNR: 35.678502 dB, 	SSIM: 0.971383
+710 - overpass59               . 	PSNR: 36.848448 dB, 	SSIM: 0.969669
+711 - overpass60               . 	PSNR: 35.556390 dB, 	SSIM: 0.959164
+712 - overpass61               . 	PSNR: 35.533196 dB, 	SSIM: 0.953646
+713 - overpass62               . 	PSNR: 31.350079 dB, 	SSIM: 0.902713
+714 - overpass63               . 	PSNR: 36.168872 dB, 	SSIM: 0.974051
+715 - overpass64               . 	PSNR: 33.912550 dB, 	SSIM: 0.947250
+716 - overpass65               . 	PSNR: 35.656075 dB, 	SSIM: 0.947868
+717 - overpass66               . 	PSNR: 34.797387 dB, 	SSIM: 0.920441
+718 - overpass67               . 	PSNR: 33.794873 dB, 	SSIM: 0.896927
+719 - overpass68               . 	PSNR: 33.504275 dB, 	SSIM: 0.913133
+720 - overpass69               . 	PSNR: 35.408684 dB, 	SSIM: 0.949510
+721 - overpass70               . 	PSNR: 32.790272 dB, 	SSIM: 0.881579
+722 - overpass71               . 	PSNR: 32.621103 dB, 	SSIM: 0.896883
+723 - overpass72               . 	PSNR: 30.449605 dB, 	SSIM: 0.870994
+724 - overpass73               . 	PSNR: 31.034412 dB, 	SSIM: 0.878663
+725 - overpass74               . 	PSNR: 29.270614 dB, 	SSIM: 0.915253
+726 - overpass75               . 	PSNR: 32.324522 dB, 	SSIM: 0.916421
+727 - overpass76               . 	PSNR: 31.424460 dB, 	SSIM: 0.921484
+728 - overpass77               . 	PSNR: 28.731065 dB, 	SSIM: 0.877905
+729 - overpass78               . 	PSNR: 31.995219 dB, 	SSIM: 0.870296
+730 - overpass79               . 	PSNR: 32.106860 dB, 	SSIM: 0.886487
+731 - overpass80               . 	PSNR: 30.058076 dB, 	SSIM: 0.880881
+732 - overpass81               . 	PSNR: 27.761310 dB, 	SSIM: 0.795317
+733 - overpass82               . 	PSNR: 28.887642 dB, 	SSIM: 0.808208
+734 - overpass83               . 	PSNR: 26.175762 dB, 	SSIM: 0.882721
+735 - overpass84               . 	PSNR: 28.278619 dB, 	SSIM: 0.836711
+736 - overpass85               . 	PSNR: 28.104057 dB, 	SSIM: 0.833537
+737 - overpass86               . 	PSNR: 28.447390 dB, 	SSIM: 0.824645
+738 - overpass87               . 	PSNR: 29.430101 dB, 	SSIM: 0.931467
+739 - overpass88               . 	PSNR: 28.175477 dB, 	SSIM: 0.819207
+740 - overpass89               . 	PSNR: 29.584497 dB, 	SSIM: 0.844574
+741 - overpass90               . 	PSNR: 26.632866 dB, 	SSIM: 0.861260
+742 - overpass91               . 	PSNR: 30.924942 dB, 	SSIM: 0.893235
+743 - overpass92               . 	PSNR: 28.028425 dB, 	SSIM: 0.880401
+744 - overpass93               . 	PSNR: 32.954774 dB, 	SSIM: 0.937311
+745 - overpass94               . 	PSNR: 33.803395 dB, 	SSIM: 0.930711
+746 - overpass95               . 	PSNR: 33.366947 dB, 	SSIM: 0.947418
+747 - overpass96               . 	PSNR: 33.044801 dB, 	SSIM: 0.907435
+748 - overpass97               . 	PSNR: 30.682382 dB, 	SSIM: 0.905352
+749 - overpass98               . 	PSNR: 29.217105 dB, 	SSIM: 0.898437
+750 - overpass99               . 	PSNR: 29.559279 dB, 	SSIM: 0.907512
+751 - parkinglot50             . 	PSNR: 28.977240 dB, 	SSIM: 0.921081
+752 - parkinglot51             . 	PSNR: 28.657221 dB, 	SSIM: 0.941337
+753 - parkinglot52             . 	PSNR: 30.151319 dB, 	SSIM: 0.937531
+754 - parkinglot53             . 	PSNR: 28.031084 dB, 	SSIM: 0.938468
+755 - parkinglot54             . 	PSNR: 29.305040 dB, 	SSIM: 0.942801
+756 - parkinglot55             . 	PSNR: 28.844620 dB, 	SSIM: 0.940636
+757 - parkinglot56             . 	PSNR: 27.436445 dB, 	SSIM: 0.930098
+758 - parkinglot57             . 	PSNR: 26.437653 dB, 	SSIM: 0.926725
+759 - parkinglot58             . 	PSNR: 26.288913 dB, 	SSIM: 0.900690
+760 - parkinglot59             . 	PSNR: 29.092354 dB, 	SSIM: 0.920400
+761 - parkinglot60             . 	PSNR: 27.480357 dB, 	SSIM: 0.916625
+762 - parkinglot61             . 	PSNR: 28.874410 dB, 	SSIM: 0.920410
+763 - parkinglot62             . 	PSNR: 28.608823 dB, 	SSIM: 0.943486
+764 - parkinglot63             . 	PSNR: 28.700314 dB, 	SSIM: 0.945113
+765 - parkinglot64             . 	PSNR: 27.636736 dB, 	SSIM: 0.928225
+766 - parkinglot65             . 	PSNR: 28.856542 dB, 	SSIM: 0.903571
+767 - parkinglot66             . 	PSNR: 28.649561 dB, 	SSIM: 0.931030
+768 - parkinglot67             . 	PSNR: 28.776859 dB, 	SSIM: 0.951093
+769 - parkinglot68             . 	PSNR: 31.665126 dB, 	SSIM: 0.948040
+770 - parkinglot69             . 	PSNR: 33.648517 dB, 	SSIM: 0.944061
+771 - parkinglot70             . 	PSNR: 34.782769 dB, 	SSIM: 0.962543
+772 - parkinglot71             . 	PSNR: 33.702278 dB, 	SSIM: 0.955139
+773 - parkinglot72             . 	PSNR: 32.527900 dB, 	SSIM: 0.955200
+774 - parkinglot73             . 	PSNR: 32.397551 dB, 	SSIM: 0.950313
+775 - parkinglot74             . 	PSNR: 32.409245 dB, 	SSIM: 0.954781
+776 - parkinglot75             . 	PSNR: 31.896138 dB, 	SSIM: 0.953796
+777 - parkinglot76             . 	PSNR: 33.294820 dB, 	SSIM: 0.942847
+778 - parkinglot77             . 	PSNR: 33.094336 dB, 	SSIM: 0.953008
+779 - parkinglot78             . 	PSNR: 31.421056 dB, 	SSIM: 0.965359
+780 - parkinglot79             . 	PSNR: 32.513390 dB, 	SSIM: 0.952640
+781 - parkinglot80             . 	PSNR: 32.411780 dB, 	SSIM: 0.957677
+782 - parkinglot81             . 	PSNR: 32.346140 dB, 	SSIM: 0.947619
+783 - parkinglot82             . 	PSNR: 36.434817 dB, 	SSIM: 0.979005
+784 - parkinglot83             . 	PSNR: 35.544036 dB, 	SSIM: 0.976370
+785 - parkinglot84             . 	PSNR: 31.990755 dB, 	SSIM: 0.953854
+786 - parkinglot85             . 	PSNR: 32.257734 dB, 	SSIM: 0.947534
+787 - parkinglot86             . 	PSNR: 33.229172 dB, 	SSIM: 0.949880
+788 - parkinglot87             . 	PSNR: 34.623825 dB, 	SSIM: 0.954233
+789 - parkinglot88             . 	PSNR: 32.495877 dB, 	SSIM: 0.950683
+790 - parkinglot89             . 	PSNR: 27.379880 dB, 	SSIM: 0.941272
+791 - parkinglot90             . 	PSNR: 26.405859 dB, 	SSIM: 0.938147
+792 - parkinglot91             . 	PSNR: 26.893297 dB, 	SSIM: 0.930875
+793 - parkinglot92             . 	PSNR: 26.232857 dB, 	SSIM: 0.928698
+794 - parkinglot93             . 	PSNR: 26.111623 dB, 	SSIM: 0.919598
+795 - parkinglot94             . 	PSNR: 25.939764 dB, 	SSIM: 0.914715
+796 - parkinglot95             . 	PSNR: 26.616054 dB, 	SSIM: 0.919069
+797 - parkinglot96             . 	PSNR: 27.279287 dB, 	SSIM: 0.925549
+798 - parkinglot97             . 	PSNR: 32.825987 dB, 	SSIM: 0.966486
+799 - parkinglot98             . 	PSNR: 23.311710 dB, 	SSIM: 0.887969
+800 - parkinglot99             . 	PSNR: 32.934110 dB, 	SSIM: 0.976330
+801 - river50                  . 	PSNR: 35.976231 dB, 	SSIM: 0.917420
+802 - river51                  . 	PSNR: 35.578941 dB, 	SSIM: 0.924541
+803 - river52                  . 	PSNR: 35.990862 dB, 	SSIM: 0.924129
+804 - river53                  . 	PSNR: 23.415675 dB, 	SSIM: 0.733052
+805 - river54                  . 	PSNR: 22.959683 dB, 	SSIM: 0.711853
+806 - river55                  . 	PSNR: 25.007221 dB, 	SSIM: 0.760623
+807 - river56                  . 	PSNR: 24.739573 dB, 	SSIM: 0.825174
+808 - river57                  . 	PSNR: 26.034743 dB, 	SSIM: 0.857885
+809 - river58                  . 	PSNR: 26.571953 dB, 	SSIM: 0.843796
+810 - river59                  . 	PSNR: 25.641896 dB, 	SSIM: 0.821000
+811 - river60                  . 	PSNR: 25.869057 dB, 	SSIM: 0.816656
+812 - river61                  . 	PSNR: 25.883737 dB, 	SSIM: 0.804615
+813 - river62                  . 	PSNR: 24.796671 dB, 	SSIM: 0.785156
+814 - river63                  . 	PSNR: 26.031958 dB, 	SSIM: 0.827489
+815 - river64                  . 	PSNR: 25.596393 dB, 	SSIM: 0.861157
+816 - river65                  . 	PSNR: 26.959239 dB, 	SSIM: 0.870300
+817 - river66                  . 	PSNR: 26.301575 dB, 	SSIM: 0.869123
+818 - river67                  . 	PSNR: 25.812846 dB, 	SSIM: 0.851151
+819 - river68                  . 	PSNR: 40.752030 dB, 	SSIM: 0.963566
+820 - river69                  . 	PSNR: 39.335500 dB, 	SSIM: 0.965780
+821 - river70                  . 	PSNR: 38.311348 dB, 	SSIM: 0.962730
+822 - river71                  . 	PSNR: 39.425386 dB, 	SSIM: 0.962720
+823 - river72                  . 	PSNR: 39.595882 dB, 	SSIM: 0.949976
+824 - river73                  . 	PSNR: 40.311357 dB, 	SSIM: 0.972938
+825 - river74                  . 	PSNR: 41.677837 dB, 	SSIM: 0.965042
+826 - river75                  . 	PSNR: 41.925563 dB, 	SSIM: 0.969695
+827 - river76                  . 	PSNR: 41.640744 dB, 	SSIM: 0.971073
+828 - river77                  . 	PSNR: 30.793260 dB, 	SSIM: 0.880038
+829 - river78                  . 	PSNR: 30.940593 dB, 	SSIM: 0.890401
+830 - river79                  . 	PSNR: 32.020561 dB, 	SSIM: 0.875782
+831 - river80                  . 	PSNR: 33.223095 dB, 	SSIM: 0.896514
+832 - river81                  . 	PSNR: 31.988864 dB, 	SSIM: 0.886272
+833 - river82                  . 	PSNR: 33.369971 dB, 	SSIM: 0.923052
+834 - river83                  . 	PSNR: 38.692206 dB, 	SSIM: 0.963762
+835 - river84                  . 	PSNR: 38.177263 dB, 	SSIM: 0.973410
+836 - river85                  . 	PSNR: 38.474829 dB, 	SSIM: 0.976580
+837 - river86                  . 	PSNR: 35.840623 dB, 	SSIM: 0.951615
+838 - river87                  . 	PSNR: 36.164211 dB, 	SSIM: 0.949355
+839 - river88                  . 	PSNR: 35.969934 dB, 	SSIM: 0.944032
+840 - river89                  . 	PSNR: 36.080281 dB, 	SSIM: 0.941935
+841 - river90                  . 	PSNR: 35.912646 dB, 	SSIM: 0.942890
+842 - river91                  . 	PSNR: 35.114531 dB, 	SSIM: 0.935660
+843 - river92                  . 	PSNR: 35.350554 dB, 	SSIM: 0.945960
+844 - river93                  . 	PSNR: 32.136190 dB, 	SSIM: 0.928074
+845 - river94                  . 	PSNR: 29.100113 dB, 	SSIM: 0.892081
+846 - river95                  . 	PSNR: 35.434630 dB, 	SSIM: 0.942433
+847 - river96                  . 	PSNR: 34.973075 dB, 	SSIM: 0.967549
+848 - river97                  . 	PSNR: 36.734120 dB, 	SSIM: 0.971858
+849 - river98                  . 	PSNR: 37.555469 dB, 	SSIM: 0.971282
+850 - river99                  . 	PSNR: 37.578000 dB, 	SSIM: 0.969744
+851 - runway50                 . 	PSNR: 37.317954 dB, 	SSIM: 0.958041
+852 - runway51                 . 	PSNR: 34.900940 dB, 	SSIM: 0.920097
+853 - runway52                 . 	PSNR: 35.213642 dB, 	SSIM: 0.923247
+854 - runway53                 . 	PSNR: 33.420416 dB, 	SSIM: 0.895754
+855 - runway54                 . 	PSNR: 33.796512 dB, 	SSIM: 0.943854
+856 - runway55                 . 	PSNR: 34.523136 dB, 	SSIM: 0.942926
+857 - runway56                 . 	PSNR: 35.579695 dB, 	SSIM: 0.925543
+858 - runway57                 . 	PSNR: 34.374660 dB, 	SSIM: 0.912438
+859 - runway58                 . 	PSNR: 34.449010 dB, 	SSIM: 0.911964
+860 - runway59                 . 	PSNR: 34.756616 dB, 	SSIM: 0.920604
+861 - runway60                 . 	PSNR: 33.808654 dB, 	SSIM: 0.926230
+862 - runway61                 . 	PSNR: 32.672862 dB, 	SSIM: 0.926890
+863 - runway62                 . 	PSNR: 34.268567 dB, 	SSIM: 0.939820
+864 - runway63                 . 	PSNR: 34.118529 dB, 	SSIM: 0.908430
+865 - runway64                 . 	PSNR: 34.525486 dB, 	SSIM: 0.900713
+866 - runway65                 . 	PSNR: 38.961231 dB, 	SSIM: 0.976210
+867 - runway66                 . 	PSNR: 32.117286 dB, 	SSIM: 0.901997
+868 - runway67                 . 	PSNR: 29.902456 dB, 	SSIM: 0.895058
+869 - runway68                 . 	PSNR: 29.258676 dB, 	SSIM: 0.866855
+870 - runway69                 . 	PSNR: 34.679997 dB, 	SSIM: 0.927566
+871 - runway70                 . 	PSNR: 35.084855 dB, 	SSIM: 0.950709
+872 - runway71                 . 	PSNR: 36.688752 dB, 	SSIM: 0.952546
+873 - runway72                 . 	PSNR: 36.414702 dB, 	SSIM: 0.948847
+874 - runway73                 . 	PSNR: 34.425445 dB, 	SSIM: 0.927499
+875 - runway74                 . 	PSNR: 36.790201 dB, 	SSIM: 0.966338
+876 - runway75                 . 	PSNR: 36.496264 dB, 	SSIM: 0.959104
+877 - runway76                 . 	PSNR: 35.805239 dB, 	SSIM: 0.954332
+878 - runway77                 . 	PSNR: 35.706560 dB, 	SSIM: 0.958789
+879 - runway78                 . 	PSNR: 36.713714 dB, 	SSIM: 0.966647
+880 - runway79                 . 	PSNR: 31.568064 dB, 	SSIM: 0.900795
+881 - runway80                 . 	PSNR: 31.395686 dB, 	SSIM: 0.888271
+882 - runway81                 . 	PSNR: 32.242439 dB, 	SSIM: 0.902579
+883 - runway82                 . 	PSNR: 35.493068 dB, 	SSIM: 0.938436
+884 - runway83                 . 	PSNR: 35.471153 dB, 	SSIM: 0.937728
+885 - runway84                 . 	PSNR: 30.708935 dB, 	SSIM: 0.888180
+886 - runway85                 . 	PSNR: 29.518276 dB, 	SSIM: 0.849783
+887 - runway86                 . 	PSNR: 29.797094 dB, 	SSIM: 0.858490
+888 - runway87                 . 	PSNR: 31.500813 dB, 	SSIM: 0.894891
+889 - runway88                 . 	PSNR: 34.567252 dB, 	SSIM: 0.933628
+890 - runway89                 . 	PSNR: 34.926226 dB, 	SSIM: 0.943193
+891 - runway90                 . 	PSNR: 34.566726 dB, 	SSIM: 0.922261
+892 - runway91                 . 	PSNR: 36.049148 dB, 	SSIM: 0.942064
+893 - runway92                 . 	PSNR: 37.321693 dB, 	SSIM: 0.920988
+894 - runway93                 . 	PSNR: 36.364081 dB, 	SSIM: 0.893909
+895 - runway94                 . 	PSNR: 36.960265 dB, 	SSIM: 0.904278
+896 - runway95                 . 	PSNR: 36.918497 dB, 	SSIM: 0.906359
+897 - runway96                 . 	PSNR: 37.055015 dB, 	SSIM: 0.905712
+898 - runway97                 . 	PSNR: 37.004509 dB, 	SSIM: 0.910057
+899 - runway98                 . 	PSNR: 35.955223 dB, 	SSIM: 0.887385
+900 - runway99                 . 	PSNR: 35.673046 dB, 	SSIM: 0.895327
+901 - sparseresidential50      . 	PSNR: 40.665027 dB, 	SSIM: 0.958598
+902 - sparseresidential51      . 	PSNR: 40.524824 dB, 	SSIM: 0.961036
+903 - sparseresidential52      . 	PSNR: 41.914123 dB, 	SSIM: 0.970803
+904 - sparseresidential53      . 	PSNR: 41.296514 dB, 	SSIM: 0.969195
+905 - sparseresidential54      . 	PSNR: 41.422817 dB, 	SSIM: 0.965904
+906 - sparseresidential55      . 	PSNR: 41.957373 dB, 	SSIM: 0.971299
+907 - sparseresidential56      . 	PSNR: 39.616743 dB, 	SSIM: 0.962002
+908 - sparseresidential57      . 	PSNR: 40.138397 dB, 	SSIM: 0.961652
+909 - sparseresidential58      . 	PSNR: 41.039890 dB, 	SSIM: 0.960516
+910 - sparseresidential59      . 	PSNR: 41.032024 dB, 	SSIM: 0.957824
+911 - sparseresidential60      . 	PSNR: 41.338400 dB, 	SSIM: 0.961682
+912 - sparseresidential61      . 	PSNR: 31.536525 dB, 	SSIM: 0.920109
+913 - sparseresidential62      . 	PSNR: 34.349672 dB, 	SSIM: 0.925301
+914 - sparseresidential63      . 	PSNR: 34.099607 dB, 	SSIM: 0.934430
+915 - sparseresidential64      . 	PSNR: 33.483765 dB, 	SSIM: 0.930174
+916 - sparseresidential65      . 	PSNR: 33.695436 dB, 	SSIM: 0.939856
+917 - sparseresidential66      . 	PSNR: 33.024288 dB, 	SSIM: 0.927885
+918 - sparseresidential67      . 	PSNR: 33.391601 dB, 	SSIM: 0.938753
+919 - sparseresidential68      . 	PSNR: 32.830735 dB, 	SSIM: 0.927871
+920 - sparseresidential69      . 	PSNR: 34.283224 dB, 	SSIM: 0.928182
+921 - sparseresidential70      . 	PSNR: 34.523875 dB, 	SSIM: 0.927354
+922 - sparseresidential71      . 	PSNR: 33.781646 dB, 	SSIM: 0.941930
+923 - sparseresidential72      . 	PSNR: 34.172754 dB, 	SSIM: 0.943307
+924 - sparseresidential73      . 	PSNR: 40.764793 dB, 	SSIM: 0.978100
+925 - sparseresidential74      . 	PSNR: 39.527124 dB, 	SSIM: 0.974839
+926 - sparseresidential75      . 	PSNR: 42.042136 dB, 	SSIM: 0.979775
+927 - sparseresidential76      . 	PSNR: 41.448916 dB, 	SSIM: 0.980017
+928 - sparseresidential77      . 	PSNR: 43.477582 dB, 	SSIM: 0.984183
+929 - sparseresidential78      . 	PSNR: 37.131418 dB, 	SSIM: 0.964064
+930 - sparseresidential79      . 	PSNR: 35.306622 dB, 	SSIM: 0.969257
+931 - sparseresidential80      . 	PSNR: 39.443913 dB, 	SSIM: 0.984371
+932 - sparseresidential81      . 	PSNR: 39.860428 dB, 	SSIM: 0.983021
+933 - sparseresidential82      . 	PSNR: 38.952059 dB, 	SSIM: 0.968949
+934 - sparseresidential83      . 	PSNR: 38.349930 dB, 	SSIM: 0.976067
+935 - sparseresidential84      . 	PSNR: 38.414393 dB, 	SSIM: 0.976100
+936 - sparseresidential85      . 	PSNR: 29.451764 dB, 	SSIM: 0.870379
+937 - sparseresidential86      . 	PSNR: 28.030029 dB, 	SSIM: 0.875824
+938 - sparseresidential87      . 	PSNR: 28.515676 dB, 	SSIM: 0.885092
+939 - sparseresidential88      . 	PSNR: 30.223179 dB, 	SSIM: 0.894501
+940 - sparseresidential89      . 	PSNR: 28.993866 dB, 	SSIM: 0.891808
+941 - sparseresidential90      . 	PSNR: 29.050803 dB, 	SSIM: 0.903794
+942 - sparseresidential91      . 	PSNR: 29.559875 dB, 	SSIM: 0.910909
+943 - sparseresidential92      . 	PSNR: 30.349645 dB, 	SSIM: 0.899290
+944 - sparseresidential93      . 	PSNR: 28.611790 dB, 	SSIM: 0.894441
+945 - sparseresidential94      . 	PSNR: 28.978241 dB, 	SSIM: 0.881450
+946 - sparseresidential95      . 	PSNR: 39.909051 dB, 	SSIM: 0.979895
+947 - sparseresidential96      . 	PSNR: 40.527901 dB, 	SSIM: 0.979185
+948 - sparseresidential97      . 	PSNR: 30.636732 dB, 	SSIM: 0.900121
+949 - sparseresidential98      . 	PSNR: 35.477690 dB, 	SSIM: 0.930835
+950 - sparseresidential99      . 	PSNR: 35.361110 dB, 	SSIM: 0.940027
+951 - storagetanks50           . 	PSNR: 37.884450 dB, 	SSIM: 0.954594
+952 - storagetanks51           . 	PSNR: 36.985284 dB, 	SSIM: 0.933329
+953 - storagetanks52           . 	PSNR: 37.999840 dB, 	SSIM: 0.942917
+954 - storagetanks53           . 	PSNR: 37.451943 dB, 	SSIM: 0.929347
+955 - storagetanks54           . 	PSNR: 38.830077 dB, 	SSIM: 0.957350
+956 - storagetanks55           . 	PSNR: 37.208338 dB, 	SSIM: 0.942331
+957 - storagetanks56           . 	PSNR: 38.775089 dB, 	SSIM: 0.944046
+958 - storagetanks57           . 	PSNR: 38.755488 dB, 	SSIM: 0.946998
+959 - storagetanks58           . 	PSNR: 38.452240 dB, 	SSIM: 0.980789
+960 - storagetanks59           . 	PSNR: 38.312684 dB, 	SSIM: 0.979178
+961 - storagetanks60           . 	PSNR: 37.932798 dB, 	SSIM: 0.979739
+962 - storagetanks61           . 	PSNR: 40.613309 dB, 	SSIM: 0.984848
+963 - storagetanks62           . 	PSNR: 41.052906 dB, 	SSIM: 0.985749
+964 - storagetanks63           . 	PSNR: 40.647811 dB, 	SSIM: 0.984351
+965 - storagetanks64           . 	PSNR: 37.018089 dB, 	SSIM: 0.973150
+966 - storagetanks65           . 	PSNR: 37.127570 dB, 	SSIM: 0.972350
+967 - storagetanks66           . 	PSNR: 37.677076 dB, 	SSIM: 0.975524
+968 - storagetanks67           . 	PSNR: 41.533904 dB, 	SSIM: 0.981764
+969 - storagetanks68           . 	PSNR: 37.337326 dB, 	SSIM: 0.977540
+970 - storagetanks69           . 	PSNR: 38.269205 dB, 	SSIM: 0.975522
+971 - storagetanks70           . 	PSNR: 38.840888 dB, 	SSIM: 0.979866
+972 - storagetanks71           . 	PSNR: 38.444096 dB, 	SSIM: 0.960414
+973 - storagetanks72           . 	PSNR: 40.125128 dB, 	SSIM: 0.984466
+974 - storagetanks73           . 	PSNR: 44.832543 dB, 	SSIM: 0.985840
+975 - storagetanks74           . 	PSNR: 43.567215 dB, 	SSIM: 0.982910
+976 - storagetanks75           . 	PSNR: 42.827494 dB, 	SSIM: 0.985473
+977 - storagetanks76           . 	PSNR: 43.840078 dB, 	SSIM: 0.984502
+978 - storagetanks77           . 	PSNR: 42.474565 dB, 	SSIM: 0.984258
+979 - storagetanks78           . 	PSNR: 46.119913 dB, 	SSIM: 0.986754
+980 - storagetanks79           . 	PSNR: 45.341884 dB, 	SSIM: 0.986431
+981 - storagetanks80           . 	PSNR: 45.852661 dB, 	SSIM: 0.988744
+982 - storagetanks81           . 	PSNR: 46.852166 dB, 	SSIM: 0.989180
+983 - storagetanks82           . 	PSNR: 34.233258 dB, 	SSIM: 0.926920
+984 - storagetanks83           . 	PSNR: 32.777217 dB, 	SSIM: 0.905644
+985 - storagetanks84           . 	PSNR: 32.184740 dB, 	SSIM: 0.888873
+986 - storagetanks85           . 	PSNR: 36.147976 dB, 	SSIM: 0.933682
+987 - storagetanks86           . 	PSNR: 33.699352 dB, 	SSIM: 0.897150
+988 - storagetanks87           . 	PSNR: 37.749503 dB, 	SSIM: 0.952141
+989 - storagetanks88           . 	PSNR: 32.967277 dB, 	SSIM: 0.926004
+990 - storagetanks89           . 	PSNR: 30.511078 dB, 	SSIM: 0.907698
+991 - storagetanks90           . 	PSNR: 30.619964 dB, 	SSIM: 0.930803
+992 - storagetanks91           . 	PSNR: 27.995953 dB, 	SSIM: 0.926475
+993 - storagetanks92           . 	PSNR: 33.163535 dB, 	SSIM: 0.943132
+994 - storagetanks93           . 	PSNR: 31.657768 dB, 	SSIM: 0.923399
+995 - storagetanks94           . 	PSNR: 29.927396 dB, 	SSIM: 0.921975
+996 - storagetanks95           . 	PSNR: 31.559749 dB, 	SSIM: 0.943753
+997 - storagetanks96           . 	PSNR: 30.593407 dB, 	SSIM: 0.929774
+998 - storagetanks97           . 	PSNR: 29.087742 dB, 	SSIM: 0.912192
+999 - storagetanks98           . 	PSNR: 30.206018 dB, 	SSIM: 0.917313
+1000 - storagetanks99           . 	PSNR: 31.362106 dB, 	SSIM: 0.934472
+1001 - tenniscourt50            . 	PSNR: 38.059581 dB, 	SSIM: 0.960229
+1002 - tenniscourt51            . 	PSNR: 39.137313 dB, 	SSIM: 0.964666
+1003 - tenniscourt52            . 	PSNR: 39.623394 dB, 	SSIM: 0.968829
+1004 - tenniscourt53            . 	PSNR: 39.676263 dB, 	SSIM: 0.963306
+1005 - tenniscourt54            . 	PSNR: 37.651801 dB, 	SSIM: 0.955333
+1006 - tenniscourt55            . 	PSNR: 37.300886 dB, 	SSIM: 0.953411
+1007 - tenniscourt56            . 	PSNR: 37.864432 dB, 	SSIM: 0.954614
+1008 - tenniscourt57            . 	PSNR: 38.736735 dB, 	SSIM: 0.963618
+1009 - tenniscourt58            . 	PSNR: 37.277832 dB, 	SSIM: 0.965512
+1010 - tenniscourt59            . 	PSNR: 37.863062 dB, 	SSIM: 0.963553
+1011 - tenniscourt60            . 	PSNR: 39.908450 dB, 	SSIM: 0.963859
+1012 - tenniscourt61            . 	PSNR: 38.454585 dB, 	SSIM: 0.966216
+1013 - tenniscourt62            . 	PSNR: 40.511628 dB, 	SSIM: 0.968217
+1014 - tenniscourt63            . 	PSNR: 39.961076 dB, 	SSIM: 0.969008
+1015 - tenniscourt64            . 	PSNR: 39.294751 dB, 	SSIM: 0.969872
+1016 - tenniscourt65            . 	PSNR: 37.544884 dB, 	SSIM: 0.962338
+1017 - tenniscourt66            . 	PSNR: 36.563779 dB, 	SSIM: 0.964413
+1018 - tenniscourt67            . 	PSNR: 38.824705 dB, 	SSIM: 0.969764
+1019 - tenniscourt68            . 	PSNR: 37.204121 dB, 	SSIM: 0.963224
+1020 - tenniscourt69            . 	PSNR: 37.163882 dB, 	SSIM: 0.965183
+1021 - tenniscourt70            . 	PSNR: 36.760133 dB, 	SSIM: 0.965701
+1022 - tenniscourt71            . 	PSNR: 36.261248 dB, 	SSIM: 0.968483
+1023 - tenniscourt72            . 	PSNR: 35.879266 dB, 	SSIM: 0.972552
+1024 - tenniscourt73            . 	PSNR: 36.216581 dB, 	SSIM: 0.970589
+1025 - tenniscourt74            . 	PSNR: 37.761829 dB, 	SSIM: 0.970038
+1026 - tenniscourt75            . 	PSNR: 34.104873 dB, 	SSIM: 0.965029
+1027 - tenniscourt76            . 	PSNR: 38.585377 dB, 	SSIM: 0.962782
+1028 - tenniscourt77            . 	PSNR: 36.966079 dB, 	SSIM: 0.967151
+1029 - tenniscourt78            . 	PSNR: 37.404543 dB, 	SSIM: 0.973504
+1030 - tenniscourt79            . 	PSNR: 36.552845 dB, 	SSIM: 0.973780
+1031 - tenniscourt80            . 	PSNR: 28.043134 dB, 	SSIM: 0.822542
+1032 - tenniscourt81            . 	PSNR: 43.364519 dB, 	SSIM: 0.978912
+1033 - tenniscourt82            . 	PSNR: 23.599818 dB, 	SSIM: 0.852905
+1034 - tenniscourt83            . 	PSNR: 25.036068 dB, 	SSIM: 0.883924
+1035 - tenniscourt84            . 	PSNR: 38.831207 dB, 	SSIM: 0.955711
+1036 - tenniscourt85            . 	PSNR: 38.407983 dB, 	SSIM: 0.936247
+1037 - tenniscourt86            . 	PSNR: 36.762225 dB, 	SSIM: 0.946965
+1038 - tenniscourt87            . 	PSNR: 36.905568 dB, 	SSIM: 0.941235
+1039 - tenniscourt88            . 	PSNR: 37.636269 dB, 	SSIM: 0.937450
+1040 - tenniscourt89            . 	PSNR: 37.972003 dB, 	SSIM: 0.936256
+1041 - tenniscourt90            . 	PSNR: 36.615830 dB, 	SSIM: 0.965052
+1042 - tenniscourt91            . 	PSNR: 37.029962 dB, 	SSIM: 0.962403
+1043 - tenniscourt92            . 	PSNR: 35.441415 dB, 	SSIM: 0.956191
+1044 - tenniscourt93            . 	PSNR: 37.830832 dB, 	SSIM: 0.971705
+1045 - tenniscourt94            . 	PSNR: 41.255358 dB, 	SSIM: 0.974537
+1046 - tenniscourt95            . 	PSNR: 40.833745 dB, 	SSIM: 0.983523
+1047 - tenniscourt96            . 	PSNR: 38.632347 dB, 	SSIM: 0.981221
+1048 - tenniscourt97            . 	PSNR: 35.650843 dB, 	SSIM: 0.971068
+1049 - tenniscourt98            . 	PSNR: 41.178174 dB, 	SSIM: 0.983453
+1050 - tenniscourt99            . 	PSNR: 40.938907 dB, 	SSIM: 0.981909
+Average: PSNR: 34.289960 dB, SSIM: 0.932396

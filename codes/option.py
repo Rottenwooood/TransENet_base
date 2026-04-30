@@ -194,6 +194,10 @@ parser.add_argument('--symunet_pretrain_restormer_heads', type=str, default='1,2
                     help='number of attention heads for each encoder/decoder stage in SymUNet-Pretrain (comma-separated)')
 parser.add_argument('--symunet_pretrain_restormer_middle_heads', type=int, default=8,
                     help='number of attention heads for middle blocks in SymUNet-Pretrain')
+parser.add_argument('--symunet_pretrain_strip_k1', type=int, default=1,
+                    help='strip kernel short side for SymUNet-Pretrain strip variants')
+parser.add_argument('--symunet_pretrain_strip_k2', type=int, default=47,
+                    help='strip kernel long side for SymUNet-Pretrain strip variants')
 
 # # Option for SymUNet Post-train (后上采样版本)
 # parser.add_argument('--symunet_posttrain_width', type=int, default=64,

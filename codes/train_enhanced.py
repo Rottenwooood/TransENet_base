@@ -57,6 +57,8 @@ import utils
 import loss
 import trainer
 
+args.use_wandb = False
+
 
 if __name__ == '__main__':
     # Print enhanced training configuration

@@ -247,7 +247,7 @@ def test_model_performance(args, sr_model, sample_input=None):
 
 def deploy(args, sr_model):
 
-    img_ext = '.tif'
+    img_ext = '.png' if args.dataset == 'AID' else '.tif'
     img_lists = glob.glob(os.path.join(args.dir_data, '*'+img_ext))
 
     if len(img_lists) == 0:
@@ -380,13 +380,10 @@ def deploy(args, sr_model):
 
 if __name__ == '__main__':
 
-    # args parameter setting
-    # You can configure these paths via command line arguments or set them here
-    # args.pre_train = '/root/autodl-tmp/TransENet_base/experiment/test_dir/pair01_NAF_symunet_blk46_w32/model/model_best.pt'
-    
-    # args.dir_data = '/root/autodl-tmp/TransENet_base/datasets/AID-train/AID-dataset/test/LR_x4'
-    args.dir_data = '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset/test/LR_x4'
-    # args.dir_out = '../experiment/results/466L1W32/x4'
+    if args.dir_data == '.':
+        default_root = '/root/autodl-tmp/TransENet_base/datasets/AID-dataset' if args.dataset == 'AID' \
+            else '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset'
+        args.dir_data = os.path.join(default_root, 'test', f'LR_x{args.scale[0]}')
 
     print("Configuration:")
     print(f"  Model: {args.model}")
@@ -414,4 +411,3 @@ if __name__ == '__main__':
     deploy(args, sr_model)
     # 模型性能测试
     test_model_performance(args, sr_model)
-

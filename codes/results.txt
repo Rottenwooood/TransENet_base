@@ -87,3 +87,15 @@ Average: PSNR: 28.019155 dB, SSIM: 0.771959
 Average: PSNR: 28.018329 dB, SSIM: 0.771715
 Average: PSNR: 27.993832 dB, SSIM: 0.770999
 Average: PSNR: 28.037064 dB, SSIM: 0.770974
+x2(old)
+Average: PSNR: 34.289960 dB, SSIM: 0.932396
+x3(old)
+[ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 30.236499 dB, SSIM: 0.846232
+x2
+[ptflops] FLOPs (G): 7.22 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 34.371795 dB, SSIM: 0.933309
+x3
+[ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 30.271736 dB, SSIM: 0.849244
+x2
