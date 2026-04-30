@@ -42,13 +42,35 @@ get_strip_k2() {
     esac
 }
 
+get_mab2_kernel_sizes() {
+    local scale="$1"
+    case "${scale}" in
+        2) echo "5,9" ;;
+        3) echo "7,9" ;;
+        *) echo "7,11" ;;
+    esac
+}
+
+get_mab2_dilations() {
+    local scale="$1"
+    case "${scale}" in
+        2) echo "4,2" ;;
+        3) echo "4,3" ;;
+        *) echo "5,3" ;;
+    esac
+}
+
 run_case() {
     local dataset="$1"
     local scale="$2"
     local patch_size="$3"
     local dataset_root="$4"
     local strip_k2
+    local mab2_kernel_sizes
+    local mab2_dilations
     strip_k2="$(get_strip_k2 "${scale}")"
+    mab2_kernel_sizes="$(get_mab2_kernel_sizes "${scale}")"
+    mab2_dilations="$(get_mab2_dilations "${scale}")"
 
     local exp_prefix="s1_trans_strip_cam_parallel_add_dw5_pa_scale_${dataset}_x${scale}"
     local save_name="${exp_prefix}_w${MODEL_WIDTH}_${RUN_TS}"
@@ -65,6 +87,8 @@ run_case() {
     echo "Test LR dir: ${test_lr_dir}"
     echo "Test HR dir: ${test_hr_dir}"
     echo "Strip k2: ${strip_k2}"
+    echo "MAB2 kernel sizes: ${mab2_kernel_sizes}"
+    echo "MAB2 dilations: ${mab2_dilations}"
     echo "Save name: ${save_name}"
     echo "Output dir: ${out_dir}"
     echo "Ext mode: ${EXT_MODE}"
@@ -88,6 +112,8 @@ run_case() {
         --symunet_pretrain_enc_blk_nums "${MODEL_ENC}" \
         --symunet_pretrain_dec_blk_nums "${MODEL_DEC}" \
         --symunet_pretrain_strip_k2 "${strip_k2}" \
+        --symunet_pretrain_mab2_kernel_sizes "${mab2_kernel_sizes}" \
+        --symunet_pretrain_mab2_dilations "${mab2_dilations}" \
         --data_train "${dataset_root}/train" \
         --data_val "${dataset_root}/val" \
         --val_every "${VAL_EVERY}" \
@@ -102,6 +128,8 @@ run_case() {
         --symunet_pretrain_enc_blk_nums "${MODEL_ENC}" \
         --symunet_pretrain_dec_blk_nums "${MODEL_DEC}" \
         --symunet_pretrain_strip_k2 "${strip_k2}" \
+        --symunet_pretrain_mab2_kernel_sizes "${mab2_kernel_sizes}" \
+        --symunet_pretrain_mab2_dilations "${mab2_dilations}" \
         --pre_train "${model_path}" \
         --dir_data "${test_lr_dir}" \
         --dir_out "${out_dir}" | tail -n 1 >> results.txt

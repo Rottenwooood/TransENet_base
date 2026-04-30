@@ -200,6 +200,10 @@ parser.add_argument('--symunet_pretrain_strip_k1', type=int, default=1,
                     help='strip kernel short side for SymUNet-Pretrain strip variants')
 parser.add_argument('--symunet_pretrain_strip_k2', type=int, default=47,
                     help='strip kernel long side for SymUNet-Pretrain strip variants')
+parser.add_argument('--symunet_pretrain_mab2_kernel_sizes', type=str, default='7,11',
+                    help='MAB2 neighborhood attention kernel sizes (comma-separated)')
+parser.add_argument('--symunet_pretrain_mab2_dilations', type=str, default='5,3',
+                    help='MAB2 neighborhood attention dilations (comma-separated)')
 
 # # Option for SymUNet Post-train (后上采样版本)
 # parser.add_argument('--symunet_posttrain_width', type=int, default=64,
@@ -273,6 +277,8 @@ args.scale = list(map(lambda x: int(x), args.scale.split('+')))
 args.symunet_pretrain_enc_blk_nums = list(map(lambda x: int(x), args.symunet_pretrain_enc_blk_nums.split(',')))
 args.symunet_pretrain_dec_blk_nums = list(map(lambda x: int(x), args.symunet_pretrain_dec_blk_nums.split(',')))
 args.symunet_pretrain_restormer_heads = list(map(lambda x: int(x), args.symunet_pretrain_restormer_heads.split(',')))
+args.symunet_pretrain_mab2_kernel_sizes = list(map(lambda x: int(x), args.symunet_pretrain_mab2_kernel_sizes.split(',')))
+args.symunet_pretrain_mab2_dilations = list(map(lambda x: int(x), args.symunet_pretrain_mab2_dilations.split(',')))
 
 # # Parse SymUNet-Posttrain parameters
 # args.symunet_posttrain_enc_blk_nums = list(map(lambda x: int(x), args.symunet_posttrain_enc_blk_nums.split(',')))

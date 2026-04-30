@@ -481,15 +481,20 @@ class S1_TransBlock_NoMAB1(nn.Module):
     S1 Series Block (去掉MAB1):
     x = LAB(x) -> MAB(dilations=[5,3]) + alpha * PA(shortcut) -> Conv -> +shortcut
     """
-    def __init__(self, c, drop_out_rate=0.):
+    def __init__(self, c, drop_out_rate=0., mab2_kernel_sizes=None, mab2_dilations=None):
         super().__init__()
         # LAB for local aggregation
         self.lab = LAB(dim=c, local_dwconv=3, expanded_ratio=1., squeeze_factor=4)
         self.pa = PA(c)
         self.pa_scale = nn.Parameter(torch.ones(1))
 
+        if mab2_kernel_sizes is None:
+            mab2_kernel_sizes = [7, 11]
+        if mab2_dilations is None:
+            mab2_dilations = [5, 3]
+
         # MAB2: num_head=2, kernel_sizes=[7, 11], dilations=[5, 3]
-        self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+        self.mab2 = MAB(dim=c, num_head=2, kernel_sizes=mab2_kernel_sizes, dilations=mab2_dilations)
 
         # Conv + residual (like RMAG) with zero initialization
         self.conv = nn.Conv2d(c, c, 3, 1, 1)
@@ -569,6 +574,8 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_DW5_PA_SCALE(nn.Module):
         restormer_middle_heads = getattr(args, 'symunet_pretrain_restormer_middle_heads', 8)
 
         drop_out_rate = getattr(args, 'symunet_pretrain_dropout', 0.)
+        mab2_kernel_sizes = getattr(args, 'symunet_pretrain_mab2_kernel_sizes', [7, 11])
+        mab2_dilations = getattr(args, 'symunet_pretrain_mab2_dilations', [5, 3])
 
         self.pre_upsample = nn.Upsample(scale_factor=self.scale, mode='bicubic', align_corners=False)
 
@@ -583,7 +590,12 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_DW5_PA_SCALE(nn.Module):
         chan = width
         for i, num in enumerate(enc_blk_nums):
             self.encoders.append(nn.Sequential(*[
-                S1_TransBlock_NoMAB1(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_TransBlock_NoMAB1(
+                    c=chan,
+                    drop_out_rate=drop_out_rate,
+                    mab2_kernel_sizes=mab2_kernel_sizes,
+                    mab2_dilations=mab2_dilations
+                ) for _ in range(num)
             ]))
             self.downs.append(DownsampleDW(chan))
             chan *= 2
@@ -607,7 +619,12 @@ class SymUNet_Pretrain_Strip_CAM_Parallel_Add_DW5_PA_SCALE(nn.Module):
             chan //= 2
 
             self.decoders.append(nn.Sequential(*[
-                S1_TransBlock_NoMAB1(c=chan, drop_out_rate=drop_out_rate) for _ in range(num)
+                S1_TransBlock_NoMAB1(
+                    c=chan,
+                    drop_out_rate=drop_out_rate,
+                    mab2_kernel_sizes=mab2_kernel_sizes,
+                    mab2_dilations=mab2_dilations
+                ) for _ in range(num)
             ]))
 
         self.padder_size = (2 ** len(self.encoders)) * 4
