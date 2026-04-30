@@ -240,7 +240,7 @@ parser.add_argument('--cosine_t_max', type=int, default=300,
                     help='maximum steps for cosine annealing')
 parser.add_argument('--cosine_eta_min', type=float, default=1e-5,
                     help='minimum learning rate for cosine annealing')
-parser.add_argument('--save_every_n_steps', type=int, default=50,
+parser.add_argument('--save_every_n_steps', type=int, default=100,
                     help='save checkpoint every n steps')
 parser.add_argument('--val_every', type=int, default=1,
                     help='run validation every N epochs')

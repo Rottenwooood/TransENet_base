@@ -16,9 +16,10 @@ LR="${LR:-2e-4}"
 LOSS="${LOSS:-1*L1}"
 OPTIMIZER="${OPTIMIZER:-ADAMW}"
 SCHEDULER="${SCHEDULER:-step}"
-SAVE_EVERY_N_STEPS="${SAVE_EVERY_N_STEPS:-500}"
+SAVE_EVERY_N_STEPS="${SAVE_EVERY_N_STEPS:-100}"
 N_THREADS="${N_THREADS:-8}"
 VAL_EVERY="${VAL_EVERY:-5}"
+EXT_MODE="${EXT_MODE:-sep}"
 
 UCMERCED_ROOT="${UCMERCED_ROOT:-/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset}"
 AID_ROOT="${AID_ROOT:-/root/autodl-tmp/TransENet_base/datasets/AID-dataset}"
@@ -66,6 +67,7 @@ run_case() {
     echo "Strip k2: ${strip_k2}"
     echo "Save name: ${save_name}"
     echo "Output dir: ${out_dir}"
+    echo "Ext mode: ${EXT_MODE}"
 
     python train_enhanced.py \
         --model "${MODEL_NAME}" \
@@ -75,7 +77,7 @@ run_case() {
         --batch_size "${BATCH_SIZE}" \
         --n_threads "${N_THREADS}" \
         --amp \
-        --ext img \
+        --ext "${EXT_MODE}" \
         --patch_size "${patch_size}" \
         --resume 0 \
         --optimizer "${OPTIMIZER}" \
