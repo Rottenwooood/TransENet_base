@@ -27,9 +27,27 @@ def create_dataloaders(args):
         raise NotImplementedError(
             'Wrong dataset name %s ' % args.dataset)
 
-    dataloaders = {'train': DataLoader(training_set, batch_size=args.batch_size,
-                                 shuffle=True, num_workers=0),  # args.n_threads
-                   'val': DataLoader(val_set, batch_size=args.batch_size,
-                                 shuffle=True, num_workers=0)}  # args.n_threads
+    loader_kwargs = {
+        'num_workers': args.n_threads,
+        'pin_memory': not args.cpu
+    }
+    if args.n_threads > 0:
+        loader_kwargs['persistent_workers'] = True
+        loader_kwargs['prefetch_factor'] = 2
+
+    dataloaders = {
+        'train': DataLoader(
+            training_set,
+            batch_size=args.batch_size,
+            shuffle=True,
+            **loader_kwargs
+        ),
+        'val': DataLoader(
+            val_set,
+            batch_size=args.batch_size,
+            shuffle=False,
+            **loader_kwargs
+        )
+    }
 
     return dataloaders

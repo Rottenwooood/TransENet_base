@@ -24,6 +24,8 @@ class Trainer():
         self.cls_loss = nn.CrossEntropyLoss()
         self.optimizer = utils.make_optimizer(args, self.model)
         self.scheduler = utils.make_scheduler(args, self.optimizer)
+        self.use_amp = getattr(args, 'amp', False) and (not args.cpu) and torch.cuda.is_available()
+        self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
 
         # Initialize WandB logger (safely)
         self.wandb_logger = None
@@ -67,15 +69,17 @@ class Trainer():
             timer_data.hold()
             timer_model.tic()
 
-            self.optimizer.zero_grad()
-            sr = self.model(lr)
-
-            loss = self.loss(sr, hr)
+            self.optimizer.zero_grad(set_to_none=True)
+            with torch.cuda.amp.autocast(enabled=self.use_amp):
+                sr = self.model(lr)
+                loss = self.loss(sr, hr)
 
             if loss.item() < self.args.skip_threshold * self.error_last:
-                loss.backward()
+                self.scaler.scale(loss).backward()
+                self.scaler.unscale_(self.optimizer)
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.01)
-                self.optimizer.step()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
             else:
                 print('Skip this batch {}! (Loss: {})'.format(
                     batch + 1, loss.item()
@@ -150,11 +154,13 @@ class Trainer():
 
                                 # forward-pass
                                 lr_p = lr[:, :, iy:iy+ip, ix:ix+ip]
-                                sr_p = self.model(lr_p)
+                                with torch.cuda.amp.autocast(enabled=self.use_amp):
+                                    sr_p = self.model(lr_p)
                                 sr[:, :, ty:ty+tp, tx:tx+tp] = sr_p
 
                     else:
-                        sr = self.model(lr)
+                        with torch.cuda.amp.autocast(enabled=self.use_amp):
+                            sr = self.model(lr)
                     sr = utils.quantize(sr, self.args.rgb_range)
 
                     save_list = [sr]
@@ -207,11 +213,9 @@ class Trainer():
                 )
 
                 # Log validation metrics to WandB (only for final scale, epoch-level logging)
-                print(f"DEBUG: WandB check - hasattr: {hasattr(self, 'wandb_logger')}, not None: {self.wandb_logger is not None}, idx_scale: {idx_scale}")
                 if hasattr(self, 'wandb_logger') and self.wandb_logger is not None and idx_scale == 0:
                     current_psnr = self.ckp.log[-1, idx_scale].item()
                     best_psnr = best[0][idx_scale].item()
-                    print(f"DEBUG: Logging to WandB - epoch: {epoch}, psnr: {current_psnr}")
 
                     self.wandb_logger.log_validation(
                         epoch=epoch,
@@ -219,9 +223,6 @@ class Trainer():
                         ssim_value=None,  # 可以后续添加
                         best_psnr=best_psnr
                     )
-                    print(f"DEBUG: WandB log_validation called successfully")
-                else:
-                    print(f"DEBUG: WandB logging skipped")
 
         self.ckp.write_log(
             'Total time: {:.2f}s\n'.format(timer_test.toc())

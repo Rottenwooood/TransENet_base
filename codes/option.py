@@ -80,6 +80,8 @@ parser.add_argument('--shift_mean', default=True,
 parser.add_argument('--precision', type=str, default='single',
                     choices=('single', 'half'),
                     help='FP precision for test (single | half)')
+parser.add_argument('--amp', action='store_true', default=False,
+                    help='use automatic mixed precision for training and validation')
 
 # training specifications
 parser.add_argument('--reset', action='store_true', default=False,
@@ -240,6 +242,8 @@ parser.add_argument('--cosine_eta_min', type=float, default=1e-5,
                     help='minimum learning rate for cosine annealing')
 parser.add_argument('--save_every_n_steps', type=int, default=50,
                     help='save checkpoint every n steps')
+parser.add_argument('--val_every', type=int, default=1,
+                    help='run validation every N epochs')
 
 # # 添加批量deploy特有的参数
 # # Pre-train模型列表 (逗号分隔)

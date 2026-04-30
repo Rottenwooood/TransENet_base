@@ -56,11 +56,16 @@ import model
 import utils
 import loss
 import trainer
+import torch
 
 args.use_wandb = False
 
 
 if __name__ == '__main__':
+    if torch.cuda.is_available() and not args.cpu:
+        torch.backends.cudnn.benchmark = True
+        torch.set_float32_matmul_precision('high')
+
     # Print enhanced training configuration
     print("🚀 Enhanced Training Configuration:")
     print(f"Model: {args.model}")
@@ -73,8 +78,11 @@ if __name__ == '__main__':
     print(f"Learning Rate: {args.lr}")
     print(f"Loss: {args.loss}")
     print(f"WandB Enabled: {getattr(args, 'use_wandb', False)}")
+    print(f"AMP Enabled: {getattr(args, 'amp', False)}")
+    print(f"Validation Every: {getattr(args, 'val_every', 1)}")
     if hasattr(args, 'save_every_n_steps'):
         print(f"Save Every N Steps: {args.save_every_n_steps}")
+    print(f"DataLoader Threads: {args.n_threads}")
 
     # Model-specific parameters
     model_prefix = args.model.lower()
@@ -110,7 +118,9 @@ if __name__ == '__main__':
         print("\n🏃 Starting training...")
         while not t.terminate():
             t.train()
-            t.test()
+            current_epoch = t.scheduler.last_epoch
+            if current_epoch % max(1, args.val_every) == 0 or current_epoch >= args.epochs:
+                t.test()
 
         print("✅ Training completed!")
         checkpoint.done()

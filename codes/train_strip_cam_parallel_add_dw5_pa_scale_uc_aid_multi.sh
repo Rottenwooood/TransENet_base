@@ -16,7 +16,9 @@ LR="${LR:-2e-4}"
 LOSS="${LOSS:-1*L1}"
 OPTIMIZER="${OPTIMIZER:-ADAMW}"
 SCHEDULER="${SCHEDULER:-step}"
-SAVE_EVERY_N_STEPS="${SAVE_EVERY_N_STEPS:-50}"
+SAVE_EVERY_N_STEPS="${SAVE_EVERY_N_STEPS:-500}"
+N_THREADS="${N_THREADS:-8}"
+VAL_EVERY="${VAL_EVERY:-5}"
 
 UCMERCED_ROOT="${UCMERCED_ROOT:-/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset}"
 AID_ROOT="${AID_ROOT:-/root/autodl-tmp/TransENet_base/datasets/AID-dataset}"
@@ -71,6 +73,8 @@ run_case() {
         --scale "${scale}" \
         --epochs "${EPOCHS}" \
         --batch_size "${BATCH_SIZE}" \
+        --n_threads "${N_THREADS}" \
+        --amp \
         --ext img \
         --patch_size "${patch_size}" \
         --resume 0 \
@@ -84,6 +88,7 @@ run_case() {
         --symunet_pretrain_strip_k2 "${strip_k2}" \
         --data_train "${dataset_root}/train" \
         --data_val "${dataset_root}/val" \
+        --val_every "${VAL_EVERY}" \
         --save_every_n_steps "${SAVE_EVERY_N_STEPS}" \
         --save "${save_name}"
 
