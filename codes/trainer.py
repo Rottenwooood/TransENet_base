@@ -105,6 +105,7 @@ class Trainer():
         epoch = self.scheduler.last_epoch
         self.ckp.write_log('\nEvaluation:')
         self.ckp.add_log(torch.zeros(1, len(self.scale)))
+        self.ckp.add_log_epoch(epoch)
         self.model.eval()
         crop_border = self.scale[0]
         timer_test = utils.timer()
@@ -201,6 +202,7 @@ class Trainer():
 
                 self.ckp.log[-1, idx_scale] = eval_acc / img_num
                 best = self.ckp.log.max(0)
+                best_epoch = self.ckp.get_best_epoch(idx_scale)
                 self.ckp.write_log(
                     '[{} x{}]\t{}: {:.3f} (Best: {:.3f} @epoch {})'.format(
                         self.args.dataset,
@@ -208,7 +210,7 @@ class Trainer():
                         self.args.test_metric,
                         self.ckp.log[-1, idx_scale],
                         best[0][idx_scale],
-                        best[1][idx_scale] + 1
+                        best_epoch
                     )
                 )
 
@@ -231,7 +233,7 @@ class Trainer():
         # Enhanced checkpoint saving
         if not self.args.test_only:
             # Regular epoch-based saving
-            is_best = best[1][0] + 1 == epoch
+            is_best = self.ckp.get_best_epoch(0) == epoch
             self.ckp.save(self, epoch, is_best=is_best)
 
             # Step-based checkpoint saving for cosine annealing

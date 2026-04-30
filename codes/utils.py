@@ -66,6 +66,7 @@ class checkpoint():
         self.args = args
         self.ok = True
         self.log = torch.Tensor()
+        self.log_epochs = []
         now = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
 
         if args.save == '.':
@@ -75,6 +76,16 @@ class checkpoint():
 
         if args.resume == 1:
             self.log = torch.load(self.dir + '/psnr_log.pt')
+            epoch_log_path = os.path.join(self.dir, 'psnr_epoch_log.pt')
+            if os.path.exists(epoch_log_path):
+                loaded_epochs = torch.load(epoch_log_path)
+                if isinstance(loaded_epochs, torch.Tensor):
+                    self.log_epochs = loaded_epochs.tolist()
+                else:
+                    self.log_epochs = list(loaded_epochs)
+            else:
+                val_every = max(1, getattr(args, 'val_every', 1))
+                self.log_epochs = [val_every * (i + 1) for i in range(len(self.log))]
             print('Continue from epoch {}...'.format(len(self.log)))
 
         if args.reset:
@@ -103,6 +114,7 @@ class checkpoint():
 
         self.plot_metric(epoch)
         torch.save(self.log, os.path.join(self.dir, 'psnr_log.pt'))
+        torch.save(torch.tensor(self.log_epochs, dtype=torch.int64), os.path.join(self.dir, 'psnr_epoch_log.pt'))
         torch.save(
             trainer.optimizer.state_dict(),
             os.path.join(self.dir, 'optimizer.pt')
@@ -110,6 +122,18 @@ class checkpoint():
 
     def add_log(self, log):
         self.log = torch.cat([self.log, log])
+
+    def add_log_epoch(self, epoch):
+        self.log_epochs.append(int(epoch))
+
+    def get_best_epoch(self, idx_scale):
+        if self.log.numel() == 0:
+            return 0
+
+        best_idx = int(self.log[:, idx_scale].argmax().item())
+        if best_idx < len(self.log_epochs):
+            return self.log_epochs[best_idx]
+        return best_idx + 1
 
     def write_log(self, log, refresh=False):
         print(log)
@@ -122,7 +146,14 @@ class checkpoint():
         self.log_file.close()
 
     def plot_metric(self, epoch):
-        axis = np.linspace(1, epoch, epoch)
+        if len(self.log) == 0:
+            return
+
+        if len(self.log_epochs) == len(self.log):
+            axis = np.array(self.log_epochs)
+        else:
+            axis = np.arange(1, len(self.log) + 1)
+
         label = 'SR on {}'.format(self.args.data_test)
         fig = plt.figure()
         plt.title(label)
@@ -326,7 +357,6 @@ def back_projection(y_sr, y_lr, down_kernel, up_kernel, sf=None, range=1):
                      output_shape=y_sr.shape,
                      kernel=up_kernel)
     return np.clip(y_sr, 0, range)
-
 
 
 
