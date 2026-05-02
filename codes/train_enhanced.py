@@ -86,7 +86,7 @@ if __name__ == '__main__':
     print(f"Loss: {args.loss}")
     print(f"WandB Enabled: {getattr(args, 'use_wandb', False)}")
     print(f"AMP Enabled: {getattr(args, 'amp', False)}")
-    print(f"Validation Every: {getattr(args, 'val_every', 1)}")
+    print("Validation Every: disabled (always validate every epoch)")
     print(f"Save Every N Epochs: {get_epoch_checkpoint_interval(args)}")
     print(f"DataLoader Threads: {args.n_threads}")
 
@@ -128,8 +128,7 @@ if __name__ == '__main__':
             save_every_n_epochs = get_epoch_checkpoint_interval(args)
             if save_every_n_epochs > 0 and current_epoch % save_every_n_epochs == 0:
                 t.save_epoch_checkpoint(current_epoch)
-            if current_epoch % max(1, args.val_every) == 0 or current_epoch >= args.epochs:
-                t.test()
+            t.test()
 
         print("✅ Training completed!")
         checkpoint.done()
