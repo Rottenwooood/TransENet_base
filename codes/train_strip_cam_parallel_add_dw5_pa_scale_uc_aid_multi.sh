@@ -18,7 +18,7 @@ OPTIMIZER="${OPTIMIZER:-ADAMW}"
 SCHEDULER="${SCHEDULER:-step}"
 SAVE_EVERY_N_STEPS="${SAVE_EVERY_N_STEPS:-100}"
 N_THREADS="${N_THREADS:-8}"
-VAL_EVERY="${VAL_EVERY:-5}"
+VAL_EVERY="${VAL_EVERY:-2}"
 EXT_MODE="${EXT_MODE:-sep}"
 
 UCMERCED_ROOT="${UCMERCED_ROOT:-/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset}"
@@ -45,8 +45,8 @@ get_strip_k2() {
 get_mab2_kernel_sizes() {
     local scale="$1"
     case "${scale}" in
-        2) echo "5,9" ;;
-        3) echo "7,9" ;;
+        # 2) echo "5,9" ;;
+        # 3) echo "7,9" ;;
         *) echo "7,11" ;;
     esac
 }
@@ -54,8 +54,8 @@ get_mab2_kernel_sizes() {
 get_mab2_dilations() {
     local scale="$1"
     case "${scale}" in
-        2) echo "4,2" ;;
-        3) echo "4,3" ;;
+        # 2) echo "4,2" ;;
+        # 3) echo "4,3" ;;
         *) echo "5,3" ;;
     esac
 }
@@ -77,7 +77,13 @@ run_case() {
     local model_path="../experiment/${save_name}/model/model_best.pt"
     local out_dir="../experiment/results/${save_name}/x${scale}"
     local test_lr_dir="${dataset_root}/test/LR_x${scale}"
-    local test_hr_dir="${dataset_root}/test/HR_x${scale}"
+    local test_hr_dir
+
+    if [[ "${dataset}" == "AID" ]]; then
+        test_hr_dir="${dataset_root}/test/HR"
+    else
+        test_hr_dir="${dataset_root}/test/HR_x${scale}"
+    fi
 
     echo
     echo "============================================================"
@@ -141,8 +147,8 @@ run_case() {
         --folder_Gen "${out_dir}" | tail -n 1 >> results.txt
 }
 
-run_case "UCMerced" 2 "${PATCH_SIZE_X2}" "${UCMERCED_ROOT}"
-run_case "UCMerced" 3 "${PATCH_SIZE_X3}" "${UCMERCED_ROOT}"
-run_case "AID" 2 "${PATCH_SIZE_X2}" "${AID_ROOT}"
+# run_case "UCMerced" 2 "${PATCH_SIZE_X2}" "${UCMERCED_ROOT}"
+# run_case "UCMerced" 3 "${PATCH_SIZE_X3}" "${UCMERCED_ROOT}"
+# run_case "AID" 2 "${PATCH_SIZE_X2}" "${AID_ROOT}"
 run_case "AID" 3 "${PATCH_SIZE_X3}" "${AID_ROOT}"
 run_case "AID" 4 "${PATCH_SIZE_X4}" "${AID_ROOT}"

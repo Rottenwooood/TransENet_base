@@ -31,7 +31,10 @@ def main():
     else:
         dataset_root = '/root/autodl-tmp/TransENet_base/datasets/AID-dataset' if args.dataset == 'AID' \
             else '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset'
-        folder_GT = os.path.join(dataset_root, 'test', f'HR_x{args.scale}')
+        if args.dataset == 'AID':
+            folder_GT = os.path.join(dataset_root, 'test', 'HR')
+        else:
+            folder_GT = os.path.join(dataset_root, 'test', f'HR_x{args.scale}')
     folder_Gen = args.folder_Gen
     img_ext = args.img_ext or ('.png' if args.dataset == 'AID' else '.tif')
     crop_border = args.crop_border if args.crop_border is not None else args.scale
@@ -47,7 +50,8 @@ def main():
 
     # Support multiple extensions
     img_list = []
-    for ext in ['.tif']:
+    search_exts = ['.png'] if args.dataset == 'AID' else ['.tif']
+    for ext in search_exts:
         img_list.extend(glob.glob(os.path.join(folder_GT, f'*{ext}')))
     img_list = sorted(img_list)
 
