@@ -250,6 +250,11 @@ parser.add_argument('--save_every_n_epochs', type=int, default=0,
                     help='save checkpoint every n epochs (overrides legacy step setting when > 0)')
 parser.add_argument('--val_every', type=int, default=1,
                     help='run validation every N epochs')
+parser.add_argument('--max_steps', type=int, default=0,
+                    help='terminate training after this many optimization steps when > 0')
+parser.add_argument('--scheduler_unit', type=str, default='epoch',
+                    choices=('epoch', 'step'),
+                    help='apply lr scheduler per epoch or per step')
 
 # # 添加批量deploy特有的参数
 # # Pre-train模型列表 (逗号分隔)

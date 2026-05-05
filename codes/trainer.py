@@ -38,6 +38,7 @@ class Trainer():
 
         # Training step counter for step-based checkpoint saving
         self.global_step = 0
+        self.stop_training = False
 
         if self.args.resume == 1:
             self.optimizer.load_state_dict(
@@ -73,9 +74,11 @@ class Trainer():
 
         timer_data, timer_model = utils.timer(), utils.timer()
 
+        num_batches = 0
         for batch, (lr, hr, file_names) in enumerate(self.loader_train):
             # Update global step counter for checkpoint saving
             self.global_step += 1
+            num_batches = batch + 1
 
             lr, hr = self.prepare([lr, hr])
 
@@ -110,8 +113,17 @@ class Trainer():
 
             timer_data.tic()
 
-        self.scheduler.step()
-        self.loss.end_log(len(self.loader_train))
+            if getattr(self.args, 'scheduler_unit', 'epoch') == 'step':
+                self.scheduler.step()
+
+            max_steps = getattr(self.args, 'max_steps', 0)
+            if max_steps > 0 and self.global_step >= max_steps:
+                self.stop_training = True
+                break
+
+        if getattr(self.args, 'scheduler_unit', 'epoch') != 'step':
+            self.scheduler.step()
+        self.loss.end_log(num_batches if num_batches > 0 else len(self.loader_train))
         self.error_last = self.loss.log[-1, -1]
 
     def test(self):
@@ -267,6 +279,10 @@ class Trainer():
                 self.wandb_logger.finish()
             return True
         else:
+            if self.stop_training:
+                if hasattr(self, 'wandb_logger') and self.wandb_logger is not None:
+                    self.wandb_logger.finish()
+                return True
             epoch = self.scheduler.last_epoch + 1
             finished = epoch >= self.args.epochs
             if finished and hasattr(self, 'wandb_logger') and self.wandb_logger is not None:
