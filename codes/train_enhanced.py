@@ -124,7 +124,7 @@ if __name__ == '__main__':
         print("\n🏃 Starting training...")
         while not t.terminate():
             t.train()
-            current_epoch = t.scheduler.last_epoch
+            current_epoch = t.current_epoch
             save_every_n_epochs = get_epoch_checkpoint_interval(args)
             if save_every_n_epochs > 0 and current_epoch % save_every_n_epochs == 0:
                 t.save_epoch_checkpoint(current_epoch)

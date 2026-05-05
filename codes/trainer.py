@@ -39,12 +39,16 @@ class Trainer():
         # Training step counter for step-based checkpoint saving
         self.global_step = 0
         self.stop_training = False
+        self.current_epoch = 0
 
         if self.args.resume == 1:
             self.optimizer.load_state_dict(
                 torch.load(os.path.join(ckp.dir, 'optimizer.pt'))
             )
-            for _ in range(len(ckp.log)): self.scheduler.step()
+            self.current_epoch = len(ckp.log)
+            if getattr(self.args, 'scheduler_unit', 'epoch') != 'step':
+                for _ in range(len(ckp.log)):
+                    self.scheduler.step()
 
         self.error_last = 1e8
 
@@ -63,7 +67,8 @@ class Trainer():
 
     def train(self):
         self.loss.step()
-        epoch = self.scheduler.last_epoch + 1
+        self.current_epoch += 1
+        epoch = self.current_epoch
         learn_rate = self.scheduler.get_last_lr()[0]
 
         self.ckp.write_log(
@@ -127,7 +132,7 @@ class Trainer():
         self.error_last = self.loss.log[-1, -1]
 
     def test(self):
-        epoch = self.scheduler.last_epoch
+        epoch = self.current_epoch
         self.ckp.write_log('\nEvaluation:')
         self.ckp.add_log(torch.zeros(1, len(self.scale)))
         self.ckp.add_log_epoch(epoch)
@@ -283,7 +288,7 @@ class Trainer():
                 if hasattr(self, 'wandb_logger') and self.wandb_logger is not None:
                     self.wandb_logger.finish()
                 return True
-            epoch = self.scheduler.last_epoch + 1
+            epoch = self.current_epoch
             finished = epoch >= self.args.epochs
             if finished and hasattr(self, 'wandb_logger') and self.wandb_logger is not None:
                 # Finish WandB when training is complete

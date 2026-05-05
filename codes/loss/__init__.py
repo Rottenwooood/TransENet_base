@@ -118,7 +118,10 @@ class Loss(nn.modules.loss._Loss):
         return ''.join(log)
 
     def plot_loss(self, apath, epoch):
-        axis = np.linspace(1, epoch, epoch)
+        if len(self.log) == 0:
+            return
+
+        axis = np.arange(1, len(self.log) + 1)
         for i, l in enumerate(self.loss):
             label = '{} Loss'.format(l['type'])
             fig = plt.figure()
@@ -155,4 +158,3 @@ class Loss(nn.modules.loss._Loss):
         for l in self.get_loss_module():
             if hasattr(l, 'scheduler'):
                 for _ in range(len(self.log)): l.scheduler.step()
-
