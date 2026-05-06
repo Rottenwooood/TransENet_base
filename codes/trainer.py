@@ -84,6 +84,7 @@ class Trainer():
             # Update global step counter for checkpoint saving
             self.global_step += 1
             num_batches = batch + 1
+            optimizer_updated = False
 
             lr, hr = self.prepare([lr, hr])
 
@@ -101,6 +102,7 @@ class Trainer():
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.01)
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
+                optimizer_updated = True
             else:
                 print('Skip this batch {}! (Loss: {})'.format(
                     batch + 1, loss.item()
@@ -118,7 +120,7 @@ class Trainer():
 
             timer_data.tic()
 
-            if getattr(self.args, 'scheduler_unit', 'epoch') == 'step':
+            if getattr(self.args, 'scheduler_unit', 'epoch') == 'step' and optimizer_updated:
                 self.scheduler.step()
 
             max_steps = getattr(self.args, 'max_steps', 0)

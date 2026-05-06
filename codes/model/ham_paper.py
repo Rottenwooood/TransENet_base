@@ -13,7 +13,7 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
 def make_model(args, parent=False):
     return HAM(
-        img_size=64,
+        img_size=48,
         patch_size=1,
         in_chans=args.n_colors,
         embed_dim=180,
@@ -320,9 +320,9 @@ class SFMB(nn.Module):
         self.ln_1 = norm_layer(hidden_dim)
         self.self_attention = VSSM(d_model=hidden_dim, dropout=attn_drop_rate, d_state=d_state, expand=expand)
         self.drop_path = DropPath(drop_path)
-        self.skip_scale = nn.Parameter(torch.ones(hidden_dim))
+        self.skip_scale = nn.Parameter(torch.full((hidden_dim,), 0.1))
         self.conv_blk = SFIIM(hidden_dim)
-        self.skip_scale2 = nn.Parameter(torch.ones(hidden_dim))
+        self.skip_scale2 = nn.Parameter(torch.full((hidden_dim,), 0.1))
 
     def forward(self, input, x_size):
         b, l, c = input.shape

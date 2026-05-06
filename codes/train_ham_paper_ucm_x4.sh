@@ -16,7 +16,7 @@ MAX_STEPS="${MAX_STEPS:-50000}"
 PATCH_SIZE="${PATCH_SIZE:-192}"
 SAVE_EVERY_N_STEPS="${SAVE_EVERY_N_STEPS:-100}"
 N_THREADS="${N_THREADS:-8}"
-VAL_EVERY="${VAL_EVERY:-2}"
+VAL_EVERY="${VAL_EVERY:-1}"
 EXT_MODE="${EXT_MODE:-sep}"
 
 UCMERCED_ROOT="${UCMERCED_ROOT:-/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset}"
@@ -32,7 +32,6 @@ python train_enhanced.py \
     --scheduler_unit step \
     --batch_size "${BATCH_SIZE}" \
     --n_threads "${N_THREADS}" \
-    --amp \
     --ext "${EXT_MODE}" \
     --patch_size "${PATCH_SIZE}" \
     --resume 0 \
