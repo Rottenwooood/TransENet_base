@@ -80,6 +80,7 @@ class Trainer():
         timer_data, timer_model = utils.timer(), utils.timer()
 
         num_batches = 0
+        valid_batches = 0
         for batch, (lr, hr, file_names) in enumerate(self.loader_train):
             # Update global step counter for checkpoint saving
             self.global_step += 1
@@ -92,18 +93,27 @@ class Trainer():
             timer_model.tic()
 
             self.optimizer.zero_grad(set_to_none=True)
+            prev_log = self.loss.log[-1].clone()
             with torch.cuda.amp.autocast(enabled=self.use_amp):
                 sr = self.model(lr)
                 loss = self.loss(sr, hr)
 
-            if loss.item() < self.args.skip_threshold * self.error_last:
+            loss_value = loss.item()
+            if not math.isfinite(loss_value):
+                self.loss.log[-1].copy_(prev_log)
+                print('Skip this batch {}! (Loss is not finite: {})'.format(
+                    batch + 1, loss_value
+                ))
+            elif loss_value < self.args.skip_threshold * self.error_last:
                 self.scaler.scale(loss).backward()
                 self.scaler.unscale_(self.optimizer)
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.01)
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
                 optimizer_updated = True
+                valid_batches += 1
             else:
+                self.loss.log[-1].copy_(prev_log)
                 print('Skip this batch {}! (Loss: {})'.format(
                     batch + 1, loss.item()
                 ))
@@ -130,8 +140,11 @@ class Trainer():
 
         if getattr(self.args, 'scheduler_unit', 'epoch') != 'step':
             self.scheduler.step()
-        self.loss.end_log(num_batches if num_batches > 0 else len(self.loader_train))
-        self.error_last = self.loss.log[-1, -1]
+        self.loss.end_log(valid_batches if valid_batches > 0 else 1)
+        if self.loss.log.numel() > 0:
+            last_error = self.loss.log[-1, -1].item()
+            if math.isfinite(last_error) and last_error > 0:
+                self.error_last = last_error
 
     def test(self):
         epoch = self.current_epoch
