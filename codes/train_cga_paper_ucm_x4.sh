@@ -7,11 +7,11 @@ cd "$(dirname "$0")"
 MODEL_NAME0="cga_paper"
 MODEL_NAME1="ham_paper"
 MODEL_NAME2="mt_paper"
-EPOCHS="${EPOCHS:-999999}"
+EPOCHS="${EPOCHS:-800}"
 BATCH_SIZE="${BATCH_SIZE:-4}"
 LR="${LR:-2e-4}"
 OPTIMIZER="${OPTIMIZER:-ADAM}"
-SCHEDULER="${SCHEDULER:-step}"
+SCHEDULER="${SCHEDULER:-cosine}"
 DECAY_TYPE0="${DECAY_TYPE:-step_250000_400000_450000_475000}"
 DECAY_TYPE1="${DECAY_TYPE:-step_250000}"
 GAMMA="${GAMMA:-0.5}"
@@ -30,7 +30,7 @@ TEST_HR_DIR="${TEST_HR_DIR:-${UCMERCED_ROOT}/test/HR_x${SCALE}}"
 RESULTS_ROOT="${RESULTS_ROOT:-../experiment/results}"
 RESULTS_FILE="${RESULTS_FILE:-results.txt}"
 RUN_TS="${RUN_TS:-$(date -u +%Y%m%d_%H%M%S)}"
-SAVE_NAME0="paper_cga_ucm_x4_${RUN_TS}"
+SAVE_NAME0="paper_cga_ucm_x4_20260507_195957"
 SAVE_NAME1="paper_ham_ucm_x4_${RUN_TS}"
 SAVE_NAME2="paper_mt_ucm_x4_${RUN_TS}"
 
@@ -45,32 +45,32 @@ train_and_eval() {
         amp_args=(--amp)
     fi
 
-    python train_enhanced.py \
-        --model "${model_name}" \
-        --dataset "${DATASET}" \
-        --scale "${SCALE}" \
-        --epochs "${EPOCHS}" \
-        --max_steps "${MAX_STEPS}" \
-        --scheduler_unit step \
-        --batch_size "${BATCH_SIZE}" \
-        --n_threads "${N_THREADS}" \
-        "${amp_args[@]}" \
-        --ext "${EXT_MODE}" \
-        --patch_size "${PATCH_SIZE}" \
-        --resume 0 \
-        --optimizer "${OPTIMIZER}" \
-        --scheduler "${SCHEDULER}" \
-        --decay_type "${decay_type}" \
-        --gamma "${GAMMA}" \
-        --lr "${LR}" \
-        --beta1 0.9 \
-        --beta2 0.99 \
-        --loss "1*L1" \
-        --data_train "${UCMERCED_ROOT}/train" \
-        --data_val "${UCMERCED_ROOT}/val" \
-        --val_every "${VAL_EVERY}" \
-        --save_every_n_steps "${SAVE_EVERY_N_STEPS}" \
-        --save "${save_name}"
+    # python train_enhanced.py \
+    #     --model "${model_name}" \
+    #     --dataset "${DATASET}" \
+    #     --scale "${SCALE}" \
+    #     --epochs "${EPOCHS}" \
+    #     --max_steps "${MAX_STEPS}" \
+    #     --scheduler_unit epoch \
+    #     --batch_size "${BATCH_SIZE}" \
+    #     --n_threads "${N_THREADS}" \
+    #     "${amp_args[@]}" \
+    #     --ext "${EXT_MODE}" \
+    #     --patch_size "${PATCH_SIZE}" \
+    #     --resume 0 \
+    #     --optimizer "${OPTIMIZER}" \
+    #     --scheduler "${SCHEDULER}" \
+    #     --decay_type "${decay_type}" \
+    #     --gamma "${GAMMA}" \
+    #     --lr "${LR}" \
+    #     --beta1 0.9 \
+    #     --beta2 0.99 \
+    #     --loss "1*L1" \
+    #     --data_train "${UCMERCED_ROOT}/train" \
+    #     --data_val "${UCMERCED_ROOT}/val" \
+    #     --val_every "${VAL_EVERY}" \
+    #     --save_every_n_steps "${SAVE_EVERY_N_STEPS}" \
+    #     --save "${save_name}"
 
     local model_path="../experiment/${save_name}/model/model_best.pt"
     local out_dir="${RESULTS_ROOT}/${save_name}/x${SCALE}"
@@ -90,6 +90,6 @@ train_and_eval() {
         --folder_Gen "${out_dir}" | tail -n 1 >> "${RESULTS_FILE}"
 }
 
-# train_and_eval "${MODEL_NAME0}" "${SAVE_NAME0}" "${DECAY_TYPE0}" 1
-train_and_eval "${MODEL_NAME1}" "${SAVE_NAME1}" "${DECAY_TYPE1}" 0
-train_and_eval "${MODEL_NAME2}" "${SAVE_NAME2}" "${DECAY_TYPE1}" 1
+train_and_eval "${MODEL_NAME0}" "${SAVE_NAME0}" "${DECAY_TYPE0}" 1
+# train_and_eval "${MODEL_NAME2}" "${SAVE_NAME2}" "${DECAY_TYPE1}" 0
+#train_and_eval "${MODEL_NAME1}" "${SAVE_NAME1}" "${DECAY_TYPE1}" 1

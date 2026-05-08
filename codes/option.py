@@ -240,9 +240,9 @@ parser.add_argument('--wandb_name', type=str, default=None,
 parser.add_argument('--scheduler', default='step',
                     choices=('step', 'cosine'),
                     help='learning rate scheduler (step | cosine)')
-parser.add_argument('--cosine_t_max', type=int, default=300,
+parser.add_argument('--cosine_t_max', type=int, default=800,
                     help='maximum steps for cosine annealing')
-parser.add_argument('--cosine_eta_min', type=float, default=1e-5,
+parser.add_argument('--cosine_eta_min', type=float, default=1e-6,
                     help='minimum learning rate for cosine annealing')
 parser.add_argument('--save_every_n_steps', type=int, default=100,
                     help='deprecated: legacy checkpoint interval, interpreted as epochs when save_every_n_epochs is 0')

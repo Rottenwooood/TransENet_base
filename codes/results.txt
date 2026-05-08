@@ -99,3 +99,15 @@ x3
 [ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
 Average: PSNR: 30.271736 dB, SSIM: 0.849244
 x2
+Loading model from ../experiment/paper_mt_ucm_x4_20260507_061859/model/model_best.pt
+[ptflops] FLOPs (G): 32.78 G，[ptflops] 参数量 (M): 7.58 M
+
+
+Average: PSNR: 27.763758 dB, SSIM: 0.764322
+Loading model from ../experiment/paper_ham_ucm_x4_20260507_061934/model/model_best.pt
+[ptflops] FLOPs (G): 32.78 G，[ptflops] 参数量 (M): 7.58 M
+Average: PSNR: 27.742206 dB, SSIM: 0.761794
+
+Loading model from ../experiment/paper_cga_ucm_x4_20260508_084131/model/model_best.pt
+[ptflops] FLOPs (G): 41.88 G，[ptflops] 参数量 (M): 10.46 M
+Average: PSNR: 27.740882 dB, SSIM: 0.764007
