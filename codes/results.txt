@@ -99,6 +99,7 @@ x3
 [ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
 Average: PSNR: 30.271736 dB, SSIM: 0.849244
 x2
+
 Loading model from ../experiment/paper_mt_ucm_x4_20260507_061859/model/model_best.pt
 [ptflops] FLOPs (G): 32.78 G，[ptflops] 参数量 (M): 7.58 M
 
@@ -111,3 +112,31 @@ Average: PSNR: 27.742206 dB, SSIM: 0.761794
 Loading model from ../experiment/paper_cga_ucm_x4_20260508_084131/model/model_best.pt
 [ptflops] FLOPs (G): 41.88 G，[ptflops] 参数量 (M): 10.46 M
 Average: PSNR: 27.740882 dB, SSIM: 0.764007
+[ptflops] FLOPs (G): 32.78 G，[ptflops] 参数量 (M): 7.58 M
+Average: PSNR: 27.716447 dB, SSIM: 0.760779
+[ptflops] FLOPs (G): 79.03 G，[ptflops] 参数量 (M): 25.20 M
+Average: PSNR: 27.958626 dB, SSIM: 0.770446
+
+mt
+[ptflops] FLOPs (G): 32.78 G，[ptflops] 参数量 (M): 7.58 M
+Average: PSNR: 27.756360 dB, SSIM: 0.762845
+ham
+[ptflops] FLOPs (G): 79.03 G，[ptflops] 参数量 (M): 25.20 M
+Average: PSNR: 27.954967 dB, SSIM: 0.772054
+mt x3 错
+[ptflops] FLOPs (G): 31.06 G，[ptflops] 参数量 (M): 7.61 M
+Average: PSNR: 30.029599 dB, SSIM: 0.843219
+mt x3
+[ptflops] FLOPs (G): 31.06 G，[ptflops] 参数量 (M): 7.61 M
+Average: PSNR: 30.020614 dB, SSIM: 0.841307
+ham x3
+[ptflops] FLOPs (G): 77.31 G，[ptflops] 参数量 (M): 25.23 M
+Average: PSNR: 30.332542 dB, SSIM: 0.852570
+mt x2
+[ptflops] FLOPs (G): 30.27 G，[ptflops] 参数量 (M): 7.43 M
+Average: PSNR: 34.130522 dB, SSIM: 0.930660
+ham x2
+[ptflops] FLOPs (G): 76.52 G，[ptflops] 参数量 (M): 25.05 M
+Average: PSNR: 34.292771 dB, SSIM: 0.932681
+[ptflops] FLOPs (G): 41.88 G，[ptflops] 参数量 (M): 10.46 M
+Average: PSNR: 29.550998 dB, SSIM: 0.795533

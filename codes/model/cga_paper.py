@@ -14,8 +14,9 @@ import numpy as np
 import random
 
 def make_model(args, parent=False):
+    input_size = max(1, args.patch_size // args.scale[0])
     return CGA(
-        img_size=64,
+        img_size=input_size,
         in_chans=args.n_colors,
         embed_dim=180,
         depth=[6, 6, 6, 6, 6, 6],
@@ -24,7 +25,7 @@ def make_model(args, parent=False):
         upscale=args.scale[0],
         img_range=float(args.rgb_range),
         resi_connection='1conv',
-        split_size=[8, 32],
+        split_size=args.cga_paper_split_size,
         c_ratio=0.5,
     )
 

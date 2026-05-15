@@ -90,6 +90,8 @@ parser.add_argument('--epochs', type=int, default=500,
                     help='number of epochs to train')
 parser.add_argument('--batch_size', type=int, default=16,
                     help='input batch size for training')
+parser.add_argument('--val_batch_size', type=int, default=0,
+                    help='validation batch size; when 0, fallback to batch_size')
 parser.add_argument('--split_batch', type=int, default=1,
                     help='split the batch into smaller chunks')
 parser.add_argument('--self_ensemble', action='store_true', default=False,
@@ -204,6 +206,8 @@ parser.add_argument('--symunet_pretrain_mab2_kernel_sizes', type=str, default='7
                     help='MAB2 neighborhood attention kernel sizes (comma-separated)')
 parser.add_argument('--symunet_pretrain_mab2_dilations', type=str, default='5,3',
                     help='MAB2 neighborhood attention dilations (comma-separated)')
+parser.add_argument('--cga_paper_split_size', type=str, default='8,32',
+                    help='CGA split window sizes (comma-separated)')
 
 # # Option for SymUNet Post-train (后上采样版本)
 # parser.add_argument('--symunet_posttrain_width', type=int, default=64,
@@ -274,6 +278,8 @@ parser.add_argument('--scheduler_unit', type=str, default='epoch',
 #                     help='输出目录基础路径')
 args = parser.parse_args()
 args.scale = list(map(lambda x: int(x), args.scale.split('+')))
+if args.val_batch_size <= 0:
+    args.val_batch_size = args.batch_size
 
 # Parse SymUNet parameters
 # args.symunet_enc_blk_nums = list(map(lambda x: int(x), args.symunet_enc_blk_nums.split(',')))
@@ -286,6 +292,7 @@ args.symunet_pretrain_dec_blk_nums = list(map(lambda x: int(x), args.symunet_pre
 args.symunet_pretrain_restormer_heads = list(map(lambda x: int(x), args.symunet_pretrain_restormer_heads.split(',')))
 args.symunet_pretrain_mab2_kernel_sizes = list(map(lambda x: int(x), args.symunet_pretrain_mab2_kernel_sizes.split(',')))
 args.symunet_pretrain_mab2_dilations = list(map(lambda x: int(x), args.symunet_pretrain_mab2_dilations.split(',')))
+args.cga_paper_split_size = list(map(lambda x: int(x), args.cga_paper_split_size.split(',')))
 
 # # Parse SymUNet-Posttrain parameters
 # args.symunet_posttrain_enc_blk_nums = list(map(lambda x: int(x), args.symunet_posttrain_enc_blk_nums.split(',')))

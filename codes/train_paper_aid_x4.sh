@@ -4,9 +4,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-MODEL_NAME1="ham_paper"
-MODEL_NAME2="mt_paper"
-EPOCHS="${EPOCHS:-500}"
+DATASET="AID"
+SCALE=4
+EPOCHS="${EPOCHS:-300}"
 BATCH_SIZE="${BATCH_SIZE:-4}"
 LR="${LR:-2e-4}"
 OPTIMIZER="${OPTIMIZER:-ADAM}"
@@ -16,25 +16,22 @@ GAMMA="${GAMMA:-0.5}"
 MAX_STEPS="${MAX_STEPS:-500000}"
 SAVE_EVERY_N_STEPS="${SAVE_EVERY_N_STEPS:-100}"
 N_THREADS="${N_THREADS:-8}"
-VAL_EVERY="${VAL_EVERY:-1}"
 EXT_MODE="${EXT_MODE:-sep}"
-DATASET="UCMerced"
 
-UCMERCED_ROOT="${UCMERCED_ROOT:-/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset}"
+AID_ROOT="${AID_ROOT:-/root/autodl-tmp/TransENet_base/datasets/AID-dataset}"
 RESULTS_ROOT="${RESULTS_ROOT:-../experiment/results}"
 RESULTS_FILE="${RESULTS_FILE:-results.txt}"
 RUN_TS="${RUN_TS:-$(date -u +%Y%m%d_%H%M%S)}"
 
-PATCH_SIZE_X3="${PATCH_SIZE_X3:-144}"
-PATCH_SIZE_X2="${PATCH_SIZE_X2:-96}"
+# image_size keeps the dataset-level reference semantics in the original framework.
+IMAGE_SIZE="${IMAGE_SIZE:-600}"
+PATCH_SIZE="${PATCH_SIZE:-256}"
+CGA_SPLIT_SIZE="${CGA_SPLIT_SIZE:-8,32}"
 
 train_and_eval() {
     local model_name="$1"
     local save_name="$2"
-    local scale="$3"
-    local patch_size="$4"
-    local use_amp="$5"
-    local resume_flag="${6:-0}"
+    local use_amp="$3"
     local amp_args=()
 
     if [[ "${use_amp}" == "1" ]]; then
@@ -44,7 +41,7 @@ train_and_eval() {
     python train_enhanced.py \
         --model "${model_name}" \
         --dataset "${DATASET}" \
-        --scale "${scale}" \
+        --scale "${SCALE}" \
         --epochs "${EPOCHS}" \
         --max_steps "${MAX_STEPS}" \
         --scheduler_unit epoch \
@@ -52,8 +49,8 @@ train_and_eval() {
         --n_threads "${N_THREADS}" \
         "${amp_args[@]}" \
         --ext "${EXT_MODE}" \
-        --patch_size "${patch_size}" \
-        --resume "${resume_flag}" \
+        --patch_size "${PATCH_SIZE}" \
+        --resume 1 \
         --optimizer "${OPTIMIZER}" \
         --scheduler "${SCHEDULER}" \
         --decay_type "${DECAY_TYPE}" \
@@ -62,38 +59,37 @@ train_and_eval() {
         --beta1 0.9 \
         --beta2 0.99 \
         --loss "1*L1" \
-        --data_train "${UCMERCED_ROOT}/train" \
-        --data_val "${UCMERCED_ROOT}/val" \
-        --val_every "${VAL_EVERY}" \
+        --cga_paper_split_size "${CGA_SPLIT_SIZE}" \
+        --data_train "${AID_ROOT}/train" \
+        --data_val "${AID_ROOT}/val" \
         --save_every_n_steps "${SAVE_EVERY_N_STEPS}" \
         --save "${save_name}"
 
     local model_path="../experiment/${save_name}/model/model_best.pt"
-    local out_dir="${RESULTS_ROOT}/${save_name}/x${scale}"
-    local test_lr_dir="${UCMERCED_ROOT}/test/LR_x${scale}"
-    local test_hr_dir="${UCMERCED_ROOT}/test/HR_x${scale}"
+    local out_dir="${RESULTS_ROOT}/${save_name}/x${SCALE}"
+    local test_lr_dir="${AID_ROOT}/test/LR_x${SCALE}"
+    local test_hr_dir="${AID_ROOT}/test/HR"
 
     python demo_deploy.py \
         --model "${model_name}" \
         --dataset "${DATASET}" \
-        --scale "${scale}" \
+        --scale "${SCALE}" \
+        --cga_paper_split_size "${CGA_SPLIT_SIZE}" \
         --pre_train "${model_path}" \
         --dir_data "${test_lr_dir}" \
         --dir_out "${out_dir}" | tail -n 1 >> "${RESULTS_FILE}"
 
     python calculate_PSNR_SSIM.py \
         --dataset "${DATASET}" \
-        --scale "${scale}" \
+        --scale "${SCALE}" \
         --folder_GT "${test_hr_dir}" \
         --folder_Gen "${out_dir}" | tail -n 1 >> "${RESULTS_FILE}"
 }
 
-SAVE_NAME_MT_X3="${MT_X3_SAVE_NAME:-paper_mt_ucm_x3_20260510_154558}"
-SAVE_NAME_HAM_X3="paper_ham_ucm_x3_${RUN_TS}"
-SAVE_NAME_MT_X2="paper_mt_ucm_x2_${RUN_TS}"
-SAVE_NAME_HAM_X2="paper_ham_ucm_x2_${RUN_TS}"
+SAVE_NAME_CGA="paper_cga_aid_x4_20260512_155448"
+SAVE_NAME_MT="paper_mt_aid_x4_${RUN_TS}"
+SAVE_NAME_HAM="paper_ham_aid_x4_${RUN_TS}"
 
-train_and_eval "${MODEL_NAME2}" "${SAVE_NAME_MT_X3}" 3 "${PATCH_SIZE_X3}" 0 1
-train_and_eval "${MODEL_NAME1}" "${SAVE_NAME_HAM_X3}" 3 "${PATCH_SIZE_X3}" 0
-train_and_eval "${MODEL_NAME2}" "${SAVE_NAME_MT_X2}" 2 "${PATCH_SIZE_X2}" 0
-train_and_eval "${MODEL_NAME1}" "${SAVE_NAME_HAM_X2}" 2 "${PATCH_SIZE_X2}" 0
+train_and_eval "cga_paper" "${SAVE_NAME_CGA}" 0
+# train_and_eval "mt_paper" "${SAVE_NAME_MT}" 0
+# train_and_eval "ham_paper" "${SAVE_NAME_HAM}" 0

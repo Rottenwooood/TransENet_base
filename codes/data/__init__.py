@@ -44,7 +44,7 @@ def create_dataloaders(args):
         ),
         'val': DataLoader(
             val_set,
-            batch_size=args.batch_size,
+            batch_size=args.val_batch_size,
             shuffle=False,
             **loader_kwargs
         )

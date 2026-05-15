@@ -14,7 +14,7 @@ from functools import partial
 
 def make_model(args, parent=False):
     return HAM(
-        img_size=48,
+        img_size=max(1, args.patch_size // args.scale[0]),
         patch_size=1,
         in_chans=args.n_colors,
         embed_dim=180,
