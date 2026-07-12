@@ -28,6 +28,7 @@ RED_RELEVANCE_CMAP = LinearSegmentedColormap.from_list(
     "red_relevance",
     [
         (0.0, "#ffffff"),
+        # (0.02, "#2b6cb0"),
         (1.0, "#ff0000"),
     ],
 )
@@ -47,6 +48,8 @@ def parse_args():
     parser.add_argument("--fold", type=int, default=50, help="GaussianBlurPath interpolation steps.")
     parser.add_argument("--kernel_size", type=int, default=9, help="GaussianBlurPath kernel size.")
     parser.add_argument("--alpha", type=float, default=0.5, help="Blend ratio for input image.")
+    parser.add_argument("--explain", choices=["sr", "residual"], default="sr",
+                        help="Explain final SR output or SR minus bicubic LR residual.")
     parser.add_argument("--device", default="cuda", choices=["cuda", "cpu"], help="Device to run on.")
     return parser.parse_args()
 
@@ -54,6 +57,15 @@ def parse_args():
 def attr_grad(image, h, w, window=16):
     patch = image[:, :, h : h + window, w : w + window]
     return patch.mean()
+
+
+def resize_like_bicubic(lr_tensor, target_tensor):
+    return torch.nn.functional.interpolate(
+        lr_tensor,
+        size=target_tensor.shape[-2:],
+        mode="bicubic",
+        align_corners=False,
+    )
 
 
 def attribution_objective(attr_func, h, w, window=16):
@@ -101,7 +113,7 @@ def GaussianBlurPath(sigma, fold, kernel_size=9):
     return path_interpolation_func
 
 
-def Path_gradient(torch_image_numpy, model, attr_objective, path_interpolation_func, device):
+def Path_gradient(torch_image_numpy, model, attr_objective, path_interpolation_func, device, explain):
     cv_numpy_image = torch_image_numpy[0].transpose(1, 2, 0)
     image_interpolation, lambda_derivative_interpolation = path_interpolation_func(cv_numpy_image)
     grad_accumulate_list = np.zeros_like(lambda_derivative_interpolation, dtype=np.float32)
@@ -111,7 +123,10 @@ def Path_gradient(torch_image_numpy, model, attr_objective, path_interpolation_f
         img_tensor = torch.from_numpy(image_interpolation[i : i + 1]).to(device)
         img_tensor.requires_grad_(True)
         result = model(img_tensor)
-        target = attr_objective(result)
+        objective_input = result
+        if explain == "residual":
+            objective_input = result - resize_like_bicubic(img_tensor, result)
+        target = attr_objective(objective_input)
         model.zero_grad(set_to_none=True)
         target.backward()
         grad = img_tensor.grad.detach().cpu().numpy()[0]
@@ -136,7 +151,7 @@ def grad_abs_norm(grad):
     return grad_2d / grad_max
 
 
-def compute_lam(model, lr_tensor, roi_x, roi_y, roi_size, sigma, fold, kernel_size, device):
+def compute_lam(model, lr_tensor, roi_x, roi_y, roi_size, sigma, fold, kernel_size, device, explain):
     attr_objective = attribution_objective(attr_grad, roi_y, roi_x, window=roi_size)
     gaus_blur_path_func = GaussianBlurPath(sigma, fold, kernel_size)
     interpolated_grad_numpy, result_numpy, interpolated_numpy = Path_gradient(
@@ -145,6 +160,7 @@ def compute_lam(model, lr_tensor, roi_x, roi_y, roi_size, sigma, fold, kernel_si
         attr_objective,
         gaus_blur_path_func,
         device=device,
+        explain=explain,
     )
     grad_numpy, result = saliency_map(interpolated_grad_numpy, result_numpy)
     abs_normed_grad_numpy = grad_abs_norm(grad_numpy)
@@ -259,6 +275,7 @@ def main():
         fold=args.fold,
         kernel_size=args.kernel_size,
         device=device,
+        explain=args.explain,
     )
     result_image = result_to_image(result)
 
@@ -290,6 +307,7 @@ def main():
     print(f"Saved LAM outputs to: {args.output_dir}")
     print(f"ROI on SR image: x={roi_x}, y={roi_y}, size={roi_size}")
     print(f"GaussianBlurPath: sigma={args.sigma}, fold={args.fold}, kernel_size={args.kernel_size}")
+    print(f"Explain target: {args.explain}")
     if hr_path:
         print(f"Reference HR image: {hr_path}")
     else:

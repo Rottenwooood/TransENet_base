@@ -1,0 +1,12 @@
+=== UCMerced x3 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_UCMerced_x3_w32 | gpu=1 ===
+=== UCMerced x2 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_UCMerced_x2_w32 | gpu=0 ===
+[ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
+[ptflops] FLOPs (G): 7.22 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 30.292803 dB, SSIM: 0.847848
+
+Average: PSNR: 34.410184 dB, SSIM: 0.933752
+
+=== UCMerced x4 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_UCMerced_x4_w32_20260520_190021 | gpu=0 ===
+[ptflops] FLOPs (G): 28.89 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 27.984490 dB, SSIM: 0.770993
+
