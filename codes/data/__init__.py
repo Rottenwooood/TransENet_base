@@ -9,6 +9,18 @@ def create_dataloaders(args):
         val_dir = args.data_val if args.data_val != '.' else '../datasets/AID'
         training_set = AIDataset(args, root_dir=train_dir, train=True)
         val_set = AIDataset(args, root_dir=val_dir, train=False)
+    elif args.dataset == 'WHU-RS19':
+        from data.hr_lr_png import HRLRPngDataset
+        train_dir = args.data_train if args.data_train != '.' else '../datasets/WHU-RS19-dataset/train'
+        val_dir = args.data_val if args.data_val != '.' else '../datasets/WHU-RS19-dataset/val'
+        training_set = HRLRPngDataset(args, root_dir=train_dir, train=True)
+        val_set = HRLRPngDataset(args, root_dir=val_dir, train=False)
+    elif args.dataset == 'RSSCN7':
+        from data.hr_lr_png import HRLRPngDataset
+        train_dir = args.data_train if args.data_train != '.' else '../datasets/RSSCN7-dataset/train'
+        val_dir = args.data_val if args.data_val != '.' else '../datasets/RSSCN7-dataset/val'
+        training_set = HRLRPngDataset(args, root_dir=train_dir, train=True)
+        val_set = HRLRPngDataset(args, root_dir=val_dir, train=False)
     elif args.dataset == 'UCMerced':
         from data.ucmerced import UCMercedDataset
         # Use configured paths or fall back to defaults

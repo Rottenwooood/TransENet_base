@@ -1,0 +1,1057 @@
+GT folder: datasets/UCMerced-dataset/test/HR_x4
+Gen folder: /root/autodl-tmp/TransENet_base/experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_UCMerced_x4_w32_20260520_190021/x4
+Image extension: .tif
+Crop border: 4
+Workers: 1
+Found 1050 images
+  1 - agricultural50           . 	SCC: 0.480428, 	SAM: 0.037570
+  2 - agricultural51           . 	SCC: 0.370015, 	SAM: 0.034805
+  3 - agricultural52           . 	SCC: 0.291240, 	SAM: 0.038999
+  4 - agricultural53           . 	SCC: 0.359331, 	SAM: 0.037725
+  5 - agricultural54           . 	SCC: 0.216353, 	SAM: 0.048751
+  6 - agricultural55           . 	SCC: 0.130686, 	SAM: 0.026415
+  7 - agricultural56           . 	SCC: 0.409342, 	SAM: 0.024151
+  8 - agricultural57           . 	SCC: 0.476180, 	SAM: 0.031983
+  9 - agricultural58           . 	SCC: 0.400656, 	SAM: 0.030832
+ 10 - agricultural59           . 	SCC: 0.348725, 	SAM: 0.044216
+ 11 - agricultural60           . 	SCC: 0.290249, 	SAM: 0.058674
+ 12 - agricultural61           . 	SCC: 0.668543, 	SAM: 0.031572
+ 13 - agricultural62           . 	SCC: 0.038109, 	SAM: 0.138226
+ 14 - agricultural63           . 	SCC: 0.509245, 	SAM: 0.070294
+ 15 - agricultural64           . 	SCC: 0.117677, 	SAM: 0.065313
+ 16 - agricultural65           . 	SCC: 0.180371, 	SAM: 0.091567
+ 17 - agricultural66           . 	SCC: 0.038701, 	SAM: 0.162271
+ 18 - agricultural67           . 	SCC: 0.063931, 	SAM: 0.235229
+ 19 - agricultural68           . 	SCC: 0.061459, 	SAM: 0.266389
+ 20 - agricultural69           . 	SCC: 0.069020, 	SAM: 0.268586
+ 21 - agricultural70           . 	SCC: 0.084069, 	SAM: 0.276113
+ 22 - agricultural71           . 	SCC: 0.099095, 	SAM: 0.259307
+ 23 - agricultural72           . 	SCC: 0.075067, 	SAM: 0.241724
+ 24 - agricultural73           . 	SCC: 0.175037, 	SAM: 0.116429
+ 25 - agricultural74           . 	SCC: 0.111207, 	SAM: 0.095353
+ 26 - agricultural75           . 	SCC: 0.036027, 	SAM: 0.052736
+ 27 - agricultural76           . 	SCC: 0.245835, 	SAM: 0.084819
+ 28 - agricultural77           . 	SCC: 0.173672, 	SAM: 0.242469
+ 29 - agricultural78           . 	SCC: 0.030027, 	SAM: 0.086775
+ 30 - agricultural79           . 	SCC: 0.108236, 	SAM: 0.104030
+ 31 - agricultural80           . 	SCC: 0.348615, 	SAM: 0.094133
+ 32 - agricultural81           . 	SCC: 0.236772, 	SAM: 0.111793
+ 33 - agricultural82           . 	SCC: 0.215792, 	SAM: 0.111268
+ 34 - agricultural83           . 	SCC: -0.033342, 	SAM: 0.130443
+ 35 - agricultural84           . 	SCC: -0.002955, 	SAM: 0.163488
+ 36 - agricultural85           . 	SCC: -0.022057, 	SAM: 0.178057
+ 37 - agricultural86           . 	SCC: 0.063543, 	SAM: 0.083634
+ 38 - agricultural87           . 	SCC: 0.094075, 	SAM: 0.140060
+ 39 - agricultural88           . 	SCC: 0.101740, 	SAM: 0.102931
+ 40 - agricultural89           . 	SCC: 0.073219, 	SAM: 0.086125
+ 41 - agricultural90           . 	SCC: 0.032742, 	SAM: 0.132336
+ 42 - agricultural91           . 	SCC: 0.034815, 	SAM: 0.100531
+ 43 - agricultural92           . 	SCC: 0.120632, 	SAM: 0.179813
+ 44 - agricultural93           . 	SCC: 0.195346, 	SAM: 0.102605
+ 45 - agricultural94           . 	SCC: 0.026066, 	SAM: 0.163351
+ 46 - agricultural95           . 	SCC: 0.033071, 	SAM: 0.086833
+ 47 - agricultural96           . 	SCC: 0.050049, 	SAM: 0.139447
+ 48 - agricultural97           . 	SCC: 0.033963, 	SAM: 0.168007
+ 49 - agricultural98           . 	SCC: 0.215399, 	SAM: 0.100691
+ 50 - agricultural99           . 	SCC: 0.185360, 	SAM: 0.207496
+ 51 - airplane50               . 	SCC: 0.377377, 	SAM: 0.093790
+ 52 - airplane51               . 	SCC: 0.300207, 	SAM: 0.081774
+ 53 - airplane52               . 	SCC: 0.317305, 	SAM: 0.052125
+ 54 - airplane53               . 	SCC: 0.396119, 	SAM: 0.077059
+ 55 - airplane54               . 	SCC: 0.322771, 	SAM: 0.075162
+ 56 - airplane55               . 	SCC: 0.379029, 	SAM: 0.077968
+ 57 - airplane56               . 	SCC: 0.290088, 	SAM: 0.133215
+ 58 - airplane57               . 	SCC: 0.266990, 	SAM: 0.077532
+ 59 - airplane58               . 	SCC: 0.177107, 	SAM: 0.073686
+ 60 - airplane59               . 	SCC: 0.391837, 	SAM: 0.079698
+ 61 - airplane60               . 	SCC: 0.328856, 	SAM: 0.073867
+ 62 - airplane61               . 	SCC: 0.357696, 	SAM: 0.077695
+ 63 - airplane62               . 	SCC: 0.357106, 	SAM: 0.073743
+ 64 - airplane63               . 	SCC: 0.347587, 	SAM: 0.071475
+ 65 - airplane64               . 	SCC: 0.325073, 	SAM: 0.073886
+ 66 - airplane65               . 	SCC: 0.361708, 	SAM: 0.077263
+ 67 - airplane66               . 	SCC: 0.331122, 	SAM: 0.101344
+ 68 - airplane67               . 	SCC: 0.439625, 	SAM: 0.092522
+ 69 - airplane68               . 	SCC: 0.381292, 	SAM: 0.079473
+ 70 - airplane69               . 	SCC: 0.356533, 	SAM: 0.082427
+ 71 - airplane70               . 	SCC: 0.316058, 	SAM: 0.089783
+ 72 - airplane71               . 	SCC: 0.357305, 	SAM: 0.080574
+ 73 - airplane72               . 	SCC: 0.260475, 	SAM: 0.087584
+ 74 - airplane73               . 	SCC: 0.312934, 	SAM: 0.066439
+ 75 - airplane74               . 	SCC: 0.336638, 	SAM: 0.067931
+ 76 - airplane75               . 	SCC: 0.307172, 	SAM: 0.070708
+ 77 - airplane76               . 	SCC: 0.335800, 	SAM: 0.069839
+ 78 - airplane77               . 	SCC: 0.215427, 	SAM: 0.080768
+ 79 - airplane78               . 	SCC: 0.229789, 	SAM: 0.084049
+ 80 - airplane79               . 	SCC: 0.248633, 	SAM: 0.055517
+ 81 - airplane80               . 	SCC: 0.206291, 	SAM: 0.041623
+ 82 - airplane81               . 	SCC: 0.255312, 	SAM: 0.069710
+ 83 - airplane82               . 	SCC: 0.251415, 	SAM: 0.068976
+ 84 - airplane83               . 	SCC: 0.289282, 	SAM: 0.054837
+ 85 - airplane84               . 	SCC: 0.263916, 	SAM: 0.065870
+ 86 - airplane85               . 	SCC: 0.240657, 	SAM: 0.075260
+ 87 - airplane86               . 	SCC: 0.200967, 	SAM: 0.069241
+ 88 - airplane87               . 	SCC: 0.363032, 	SAM: 0.089447
+ 89 - airplane88               . 	SCC: 0.240239, 	SAM: 0.073638
+ 90 - airplane89               . 	SCC: 0.193791, 	SAM: 0.071124
+ 91 - airplane90               . 	SCC: 0.314084, 	SAM: 0.070677
+ 92 - airplane91               . 	SCC: 0.229301, 	SAM: 0.070467
+ 93 - airplane92               . 	SCC: 0.169725, 	SAM: 0.048835
+ 94 - airplane93               . 	SCC: 0.199449, 	SAM: 0.049165
+ 95 - airplane94               . 	SCC: 0.197526, 	SAM: 0.067992
+ 96 - airplane95               . 	SCC: 0.331228, 	SAM: 0.044557
+ 97 - airplane96               . 	SCC: 0.350197, 	SAM: 0.075245
+ 98 - airplane97               . 	SCC: 0.290168, 	SAM: 0.080740
+ 99 - airplane98               . 	SCC: 0.256404, 	SAM: 0.064749
+100 - airplane99               . 	SCC: 0.254735, 	SAM: 0.084856
+101 - baseballdiamond50        . 	SCC: 0.309441, 	SAM: 0.060847
+102 - baseballdiamond51        . 	SCC: 0.296598, 	SAM: 0.059343
+103 - baseballdiamond52        . 	SCC: 0.255641, 	SAM: 0.058278
+104 - baseballdiamond53        . 	SCC: 0.195182, 	SAM: 0.033496
+105 - baseballdiamond54        . 	SCC: 0.201440, 	SAM: 0.034916
+106 - baseballdiamond55        . 	SCC: 0.206424, 	SAM: 0.050544
+107 - baseballdiamond56        . 	SCC: 0.181934, 	SAM: 0.044086
+108 - baseballdiamond57        . 	SCC: 0.212966, 	SAM: 0.043179
+109 - baseballdiamond58        . 	SCC: 0.250982, 	SAM: 0.050845
+110 - baseballdiamond59        . 	SCC: 0.194076, 	SAM: 0.071122
+111 - baseballdiamond60        . 	SCC: 0.186108, 	SAM: 0.068639
+112 - baseballdiamond61        . 	SCC: 0.204352, 	SAM: 0.086436
+113 - baseballdiamond62        . 	SCC: 0.133816, 	SAM: 0.069888
+114 - baseballdiamond63        . 	SCC: 0.147393, 	SAM: 0.073726
+115 - baseballdiamond64        . 	SCC: 0.166486, 	SAM: 0.079396
+116 - baseballdiamond65        . 	SCC: 0.119358, 	SAM: 0.074138
+117 - baseballdiamond66        . 	SCC: 0.283514, 	SAM: 0.046134
+118 - baseballdiamond67        . 	SCC: 0.269934, 	SAM: 0.047263
+119 - baseballdiamond68        . 	SCC: 0.248539, 	SAM: 0.044261
+120 - baseballdiamond69        . 	SCC: 0.229770, 	SAM: 0.046571
+121 - baseballdiamond70        . 	SCC: 0.237822, 	SAM: 0.051161
+122 - baseballdiamond71        . 	SCC: 0.180737, 	SAM: 0.043231
+123 - baseballdiamond72        . 	SCC: 0.213323, 	SAM: 0.047197
+124 - baseballdiamond73        . 	SCC: 0.226507, 	SAM: 0.039043
+125 - baseballdiamond74        . 	SCC: 0.249657, 	SAM: 0.058233
+126 - baseballdiamond75        . 	SCC: 0.214173, 	SAM: 0.047195
+127 - baseballdiamond76        . 	SCC: 0.232307, 	SAM: 0.042662
+128 - baseballdiamond77        . 	SCC: 0.179059, 	SAM: 0.042933
+129 - baseballdiamond78        . 	SCC: 0.223817, 	SAM: 0.046907
+130 - baseballdiamond79        . 	SCC: 0.100248, 	SAM: 0.129325
+131 - baseballdiamond80        . 	SCC: 0.184721, 	SAM: 0.038678
+132 - baseballdiamond81        . 	SCC: 0.198875, 	SAM: 0.050873
+133 - baseballdiamond82        . 	SCC: 0.201341, 	SAM: 0.054971
+134 - baseballdiamond83        . 	SCC: 0.156898, 	SAM: 0.034615
+135 - baseballdiamond84        . 	SCC: 0.180705, 	SAM: 0.037547
+136 - baseballdiamond85        . 	SCC: 0.159258, 	SAM: 0.037788
+137 - baseballdiamond86        . 	SCC: 0.209639, 	SAM: 0.029728
+138 - baseballdiamond87        . 	SCC: 0.194064, 	SAM: 0.039938
+139 - baseballdiamond88        . 	SCC: 0.196553, 	SAM: 0.053662
+140 - baseballdiamond89        . 	SCC: 0.237324, 	SAM: 0.044141
+141 - baseballdiamond90        . 	SCC: 0.113245, 	SAM: 0.027211
+142 - baseballdiamond91        . 	SCC: 0.222157, 	SAM: 0.050371
+143 - baseballdiamond92        . 	SCC: 0.227725, 	SAM: 0.054991
+144 - baseballdiamond93        . 	SCC: 0.229549, 	SAM: 0.059654
+145 - baseballdiamond94        . 	SCC: 0.177082, 	SAM: 0.030373
+146 - baseballdiamond95        . 	SCC: 0.274266, 	SAM: 0.063592
+147 - baseballdiamond96        . 	SCC: 0.216206, 	SAM: 0.054398
+148 - baseballdiamond97        . 	SCC: 0.219308, 	SAM: 0.044499
+149 - baseballdiamond98        . 	SCC: 0.226679, 	SAM: 0.047995
+150 - baseballdiamond99        . 	SCC: 0.227593, 	SAM: 0.053565
+151 - beach50                  . 	SCC: 0.184282, 	SAM: 0.037602
+152 - beach51                  . 	SCC: 0.161232, 	SAM: 0.031734
+153 - beach52                  . 	SCC: 0.196657, 	SAM: 0.027789
+154 - beach53                  . 	SCC: 0.203274, 	SAM: 0.025213
+155 - beach54                  . 	SCC: 0.225201, 	SAM: 0.029229
+156 - beach55                  . 	SCC: 0.220003, 	SAM: 0.038797
+157 - beach56                  . 	SCC: 0.205372, 	SAM: 0.039612
+158 - beach57                  . 	SCC: 0.155545, 	SAM: 0.027813
+159 - beach58                  . 	SCC: 0.157820, 	SAM: 0.027248
+160 - beach59                  . 	SCC: 0.128980, 	SAM: 0.027879
+161 - beach60                  . 	SCC: 0.292761, 	SAM: 0.027497
+162 - beach61                  . 	SCC: 0.314517, 	SAM: 0.027918
+163 - beach62                  . 	SCC: 0.326809, 	SAM: 0.024398
+164 - beach63                  . 	SCC: 0.277208, 	SAM: 0.024287
+165 - beach64                  . 	SCC: 0.301145, 	SAM: 0.022355
+166 - beach65                  . 	SCC: 0.270663, 	SAM: 0.019664
+167 - beach66                  . 	SCC: 0.295842, 	SAM: 0.022105
+168 - beach67                  . 	SCC: 0.214032, 	SAM: 0.033964
+169 - beach68                  . 	SCC: 0.236513, 	SAM: 0.034865
+170 - beach69                  . 	SCC: 0.248212, 	SAM: 0.034955
+171 - beach70                  . 	SCC: 0.219912, 	SAM: 0.029872
+172 - beach71                  . 	SCC: 0.233939, 	SAM: 0.028310
+173 - beach72                  . 	SCC: 0.215804, 	SAM: 0.029051
+174 - beach73                  . 	SCC: 0.194924, 	SAM: 0.069587
+175 - beach74                  . 	SCC: 0.197673, 	SAM: 0.088401
+176 - beach75                  . 	SCC: 0.165967, 	SAM: 0.022287
+177 - beach76                  . 	SCC: 0.167047, 	SAM: 0.019694
+178 - beach77                  . 	SCC: 0.161448, 	SAM: 0.029956
+179 - beach78                  . 	SCC: 0.154840, 	SAM: 0.015607
+180 - beach79                  . 	SCC: 0.112021, 	SAM: 0.010919
+181 - beach80                  . 	SCC: 0.109981, 	SAM: 0.013237
+182 - beach81                  . 	SCC: 0.128130, 	SAM: 0.014071
+183 - beach82                  . 	SCC: 0.092376, 	SAM: 0.008543
+184 - beach83                  . 	SCC: 0.113604, 	SAM: 0.010329
+185 - beach84                  . 	SCC: 0.080232, 	SAM: 0.008551
+186 - beach85                  . 	SCC: 0.116199, 	SAM: 0.023655
+187 - beach86                  . 	SCC: 0.091260, 	SAM: 0.019708
+188 - beach87                  . 	SCC: 0.093415, 	SAM: 0.019075
+189 - beach88                  . 	SCC: 0.112119, 	SAM: 0.021809
+190 - beach89                  . 	SCC: 0.079755, 	SAM: 0.017915
+191 - beach90                  . 	SCC: 0.091031, 	SAM: 0.018163
+192 - beach91                  . 	SCC: 0.089882, 	SAM: 0.021826
+193 - beach92                  . 	SCC: 0.085193, 	SAM: 0.022148
+194 - beach93                  . 	SCC: 0.305771, 	SAM: 0.022939
+195 - beach94                  . 	SCC: 0.301113, 	SAM: 0.035821
+196 - beach95                  . 	SCC: 0.278340, 	SAM: 0.035984
+197 - beach96                  . 	SCC: 0.305816, 	SAM: 0.032937
+198 - beach97                  . 	SCC: 0.309210, 	SAM: 0.034657
+199 - beach98                  . 	SCC: 0.313313, 	SAM: 0.038892
+200 - beach99                  . 	SCC: 0.308488, 	SAM: 0.035375
+201 - buildings50              . 	SCC: 0.496722, 	SAM: 0.074599
+202 - buildings51              . 	SCC: 0.482379, 	SAM: 0.089681
+203 - buildings52              . 	SCC: 0.369872, 	SAM: 0.015284
+204 - buildings53              . 	SCC: 0.383166, 	SAM: 0.094500
+205 - buildings54              . 	SCC: 0.367948, 	SAM: 0.080715
+206 - buildings55              . 	SCC: 0.393190, 	SAM: 0.040848
+207 - buildings56              . 	SCC: 0.342521, 	SAM: 0.092096
+208 - buildings57              . 	SCC: 0.339642, 	SAM: 0.076944
+209 - buildings58              . 	SCC: 0.400674, 	SAM: 0.066887
+210 - buildings59              . 	SCC: 0.445140, 	SAM: 0.066901
+211 - buildings60              . 	SCC: 0.417735, 	SAM: 0.055743
+212 - buildings61              . 	SCC: 0.368233, 	SAM: 0.046122
+213 - buildings62              . 	SCC: 0.403406, 	SAM: 0.050485
+214 - buildings63              . 	SCC: 0.362014, 	SAM: 0.067270
+215 - buildings64              . 	SCC: 0.317362, 	SAM: 0.065195
+216 - buildings65              . 	SCC: 0.243453, 	SAM: 0.048573
+217 - buildings66              . 	SCC: 0.318525, 	SAM: 0.053163
+218 - buildings67              . 	SCC: 0.263415, 	SAM: 0.079464
+219 - buildings68              . 	SCC: 0.395358, 	SAM: 0.062936
+220 - buildings69              . 	SCC: 0.415873, 	SAM: 0.034639
+221 - buildings70              . 	SCC: 0.351364, 	SAM: 0.049285
+222 - buildings71              . 	SCC: 0.412037, 	SAM: 0.063120
+223 - buildings72              . 	SCC: 0.482755, 	SAM: 0.054003
+224 - buildings73              . 	SCC: 0.368094, 	SAM: 0.060788
+225 - buildings74              . 	SCC: 0.344667, 	SAM: 0.059811
+226 - buildings75              . 	SCC: 0.393902, 	SAM: 0.065188
+227 - buildings76              . 	SCC: 0.403589, 	SAM: 0.059938
+228 - buildings77              . 	SCC: 0.390863, 	SAM: 0.070236
+229 - buildings78              . 	SCC: 0.303914, 	SAM: 0.102256
+230 - buildings79              . 	SCC: 0.258675, 	SAM: 0.109889
+231 - buildings80              . 	SCC: 0.213456, 	SAM: 0.134712
+232 - buildings81              . 	SCC: 0.296935, 	SAM: 0.270634
+233 - buildings82              . 	SCC: 0.334617, 	SAM: 0.261995
+234 - buildings83              . 	SCC: 0.268606, 	SAM: 0.118461
+235 - buildings84              . 	SCC: 0.411453, 	SAM: 0.255569
+236 - buildings85              . 	SCC: 0.298042, 	SAM: 0.077140
+237 - buildings86              . 	SCC: 0.291792, 	SAM: 0.026992
+238 - buildings87              . 	SCC: 0.363743, 	SAM: 0.067423
+239 - buildings88              . 	SCC: 0.449451, 	SAM: 0.095223
+240 - buildings89              . 	SCC: 0.378765, 	SAM: 0.090276
+241 - buildings90              . 	SCC: 0.370539, 	SAM: 0.106026
+242 - buildings91              . 	SCC: 0.357135, 	SAM: 0.123187
+243 - buildings92              . 	SCC: 0.316053, 	SAM: 0.070987
+244 - buildings93              . 	SCC: 0.399774, 	SAM: 0.105092
+245 - buildings94              . 	SCC: 0.290499, 	SAM: 0.158605
+246 - buildings95              . 	SCC: 0.331743, 	SAM: 0.132825
+247 - buildings96              . 	SCC: 0.339384, 	SAM: 0.079456
+248 - buildings97              . 	SCC: 0.291952, 	SAM: 0.073995
+249 - buildings98              . 	SCC: 0.332436, 	SAM: 0.068956
+250 - buildings99              . 	SCC: 0.310450, 	SAM: 0.059644
+251 - chaparral50              . 	SCC: 0.296274, 	SAM: 0.099034
+252 - chaparral51              . 	SCC: 0.401370, 	SAM: 0.121887
+253 - chaparral52              . 	SCC: 0.413549, 	SAM: 0.127928
+254 - chaparral53              . 	SCC: 0.399784, 	SAM: 0.110166
+255 - chaparral54              . 	SCC: 0.301578, 	SAM: 0.119973
+256 - chaparral55              . 	SCC: 0.444571, 	SAM: 0.106493
+257 - chaparral56              . 	SCC: 0.394852, 	SAM: 0.127024
+258 - chaparral57              . 	SCC: 0.457935, 	SAM: 0.097167
+259 - chaparral58              . 	SCC: 0.468558, 	SAM: 0.093291
+260 - chaparral59              . 	SCC: 0.485500, 	SAM: 0.073162
+261 - chaparral60              . 	SCC: 0.138697, 	SAM: 0.254984
+262 - chaparral61              . 	SCC: 0.100445, 	SAM: 0.275796
+263 - chaparral62              . 	SCC: 0.089414, 	SAM: 0.273640
+264 - chaparral63              . 	SCC: 0.100117, 	SAM: 0.286497
+265 - chaparral64              . 	SCC: 0.117358, 	SAM: 0.303474
+266 - chaparral65              . 	SCC: 0.135125, 	SAM: 0.196023
+267 - chaparral66              . 	SCC: 0.143147, 	SAM: 0.204531
+268 - chaparral67              . 	SCC: 0.429059, 	SAM: 0.072192
+269 - chaparral68              . 	SCC: 0.362429, 	SAM: 0.083494
+270 - chaparral69              . 	SCC: 0.286130, 	SAM: 0.094227
+271 - chaparral70              . 	SCC: 0.275139, 	SAM: 0.073931
+272 - chaparral71              . 	SCC: 0.326295, 	SAM: 0.095459
+273 - chaparral72              . 	SCC: 0.242847, 	SAM: 0.084333
+274 - chaparral73              . 	SCC: 0.255843, 	SAM: 0.084279
+275 - chaparral74              . 	SCC: 0.306189, 	SAM: 0.076747
+276 - chaparral75              . 	SCC: 0.347816, 	SAM: 0.068275
+277 - chaparral76              . 	SCC: 0.322734, 	SAM: 0.071149
+278 - chaparral77              . 	SCC: 0.244524, 	SAM: 0.107631
+279 - chaparral78              . 	SCC: 0.243615, 	SAM: 0.100579
+280 - chaparral79              . 	SCC: 0.256131, 	SAM: 0.092465
+281 - chaparral80              . 	SCC: 0.235852, 	SAM: 0.112674
+282 - chaparral81              . 	SCC: 0.266516, 	SAM: 0.084552
+283 - chaparral82              . 	SCC: 0.299027, 	SAM: 0.091013
+284 - chaparral83              . 	SCC: 0.281515, 	SAM: 0.100970
+285 - chaparral84              . 	SCC: 0.271463, 	SAM: 0.121125
+286 - chaparral85              . 	SCC: 0.325846, 	SAM: 0.084761
+287 - chaparral86              . 	SCC: 0.248778, 	SAM: 0.122420
+288 - chaparral87              . 	SCC: 0.236603, 	SAM: 0.132444
+289 - chaparral88              . 	SCC: 0.293211, 	SAM: 0.070421
+290 - chaparral89              . 	SCC: 0.247875, 	SAM: 0.080257
+291 - chaparral90              . 	SCC: 0.192876, 	SAM: 0.155057
+292 - chaparral91              . 	SCC: 0.162673, 	SAM: 0.163531
+293 - chaparral92              . 	SCC: 0.332388, 	SAM: 0.073476
+294 - chaparral93              . 	SCC: 0.311087, 	SAM: 0.086732
+295 - chaparral94              . 	SCC: 0.202169, 	SAM: 0.168445
+296 - chaparral95              . 	SCC: 0.225704, 	SAM: 0.155415
+297 - chaparral96              . 	SCC: 0.229458, 	SAM: 0.138690
+298 - chaparral97              . 	SCC: 0.279796, 	SAM: 0.096348
+299 - chaparral98              . 	SCC: 0.224393, 	SAM: 0.128313
+300 - chaparral99              . 	SCC: 0.277435, 	SAM: 0.108167
+301 - denseresidential50       . 	SCC: 0.407822, 	SAM: 0.043194
+302 - denseresidential51       . 	SCC: 0.405546, 	SAM: 0.089430
+303 - denseresidential52       . 	SCC: 0.522354, 	SAM: 0.073016
+304 - denseresidential53       . 	SCC: 0.392858, 	SAM: 0.115729
+305 - denseresidential54       . 	SCC: 0.413256, 	SAM: 0.118075
+306 - denseresidential55       . 	SCC: 0.402216, 	SAM: 0.115806
+307 - denseresidential56       . 	SCC: 0.361651, 	SAM: 0.086244
+308 - denseresidential57       . 	SCC: 0.406418, 	SAM: 0.080758
+309 - denseresidential58       . 	SCC: 0.520403, 	SAM: 0.077490
+310 - denseresidential59       . 	SCC: 0.491053, 	SAM: 0.076188
+311 - denseresidential60       . 	SCC: 0.486636, 	SAM: 0.081044
+312 - denseresidential61       . 	SCC: 0.431339, 	SAM: 0.083318
+313 - denseresidential62       . 	SCC: 0.384384, 	SAM: 0.080897
+314 - denseresidential63       . 	SCC: 0.374413, 	SAM: 0.075043
+315 - denseresidential64       . 	SCC: 0.499433, 	SAM: 0.079052
+316 - denseresidential65       . 	SCC: 0.396708, 	SAM: 0.100369
+317 - denseresidential66       . 	SCC: 0.363579, 	SAM: 0.110205
+318 - denseresidential67       . 	SCC: 0.379858, 	SAM: 0.077042
+319 - denseresidential68       . 	SCC: 0.443151, 	SAM: 0.093137
+320 - denseresidential69       . 	SCC: 0.324333, 	SAM: 0.092706
+321 - denseresidential70       . 	SCC: 0.352249, 	SAM: 0.087066
+322 - denseresidential71       . 	SCC: 0.371742, 	SAM: 0.085483
+323 - denseresidential72       . 	SCC: 0.439923, 	SAM: 0.073479
+324 - denseresidential73       . 	SCC: 0.367053, 	SAM: 0.109807
+325 - denseresidential74       . 	SCC: 0.496024, 	SAM: 0.078615
+326 - denseresidential75       . 	SCC: 0.462287, 	SAM: 0.079550
+327 - denseresidential76       . 	SCC: 0.510662, 	SAM: 0.068961
+328 - denseresidential77       . 	SCC: 0.548833, 	SAM: 0.074328
+329 - denseresidential78       . 	SCC: 0.537251, 	SAM: 0.093840
+330 - denseresidential79       . 	SCC: 0.566392, 	SAM: 0.096221
+331 - denseresidential80       . 	SCC: 0.510158, 	SAM: 0.060920
+332 - denseresidential81       . 	SCC: 0.474375, 	SAM: 0.063563
+333 - denseresidential82       . 	SCC: 0.217681, 	SAM: 0.256394
+334 - denseresidential83       . 	SCC: 0.219198, 	SAM: 0.250958
+335 - denseresidential84       . 	SCC: 0.440005, 	SAM: 0.056597
+336 - denseresidential85       . 	SCC: 0.417784, 	SAM: 0.069192
+337 - denseresidential86       . 	SCC: 0.477647, 	SAM: 0.060335
+338 - denseresidential87       . 	SCC: 0.432702, 	SAM: 0.101300
+339 - denseresidential88       . 	SCC: 0.346981, 	SAM: 0.096207
+340 - denseresidential89       . 	SCC: 0.326208, 	SAM: 0.103554
+341 - denseresidential90       . 	SCC: 0.383618, 	SAM: 0.085765
+342 - denseresidential91       . 	SCC: 0.387451, 	SAM: 0.083957
+343 - denseresidential92       . 	SCC: 0.314836, 	SAM: 0.122815
+344 - denseresidential93       . 	SCC: 0.300991, 	SAM: 0.118780
+345 - denseresidential94       . 	SCC: 0.422813, 	SAM: 0.091024
+346 - denseresidential95       . 	SCC: 0.385483, 	SAM: 0.086867
+347 - denseresidential96       . 	SCC: 0.404494, 	SAM: 0.102819
+348 - denseresidential97       . 	SCC: 0.432641, 	SAM: 0.095495
+349 - denseresidential98       . 	SCC: 0.329226, 	SAM: 0.058877
+350 - denseresidential99       . 	SCC: 0.358380, 	SAM: 0.167896
+351 - forest50                 . 	SCC: 0.290572, 	SAM: 0.183690
+352 - forest51                 . 	SCC: 0.299320, 	SAM: 0.179706
+353 - forest52                 . 	SCC: 0.306650, 	SAM: 0.177362
+354 - forest53                 . 	SCC: 0.337918, 	SAM: 0.170348
+355 - forest54                 . 	SCC: 0.253593, 	SAM: 0.114576
+356 - forest55                 . 	SCC: 0.289451, 	SAM: 0.156530
+357 - forest56                 . 	SCC: 0.303174, 	SAM: 0.171014
+358 - forest57                 . 	SCC: 0.308423, 	SAM: 0.169826
+359 - forest58                 . 	SCC: 0.329465, 	SAM: 0.204521
+360 - forest59                 . 	SCC: 0.313197, 	SAM: 0.129101
+361 - forest60                 . 	SCC: 0.415593, 	SAM: 0.155607
+362 - forest61                 . 	SCC: 0.390404, 	SAM: 0.097505
+363 - forest62                 . 	SCC: 0.371804, 	SAM: 0.113027
+364 - forest63                 . 	SCC: 0.211273, 	SAM: 0.098874
+365 - forest64                 . 	SCC: 0.202709, 	SAM: 0.107081
+366 - forest65                 . 	SCC: 0.208968, 	SAM: 0.197673
+367 - forest66                 . 	SCC: 0.221773, 	SAM: 0.150661
+368 - forest67                 . 	SCC: 0.220622, 	SAM: 0.128493
+369 - forest68                 . 	SCC: 0.206248, 	SAM: 0.114742
+370 - forest69                 . 	SCC: 0.232071, 	SAM: 0.199704
+371 - forest70                 . 	SCC: 0.232641, 	SAM: 0.193840
+372 - forest71                 . 	SCC: 0.219116, 	SAM: 0.206358
+373 - forest72                 . 	SCC: 0.203010, 	SAM: 0.221675
+374 - forest73                 . 	SCC: 0.201868, 	SAM: 0.206396
+375 - forest74                 . 	SCC: 0.171225, 	SAM: 0.130004
+376 - forest75                 . 	SCC: 0.215410, 	SAM: 0.213803
+377 - forest76                 . 	SCC: 0.208646, 	SAM: 0.227032
+378 - forest77                 . 	SCC: 0.197344, 	SAM: 0.217532
+379 - forest78                 . 	SCC: 0.185673, 	SAM: 0.274460
+380 - forest79                 . 	SCC: 0.195393, 	SAM: 0.224076
+381 - forest80                 . 	SCC: 0.210915, 	SAM: 0.205036
+382 - forest81                 . 	SCC: 0.219655, 	SAM: 0.202346
+383 - forest82                 . 	SCC: 0.211024, 	SAM: 0.230310
+384 - forest83                 . 	SCC: 0.215852, 	SAM: 0.265791
+385 - forest84                 . 	SCC: 0.194868, 	SAM: 0.249653
+386 - forest85                 . 	SCC: 0.216863, 	SAM: 0.270060
+387 - forest86                 . 	SCC: 0.198421, 	SAM: 0.215894
+388 - forest87                 . 	SCC: 0.200107, 	SAM: 0.268731
+389 - forest88                 . 	SCC: 0.211211, 	SAM: 0.257982
+390 - forest89                 . 	SCC: 0.198595, 	SAM: 0.233393
+391 - forest90                 . 	SCC: 0.195116, 	SAM: 0.210248
+392 - forest91                 . 	SCC: 0.216085, 	SAM: 0.222329
+393 - forest92                 . 	SCC: 0.215515, 	SAM: 0.231528
+394 - forest93                 . 	SCC: 0.209870, 	SAM: 0.240712
+395 - forest94                 . 	SCC: 0.224365, 	SAM: 0.239660
+396 - forest95                 . 	SCC: 0.229078, 	SAM: 0.220759
+397 - forest96                 . 	SCC: 0.249113, 	SAM: 0.197824
+398 - forest97                 . 	SCC: 0.225387, 	SAM: 0.179307
+399 - forest98                 . 	SCC: 0.226700, 	SAM: 0.191477
+400 - forest99                 . 	SCC: 0.243404, 	SAM: 0.234213
+401 - freeway50                . 	SCC: 0.368991, 	SAM: 0.074321
+402 - freeway51                . 	SCC: 0.199301, 	SAM: 0.077419
+403 - freeway52                . 	SCC: 0.328115, 	SAM: 0.064755
+404 - freeway53                . 	SCC: 0.389485, 	SAM: 0.083160
+405 - freeway54                . 	SCC: 0.338102, 	SAM: 0.066425
+406 - freeway55                . 	SCC: 0.389084, 	SAM: 0.056779
+407 - freeway56                . 	SCC: 0.192795, 	SAM: 0.097871
+408 - freeway57                . 	SCC: 0.170329, 	SAM: 0.093232
+409 - freeway58                . 	SCC: 0.246707, 	SAM: 0.104423
+410 - freeway59                . 	SCC: 0.210905, 	SAM: 0.082339
+411 - freeway60                . 	SCC: 0.239050, 	SAM: 0.108194
+412 - freeway61                . 	SCC: 0.328690, 	SAM: 0.102576
+413 - freeway62                . 	SCC: 0.271096, 	SAM: 0.089053
+414 - freeway63                . 	SCC: 0.329270, 	SAM: 0.097311
+415 - freeway64                . 	SCC: 0.471750, 	SAM: 0.065184
+416 - freeway65                . 	SCC: 0.493000, 	SAM: 0.062696
+417 - freeway66                . 	SCC: 0.401034, 	SAM: 0.066927
+418 - freeway67                . 	SCC: 0.459561, 	SAM: 0.058508
+419 - freeway68                . 	SCC: 0.443755, 	SAM: 0.051616
+420 - freeway69                . 	SCC: 0.437786, 	SAM: 0.056793
+421 - freeway70                . 	SCC: 0.407472, 	SAM: 0.048541
+422 - freeway71                . 	SCC: 0.411797, 	SAM: 0.043339
+423 - freeway72                . 	SCC: 0.439536, 	SAM: 0.039758
+424 - freeway73                . 	SCC: 0.427471, 	SAM: 0.048567
+425 - freeway74                . 	SCC: 0.428499, 	SAM: 0.026904
+426 - freeway75                . 	SCC: 0.401858, 	SAM: 0.032736
+427 - freeway76                . 	SCC: 0.505215, 	SAM: 0.058221
+428 - freeway77                . 	SCC: 0.338268, 	SAM: 0.061372
+429 - freeway78                . 	SCC: 0.314918, 	SAM: 0.052847
+430 - freeway79                . 	SCC: 0.457646, 	SAM: 0.042934
+431 - freeway80                . 	SCC: 0.437622, 	SAM: 0.048405
+432 - freeway81                . 	SCC: 0.331652, 	SAM: 0.051746
+433 - freeway82                . 	SCC: 0.229152, 	SAM: 0.092143
+434 - freeway83                . 	SCC: 0.162995, 	SAM: 0.085478
+435 - freeway84                . 	SCC: 0.120952, 	SAM: 0.071539
+436 - freeway85                . 	SCC: 0.289174, 	SAM: 0.079654
+437 - freeway86                . 	SCC: 0.206552, 	SAM: 0.228289
+438 - freeway87                . 	SCC: 0.282048, 	SAM: 0.144218
+439 - freeway88                . 	SCC: 0.185125, 	SAM: 0.153196
+440 - freeway89                . 	SCC: 0.387916, 	SAM: 0.042604
+441 - freeway90                . 	SCC: 0.427672, 	SAM: 0.034472
+442 - freeway91                . 	SCC: 0.422880, 	SAM: 0.044846
+443 - freeway92                . 	SCC: 0.404810, 	SAM: 0.034565
+444 - freeway93                . 	SCC: 0.244271, 	SAM: 0.111452
+445 - freeway94                . 	SCC: 0.241955, 	SAM: 0.131371
+446 - freeway95                . 	SCC: 0.253858, 	SAM: 0.115426
+447 - freeway96                . 	SCC: 0.427345, 	SAM: 0.067140
+448 - freeway97                . 	SCC: 0.475064, 	SAM: 0.070459
+449 - freeway98                . 	SCC: 0.336711, 	SAM: 0.101584
+450 - freeway99                . 	SCC: 0.325707, 	SAM: 0.066355
+451 - golfcourse50             . 	SCC: 0.239273, 	SAM: 0.041144
+452 - golfcourse51             . 	SCC: 0.172468, 	SAM: 0.033239
+453 - golfcourse52             . 	SCC: 0.272185, 	SAM: 0.050525
+454 - golfcourse53             . 	SCC: 0.131321, 	SAM: 0.028639
+455 - golfcourse54             . 	SCC: 0.187886, 	SAM: 0.028291
+456 - golfcourse55             . 	SCC: 0.208969, 	SAM: 0.029688
+457 - golfcourse56             . 	SCC: 0.176031, 	SAM: 0.036565
+458 - golfcourse57             . 	SCC: 0.248877, 	SAM: 0.026266
+459 - golfcourse58             . 	SCC: 0.214616, 	SAM: 0.026681
+460 - golfcourse59             . 	SCC: 0.202789, 	SAM: 0.038777
+461 - golfcourse60             . 	SCC: 0.205594, 	SAM: 0.028294
+462 - golfcourse61             . 	SCC: 0.192927, 	SAM: 0.020040
+463 - golfcourse62             . 	SCC: 0.197207, 	SAM: 0.037164
+464 - golfcourse63             . 	SCC: 0.190577, 	SAM: 0.038252
+465 - golfcourse64             . 	SCC: 0.125123, 	SAM: 0.029522
+466 - golfcourse65             . 	SCC: 0.222979, 	SAM: 0.039545
+467 - golfcourse66             . 	SCC: 0.171593, 	SAM: 0.028639
+468 - golfcourse67             . 	SCC: 0.168180, 	SAM: 0.031085
+469 - golfcourse68             . 	SCC: 0.289106, 	SAM: 0.028439
+470 - golfcourse69             . 	SCC: 0.209112, 	SAM: 0.026498
+471 - golfcourse70             . 	SCC: 0.207334, 	SAM: 0.030843
+472 - golfcourse71             . 	SCC: 0.165528, 	SAM: 0.030778
+473 - golfcourse72             . 	SCC: 0.190928, 	SAM: 0.029153
+474 - golfcourse73             . 	SCC: 0.202443, 	SAM: 0.027506
+475 - golfcourse74             . 	SCC: 0.213338, 	SAM: 0.047419
+476 - golfcourse75             . 	SCC: 0.210856, 	SAM: 0.037375
+477 - golfcourse76             . 	SCC: 0.209715, 	SAM: 0.047013
+478 - golfcourse77             . 	SCC: 0.200512, 	SAM: 0.048411
+479 - golfcourse78             . 	SCC: 0.245171, 	SAM: 0.039020
+480 - golfcourse79             . 	SCC: 0.227104, 	SAM: 0.062846
+481 - golfcourse80             . 	SCC: 0.181412, 	SAM: 0.068864
+482 - golfcourse81             . 	SCC: 0.193716, 	SAM: 0.061298
+483 - golfcourse82             . 	SCC: 0.268205, 	SAM: 0.062173
+484 - golfcourse83             . 	SCC: 0.250990, 	SAM: 0.058765
+485 - golfcourse84             . 	SCC: 0.195904, 	SAM: 0.059720
+486 - golfcourse85             . 	SCC: 0.241594, 	SAM: 0.065425
+487 - golfcourse86             . 	SCC: 0.220770, 	SAM: 0.076372
+488 - golfcourse87             . 	SCC: 0.182852, 	SAM: 0.034966
+489 - golfcourse88             . 	SCC: 0.208302, 	SAM: 0.035476
+490 - golfcourse89             . 	SCC: 0.202644, 	SAM: 0.029929
+491 - golfcourse90             . 	SCC: 0.198942, 	SAM: 0.050577
+492 - golfcourse91             . 	SCC: 0.170040, 	SAM: 0.037328
+493 - golfcourse92             . 	SCC: 0.169366, 	SAM: 0.056570
+494 - golfcourse93             . 	SCC: 0.198710, 	SAM: 0.037872
+495 - golfcourse94             . 	SCC: 0.179803, 	SAM: 0.041529
+496 - golfcourse95             . 	SCC: 0.180090, 	SAM: 0.056975
+497 - golfcourse96             . 	SCC: 0.209586, 	SAM: 0.051133
+498 - golfcourse97             . 	SCC: 0.204460, 	SAM: 0.056337
+499 - golfcourse98             . 	SCC: 0.212447, 	SAM: 0.036009
+500 - golfcourse99             . 	SCC: 0.214329, 	SAM: 0.037771
+501 - harbor50                 . 	SCC: 0.388356, 	SAM: 0.125442
+502 - harbor51                 . 	SCC: 0.388490, 	SAM: 0.154137
+503 - harbor52                 . 	SCC: 0.359556, 	SAM: 0.173150
+504 - harbor53                 . 	SCC: 0.321441, 	SAM: 0.165615
+505 - harbor54                 . 	SCC: 0.331210, 	SAM: 0.168666
+506 - harbor55                 . 	SCC: 0.324453, 	SAM: 0.190955
+507 - harbor56                 . 	SCC: 0.341557, 	SAM: 0.179668
+508 - harbor57                 . 	SCC: 0.355957, 	SAM: 0.171330
+509 - harbor58                 . 	SCC: 0.288318, 	SAM: 0.160326
+510 - harbor59                 . 	SCC: 0.314514, 	SAM: 0.208050
+511 - harbor60                 . 	SCC: 0.435258, 	SAM: 0.164151
+512 - harbor61                 . 	SCC: 0.375149, 	SAM: 0.157996
+513 - harbor62                 . 	SCC: 0.274883, 	SAM: 0.154062
+514 - harbor63                 . 	SCC: 0.360871, 	SAM: 0.156693
+515 - harbor64                 . 	SCC: 0.300697, 	SAM: 0.159439
+516 - harbor65                 . 	SCC: 0.356513, 	SAM: 0.146711
+517 - harbor66                 . 	SCC: 0.323954, 	SAM: 0.132425
+518 - harbor67                 . 	SCC: 0.428392, 	SAM: 0.113001
+519 - harbor68                 . 	SCC: 0.409935, 	SAM: 0.113421
+520 - harbor69                 . 	SCC: 0.354270, 	SAM: 0.126712
+521 - harbor70                 . 	SCC: 0.319701, 	SAM: 0.114206
+522 - harbor71                 . 	SCC: 0.351921, 	SAM: 0.088954
+523 - harbor72                 . 	SCC: 0.325189, 	SAM: 0.086552
+524 - harbor73                 . 	SCC: 0.314135, 	SAM: 0.090306
+525 - harbor74                 . 	SCC: 0.344252, 	SAM: 0.090188
+526 - harbor75                 . 	SCC: 0.418705, 	SAM: 0.088929
+527 - harbor76                 . 	SCC: 0.435240, 	SAM: 0.080593
+528 - harbor77                 . 	SCC: 0.383559, 	SAM: 0.087395
+529 - harbor78                 . 	SCC: 0.386219, 	SAM: 0.087003
+530 - harbor79                 . 	SCC: 0.366926, 	SAM: 0.085753
+531 - harbor80                 . 	SCC: 0.356459, 	SAM: 0.077542
+532 - harbor81                 . 	SCC: 0.408054, 	SAM: 0.079794
+533 - harbor82                 . 	SCC: 0.407718, 	SAM: 0.265588
+534 - harbor83                 . 	SCC: 0.363070, 	SAM: 0.266661
+535 - harbor84                 . 	SCC: 0.344730, 	SAM: 0.237109
+536 - harbor85                 . 	SCC: 0.425987, 	SAM: 0.189456
+537 - harbor86                 . 	SCC: 0.413792, 	SAM: 0.232484
+538 - harbor87                 . 	SCC: 0.351394, 	SAM: 0.279021
+539 - harbor88                 . 	SCC: 0.334051, 	SAM: 0.257914
+540 - harbor89                 . 	SCC: 0.287057, 	SAM: 0.247573
+541 - harbor90                 . 	SCC: 0.292933, 	SAM: 0.261342
+542 - harbor91                 . 	SCC: 0.338746, 	SAM: 0.211339
+543 - harbor92                 . 	SCC: 0.373582, 	SAM: 0.222152
+544 - harbor93                 . 	SCC: 0.373009, 	SAM: 0.238927
+545 - harbor94                 . 	SCC: 0.344504, 	SAM: 0.235576
+546 - harbor95                 . 	SCC: 0.298011, 	SAM: 0.232304
+547 - harbor96                 . 	SCC: 0.264139, 	SAM: 0.218861
+548 - harbor97                 . 	SCC: 0.173341, 	SAM: 0.182149
+549 - harbor98                 . 	SCC: 0.350031, 	SAM: 0.224079
+550 - harbor99                 . 	SCC: 0.351686, 	SAM: 0.224590
+551 - intersection50           . 	SCC: 0.286466, 	SAM: 0.093941
+552 - intersection51           . 	SCC: 0.259594, 	SAM: 0.070606
+553 - intersection52           . 	SCC: 0.218314, 	SAM: 0.108611
+554 - intersection53           . 	SCC: 0.249339, 	SAM: 0.120302
+555 - intersection54           . 	SCC: 0.286979, 	SAM: 0.090037
+556 - intersection55           . 	SCC: 0.234924, 	SAM: 0.141208
+557 - intersection56           . 	SCC: 0.386855, 	SAM: 0.105067
+558 - intersection57           . 	SCC: 0.397401, 	SAM: 0.098467
+559 - intersection58           . 	SCC: 0.246764, 	SAM: 0.079117
+560 - intersection59           . 	SCC: 0.334554, 	SAM: 0.142887
+561 - intersection60           . 	SCC: 0.460601, 	SAM: 0.034891
+562 - intersection61           . 	SCC: 0.466579, 	SAM: 0.033221
+563 - intersection62           . 	SCC: 0.359485, 	SAM: 0.079241
+564 - intersection63           . 	SCC: 0.383735, 	SAM: 0.063375
+565 - intersection64           . 	SCC: 0.338219, 	SAM: 0.051745
+566 - intersection65           . 	SCC: 0.364027, 	SAM: 0.067391
+567 - intersection66           . 	SCC: 0.377453, 	SAM: 0.084439
+568 - intersection67           . 	SCC: 0.351869, 	SAM: 0.072090
+569 - intersection68           . 	SCC: 0.312641, 	SAM: 0.086186
+570 - intersection69           . 	SCC: 0.368415, 	SAM: 0.088793
+571 - intersection70           . 	SCC: 0.428806, 	SAM: 0.049820
+572 - intersection71           . 	SCC: 0.417538, 	SAM: 0.075530
+573 - intersection72           . 	SCC: 0.420645, 	SAM: 0.070757
+574 - intersection73           . 	SCC: 0.397290, 	SAM: 0.071260
+575 - intersection74           . 	SCC: 0.396519, 	SAM: 0.062561
+576 - intersection75           . 	SCC: 0.377317, 	SAM: 0.047473
+577 - intersection76           . 	SCC: 0.329868, 	SAM: 0.063259
+578 - intersection77           . 	SCC: 0.377687, 	SAM: 0.066869
+579 - intersection78           . 	SCC: 0.303452, 	SAM: 0.098611
+580 - intersection79           . 	SCC: 0.259223, 	SAM: 0.336542
+581 - intersection80           . 	SCC: 0.273301, 	SAM: 0.251588
+582 - intersection81           . 	SCC: 0.314935, 	SAM: 0.233841
+583 - intersection82           . 	SCC: 0.310373, 	SAM: 0.357430
+584 - intersection83           . 	SCC: 0.182451, 	SAM: 0.214197
+585 - intersection84           . 	SCC: 0.284211, 	SAM: 0.044733
+586 - intersection85           . 	SCC: 0.443511, 	SAM: 0.051485
+587 - intersection86           . 	SCC: 0.238083, 	SAM: 0.088406
+588 - intersection87           . 	SCC: 0.263532, 	SAM: 0.093903
+589 - intersection88           . 	SCC: 0.305827, 	SAM: 0.080103
+590 - intersection89           . 	SCC: 0.201543, 	SAM: 0.098710
+591 - intersection90           . 	SCC: 0.155749, 	SAM: 0.085020
+592 - intersection91           . 	SCC: 0.185138, 	SAM: 0.130208
+593 - intersection92           . 	SCC: 0.236756, 	SAM: 0.098502
+594 - intersection93           . 	SCC: 0.232715, 	SAM: 0.093693
+595 - intersection94           . 	SCC: 0.387785, 	SAM: 0.080722
+596 - intersection95           . 	SCC: 0.368283, 	SAM: 0.096168
+597 - intersection96           . 	SCC: 0.349303, 	SAM: 0.105170
+598 - intersection97           . 	SCC: 0.336440, 	SAM: 0.093462
+599 - intersection98           . 	SCC: 0.398120, 	SAM: 0.088141
+600 - intersection99           . 	SCC: 0.354535, 	SAM: 0.089335
+601 - mediumresidential50      . 	SCC: 0.362186, 	SAM: 0.107759
+602 - mediumresidential51      . 	SCC: 0.337118, 	SAM: 0.105690
+603 - mediumresidential52      . 	SCC: 0.328808, 	SAM: 0.093435
+604 - mediumresidential53      . 	SCC: 0.384087, 	SAM: 0.090633
+605 - mediumresidential54      . 	SCC: 0.359646, 	SAM: 0.091178
+606 - mediumresidential55      . 	SCC: 0.364365, 	SAM: 0.082443
+607 - mediumresidential56      . 	SCC: 0.251458, 	SAM: 0.130737
+608 - mediumresidential57      . 	SCC: 0.234468, 	SAM: 0.142453
+609 - mediumresidential58      . 	SCC: 0.289883, 	SAM: 0.123614
+610 - mediumresidential59      . 	SCC: 0.376896, 	SAM: 0.140628
+611 - mediumresidential60      . 	SCC: 0.389300, 	SAM: 0.128563
+612 - mediumresidential61      . 	SCC: 0.426779, 	SAM: 0.119772
+613 - mediumresidential62      . 	SCC: 0.417471, 	SAM: 0.117136
+614 - mediumresidential63      . 	SCC: 0.385681, 	SAM: 0.128900
+615 - mediumresidential64      . 	SCC: 0.464636, 	SAM: 0.096024
+616 - mediumresidential65      . 	SCC: 0.376506, 	SAM: 0.116000
+617 - mediumresidential66      . 	SCC: 0.404869, 	SAM: 0.122856
+618 - mediumresidential67      . 	SCC: 0.427515, 	SAM: 0.094415
+619 - mediumresidential68      . 	SCC: 0.409466, 	SAM: 0.107519
+620 - mediumresidential69      . 	SCC: 0.350701, 	SAM: 0.167968
+621 - mediumresidential70      . 	SCC: 0.353206, 	SAM: 0.146904
+622 - mediumresidential71      . 	SCC: 0.326115, 	SAM: 0.172302
+623 - mediumresidential72      . 	SCC: 0.378653, 	SAM: 0.163686
+624 - mediumresidential73      . 	SCC: 0.321346, 	SAM: 0.173663
+625 - mediumresidential74      . 	SCC: 0.359231, 	SAM: 0.142688
+626 - mediumresidential75      . 	SCC: 0.345468, 	SAM: 0.158778
+627 - mediumresidential76      . 	SCC: 0.458776, 	SAM: 0.046785
+628 - mediumresidential77      . 	SCC: 0.407313, 	SAM: 0.042587
+629 - mediumresidential78      . 	SCC: 0.406378, 	SAM: 0.040348
+630 - mediumresidential79      . 	SCC: 0.422158, 	SAM: 0.042454
+631 - mediumresidential80      . 	SCC: 0.356201, 	SAM: 0.051574
+632 - mediumresidential81      . 	SCC: 0.348606, 	SAM: 0.099621
+633 - mediumresidential82      . 	SCC: 0.335404, 	SAM: 0.101600
+634 - mediumresidential83      . 	SCC: 0.441458, 	SAM: 0.094147
+635 - mediumresidential84      . 	SCC: 0.398056, 	SAM: 0.098327
+636 - mediumresidential85      . 	SCC: 0.408817, 	SAM: 0.076428
+637 - mediumresidential86      . 	SCC: 0.323470, 	SAM: 0.127009
+638 - mediumresidential87      . 	SCC: 0.337859, 	SAM: 0.097430
+639 - mediumresidential88      . 	SCC: 0.363240, 	SAM: 0.070110
+640 - mediumresidential89      . 	SCC: 0.325683, 	SAM: 0.060999
+641 - mediumresidential90      . 	SCC: 0.413289, 	SAM: 0.070390
+642 - mediumresidential91      . 	SCC: 0.445716, 	SAM: 0.079074
+643 - mediumresidential92      . 	SCC: 0.221183, 	SAM: 0.127674
+644 - mediumresidential93      . 	SCC: 0.309902, 	SAM: 0.066344
+645 - mediumresidential94      . 	SCC: 0.299709, 	SAM: 0.093367
+646 - mediumresidential95      . 	SCC: 0.410442, 	SAM: 0.094848
+647 - mediumresidential96      . 	SCC: 0.422206, 	SAM: 0.101248
+648 - mediumresidential97      . 	SCC: 0.406638, 	SAM: 0.096151
+649 - mediumresidential98      . 	SCC: 0.206169, 	SAM: 0.095091
+650 - mediumresidential99      . 	SCC: 0.261796, 	SAM: 0.088858
+651 - mobilehomepark50         . 	SCC: 0.523176, 	SAM: 0.064755
+652 - mobilehomepark51         . 	SCC: 0.483370, 	SAM: 0.074490
+653 - mobilehomepark52         . 	SCC: 0.509612, 	SAM: 0.064376
+654 - mobilehomepark53         . 	SCC: 0.560663, 	SAM: 0.060125
+655 - mobilehomepark54         . 	SCC: 0.517066, 	SAM: 0.053338
+656 - mobilehomepark55         . 	SCC: 0.563326, 	SAM: 0.053740
+657 - mobilehomepark56         . 	SCC: 0.507166, 	SAM: 0.070458
+658 - mobilehomepark57         . 	SCC: 0.499256, 	SAM: 0.063303
+659 - mobilehomepark58         . 	SCC: 0.508268, 	SAM: 0.073464
+660 - mobilehomepark59         . 	SCC: 0.517862, 	SAM: 0.074269
+661 - mobilehomepark60         . 	SCC: 0.479367, 	SAM: 0.079285
+662 - mobilehomepark61         . 	SCC: 0.592498, 	SAM: 0.048168
+663 - mobilehomepark62         . 	SCC: 0.531729, 	SAM: 0.063510
+664 - mobilehomepark63         . 	SCC: 0.536804, 	SAM: 0.063448
+665 - mobilehomepark64         . 	SCC: 0.567567, 	SAM: 0.062351
+666 - mobilehomepark65         . 	SCC: 0.524709, 	SAM: 0.062002
+667 - mobilehomepark66         . 	SCC: 0.496798, 	SAM: 0.062789
+668 - mobilehomepark67         . 	SCC: 0.547389, 	SAM: 0.069643
+669 - mobilehomepark68         . 	SCC: 0.525785, 	SAM: 0.067912
+670 - mobilehomepark69         . 	SCC: 0.503686, 	SAM: 0.064104
+671 - mobilehomepark70         . 	SCC: 0.540001, 	SAM: 0.065796
+672 - mobilehomepark71         . 	SCC: 0.272120, 	SAM: 0.108593
+673 - mobilehomepark72         . 	SCC: 0.357505, 	SAM: 0.086078
+674 - mobilehomepark73         . 	SCC: 0.341306, 	SAM: 0.104419
+675 - mobilehomepark74         . 	SCC: 0.318411, 	SAM: 0.114240
+676 - mobilehomepark75         . 	SCC: 0.186641, 	SAM: 0.158700
+677 - mobilehomepark76         . 	SCC: 0.205868, 	SAM: 0.153451
+678 - mobilehomepark77         . 	SCC: 0.380690, 	SAM: 0.108646
+679 - mobilehomepark78         . 	SCC: 0.308135, 	SAM: 0.320412
+680 - mobilehomepark79         . 	SCC: 0.320225, 	SAM: 0.318891
+681 - mobilehomepark80         . 	SCC: 0.451202, 	SAM: 0.233582
+682 - mobilehomepark81         . 	SCC: 0.436287, 	SAM: 0.237349
+683 - mobilehomepark82         . 	SCC: 0.309330, 	SAM: 0.235193
+684 - mobilehomepark83         . 	SCC: 0.353516, 	SAM: 0.223760
+685 - mobilehomepark84         . 	SCC: 0.310365, 	SAM: 0.232762
+686 - mobilehomepark85         . 	SCC: 0.353636, 	SAM: 0.239722
+687 - mobilehomepark86         . 	SCC: 0.365096, 	SAM: 0.252453
+688 - mobilehomepark87         . 	SCC: 0.358588, 	SAM: 0.213557
+689 - mobilehomepark88         . 	SCC: 0.342740, 	SAM: 0.239935
+690 - mobilehomepark89         . 	SCC: 0.345530, 	SAM: 0.231101
+691 - mobilehomepark90         . 	SCC: 0.341828, 	SAM: 0.209652
+692 - mobilehomepark91         . 	SCC: 0.361444, 	SAM: 0.218271
+693 - mobilehomepark92         . 	SCC: 0.388128, 	SAM: 0.223481
+694 - mobilehomepark93         . 	SCC: 0.450377, 	SAM: 0.202197
+695 - mobilehomepark94         . 	SCC: 0.322885, 	SAM: 0.280983
+696 - mobilehomepark95         . 	SCC: 0.274005, 	SAM: 0.292448
+697 - mobilehomepark96         . 	SCC: 0.335276, 	SAM: 0.247240
+698 - mobilehomepark97         . 	SCC: 0.347970, 	SAM: 0.260700
+699 - mobilehomepark98         . 	SCC: 0.345705, 	SAM: 0.252480
+700 - mobilehomepark99         . 	SCC: 0.247288, 	SAM: 0.261802
+701 - overpass50               . 	SCC: 0.364766, 	SAM: 0.115567
+702 - overpass51               . 	SCC: 0.287474, 	SAM: 0.103540
+703 - overpass52               . 	SCC: 0.289324, 	SAM: 0.106926
+704 - overpass53               . 	SCC: 0.393724, 	SAM: 0.076775
+705 - overpass54               . 	SCC: 0.302594, 	SAM: 0.118884
+706 - overpass55               . 	SCC: 0.443323, 	SAM: 0.109809
+707 - overpass56               . 	SCC: 0.371978, 	SAM: 0.121558
+708 - overpass57               . 	SCC: 0.381503, 	SAM: 0.142917
+709 - overpass58               . 	SCC: 0.404020, 	SAM: 0.131228
+710 - overpass59               . 	SCC: 0.350938, 	SAM: 0.121406
+711 - overpass60               . 	SCC: 0.378213, 	SAM: 0.159035
+712 - overpass61               . 	SCC: 0.326284, 	SAM: 0.120518
+713 - overpass62               . 	SCC: 0.233854, 	SAM: 0.087276
+714 - overpass63               . 	SCC: 0.510899, 	SAM: 0.121643
+715 - overpass64               . 	SCC: 0.389776, 	SAM: 0.074965
+716 - overpass65               . 	SCC: 0.352601, 	SAM: 0.062714
+717 - overpass66               . 	SCC: 0.282021, 	SAM: 0.063122
+718 - overpass67               . 	SCC: 0.270615, 	SAM: 0.068616
+719 - overpass68               . 	SCC: 0.285729, 	SAM: 0.074160
+720 - overpass69               . 	SCC: 0.351415, 	SAM: 0.068999
+721 - overpass70               . 	SCC: 0.219684, 	SAM: 0.076908
+722 - overpass71               . 	SCC: 0.256369, 	SAM: 0.081219
+723 - overpass72               . 	SCC: 0.238531, 	SAM: 0.101418
+724 - overpass73               . 	SCC: 0.246640, 	SAM: 0.083682
+725 - overpass74               . 	SCC: 0.211991, 	SAM: 0.087469
+726 - overpass75               . 	SCC: 0.316768, 	SAM: 0.073703
+727 - overpass76               . 	SCC: 0.326785, 	SAM: 0.085533
+728 - overpass77               . 	SCC: 0.185731, 	SAM: 0.125472
+729 - overpass78               . 	SCC: 0.156668, 	SAM: 0.085630
+730 - overpass79               . 	SCC: 0.189995, 	SAM: 0.083285
+731 - overpass80               . 	SCC: 0.219659, 	SAM: 0.073013
+732 - overpass81               . 	SCC: 0.248078, 	SAM: 0.103785
+733 - overpass82               . 	SCC: 0.188986, 	SAM: 0.112037
+734 - overpass83               . 	SCC: 0.321188, 	SAM: 0.111048
+735 - overpass84               . 	SCC: 0.254123, 	SAM: 0.115189
+736 - overpass85               . 	SCC: 0.223417, 	SAM: 0.125524
+737 - overpass86               . 	SCC: 0.250544, 	SAM: 0.119505
+738 - overpass87               . 	SCC: 0.344196, 	SAM: 0.118537
+739 - overpass88               . 	SCC: 0.222476, 	SAM: 0.153524
+740 - overpass89               . 	SCC: 0.251698, 	SAM: 0.123455
+741 - overpass90               . 	SCC: 0.192331, 	SAM: 0.122300
+742 - overpass91               . 	SCC: 0.224413, 	SAM: 0.097736
+743 - overpass92               . 	SCC: 0.309686, 	SAM: 0.133116
+744 - overpass93               . 	SCC: 0.352619, 	SAM: 0.065956
+745 - overpass94               . 	SCC: 0.310092, 	SAM: 0.066106
+746 - overpass95               . 	SCC: 0.424656, 	SAM: 0.067577
+747 - overpass96               . 	SCC: 0.285004, 	SAM: 0.082011
+748 - overpass97               . 	SCC: 0.237504, 	SAM: 0.098933
+749 - overpass98               . 	SCC: 0.249306, 	SAM: 0.104056
+750 - overpass99               . 	SCC: 0.249784, 	SAM: 0.111592
+751 - parkinglot50             . 	SCC: 0.331646, 	SAM: 0.164599
+752 - parkinglot51             . 	SCC: 0.423985, 	SAM: 0.155355
+753 - parkinglot52             . 	SCC: 0.371869, 	SAM: 0.141423
+754 - parkinglot53             . 	SCC: 0.408920, 	SAM: 0.161621
+755 - parkinglot54             . 	SCC: 0.386621, 	SAM: 0.123736
+756 - parkinglot55             . 	SCC: 0.398677, 	SAM: 0.120122
+757 - parkinglot56             . 	SCC: 0.359348, 	SAM: 0.147095
+758 - parkinglot57             . 	SCC: 0.323541, 	SAM: 0.157139
+759 - parkinglot58             . 	SCC: 0.282328, 	SAM: 0.220606
+760 - parkinglot59             . 	SCC: 0.262710, 	SAM: 0.178374
+761 - parkinglot60             . 	SCC: 0.337710, 	SAM: 0.137395
+762 - parkinglot61             . 	SCC: 0.305832, 	SAM: 0.128528
+763 - parkinglot62             . 	SCC: 0.323384, 	SAM: 0.167430
+764 - parkinglot63             . 	SCC: 0.338879, 	SAM: 0.155243
+765 - parkinglot64             . 	SCC: 0.310259, 	SAM: 0.140192
+766 - parkinglot65             . 	SCC: 0.250093, 	SAM: 0.142140
+767 - parkinglot66             . 	SCC: 0.354484, 	SAM: 0.123834
+768 - parkinglot67             . 	SCC: 0.387215, 	SAM: 0.143274
+769 - parkinglot68             . 	SCC: 0.432115, 	SAM: 0.200455
+770 - parkinglot69             . 	SCC: 0.383640, 	SAM: 0.155948
+771 - parkinglot70             . 	SCC: 0.338829, 	SAM: 0.109955
+772 - parkinglot71             . 	SCC: 0.443999, 	SAM: 0.140035
+773 - parkinglot72             . 	SCC: 0.435754, 	SAM: 0.148248
+774 - parkinglot73             . 	SCC: 0.419622, 	SAM: 0.145969
+775 - parkinglot74             . 	SCC: 0.413238, 	SAM: 0.174232
+776 - parkinglot75             . 	SCC: 0.373311, 	SAM: 0.165393
+777 - parkinglot76             . 	SCC: 0.368317, 	SAM: 0.173524
+778 - parkinglot77             . 	SCC: 0.409432, 	SAM: 0.118283
+779 - parkinglot78             . 	SCC: 0.376828, 	SAM: 0.157892
+780 - parkinglot79             . 	SCC: 0.375889, 	SAM: 0.149474
+781 - parkinglot80             . 	SCC: 0.451037, 	SAM: 0.134943
+782 - parkinglot81             . 	SCC: 0.419924, 	SAM: 0.130056
+783 - parkinglot82             . 	SCC: 0.448442, 	SAM: 0.086268
+784 - parkinglot83             . 	SCC: 0.477641, 	SAM: 0.091723
+785 - parkinglot84             . 	SCC: 0.431628, 	SAM: 0.151784
+786 - parkinglot85             . 	SCC: 0.412763, 	SAM: 0.190063
+787 - parkinglot86             . 	SCC: 0.405474, 	SAM: 0.174095
+788 - parkinglot87             . 	SCC: 0.375205, 	SAM: 0.125696
+789 - parkinglot88             . 	SCC: 0.423954, 	SAM: 0.231829
+790 - parkinglot89             . 	SCC: 0.329467, 	SAM: 0.189356
+791 - parkinglot90             . 	SCC: 0.327677, 	SAM: 0.194547
+792 - parkinglot91             . 	SCC: 0.301257, 	SAM: 0.224790
+793 - parkinglot92             . 	SCC: 0.250313, 	SAM: 0.204489
+794 - parkinglot93             . 	SCC: 0.257424, 	SAM: 0.197142
+795 - parkinglot94             . 	SCC: 0.247746, 	SAM: 0.197449
+796 - parkinglot95             . 	SCC: 0.250652, 	SAM: 0.189782
+797 - parkinglot96             . 	SCC: 0.272970, 	SAM: 0.178742
+798 - parkinglot97             . 	SCC: 0.425280, 	SAM: 0.089611
+799 - parkinglot98             . 	SCC: 0.282898, 	SAM: 0.375845
+800 - parkinglot99             . 	SCC: 0.360196, 	SAM: 0.097768
+801 - river50                  . 	SCC: 0.175578, 	SAM: 0.065116
+802 - river51                  . 	SCC: 0.191964, 	SAM: 0.070403
+803 - river52                  . 	SCC: 0.200472, 	SAM: 0.061853
+804 - river53                  . 	SCC: 0.110030, 	SAM: 0.328636
+805 - river54                  . 	SCC: 0.119103, 	SAM: 0.355388
+806 - river55                  . 	SCC: 0.126905, 	SAM: 0.319617
+807 - river56                  . 	SCC: 0.155125, 	SAM: 0.274610
+808 - river57                  . 	SCC: 0.157467, 	SAM: 0.252898
+809 - river58                  . 	SCC: 0.150754, 	SAM: 0.270257
+810 - river59                  . 	SCC: 0.135175, 	SAM: 0.243763
+811 - river60                  . 	SCC: 0.158486, 	SAM: 0.239279
+812 - river61                  . 	SCC: 0.155515, 	SAM: 0.252437
+813 - river62                  . 	SCC: 0.142963, 	SAM: 0.295564
+814 - river63                  . 	SCC: 0.139074, 	SAM: 0.206563
+815 - river64                  . 	SCC: 0.113627, 	SAM: 0.246690
+816 - river65                  . 	SCC: 0.132850, 	SAM: 0.235662
+817 - river66                  . 	SCC: 0.217140, 	SAM: 0.227684
+818 - river67                  . 	SCC: 0.207205, 	SAM: 0.206812
+819 - river68                  . 	SCC: 0.224498, 	SAM: 0.043867
+820 - river69                  . 	SCC: 0.275293, 	SAM: 0.059358
+821 - river70                  . 	SCC: 0.284484, 	SAM: 0.061472
+822 - river71                  . 	SCC: 0.267614, 	SAM: 0.048339
+823 - river72                  . 	SCC: 0.180749, 	SAM: 0.049675
+824 - river73                  . 	SCC: 0.292345, 	SAM: 0.058399
+825 - river74                  . 	SCC: 0.199297, 	SAM: 0.035248
+826 - river75                  . 	SCC: 0.239147, 	SAM: 0.034904
+827 - river76                  . 	SCC: 0.188556, 	SAM: 0.045519
+828 - river77                  . 	SCC: 0.187267, 	SAM: 0.119998
+829 - river78                  . 	SCC: 0.211470, 	SAM: 0.119928
+830 - river79                  . 	SCC: 0.222658, 	SAM: 0.082685
+831 - river80                  . 	SCC: 0.269296, 	SAM: 0.075115
+832 - river81                  . 	SCC: 0.237603, 	SAM: 0.089222
+833 - river82                  . 	SCC: 0.154055, 	SAM: 0.065729
+834 - river83                  . 	SCC: 0.221190, 	SAM: 0.064666
+835 - river84                  . 	SCC: 0.078801, 	SAM: 0.106401
+836 - river85                  . 	SCC: 0.110534, 	SAM: 0.101231
+837 - river86                  . 	SCC: 0.212244, 	SAM: 0.130764
+838 - river87                  . 	SCC: 0.169449, 	SAM: 0.127665
+839 - river88                  . 	SCC: 0.180489, 	SAM: 0.139062
+840 - river89                  . 	SCC: 0.178396, 	SAM: 0.135574
+841 - river90                  . 	SCC: 0.202436, 	SAM: 0.137358
+842 - river91                  . 	SCC: 0.140641, 	SAM: 0.133268
+843 - river92                  . 	SCC: 0.136015, 	SAM: 0.133326
+844 - river93                  . 	SCC: 0.181574, 	SAM: 0.148280
+845 - river94                  . 	SCC: 0.186713, 	SAM: 0.181548
+846 - river95                  . 	SCC: 0.161402, 	SAM: 0.127921
+847 - river96                  . 	SCC: 0.211972, 	SAM: 0.174994
+848 - river97                  . 	SCC: 0.199347, 	SAM: 0.129721
+849 - river98                  . 	SCC: 0.124550, 	SAM: 0.107030
+850 - river99                  . 	SCC: 0.109739, 	SAM: 0.108828
+851 - runway50                 . 	SCC: 0.410993, 	SAM: 0.050004
+852 - runway51                 . 	SCC: 0.249826, 	SAM: 0.066686
+853 - runway52                 . 	SCC: 0.245589, 	SAM: 0.068700
+854 - runway53                 . 	SCC: 0.249353, 	SAM: 0.075870
+855 - runway54                 . 	SCC: 0.513882, 	SAM: 0.073370
+856 - runway55                 . 	SCC: 0.480148, 	SAM: 0.069208
+857 - runway56                 . 	SCC: 0.251679, 	SAM: 0.054635
+858 - runway57                 . 	SCC: 0.267343, 	SAM: 0.065653
+859 - runway58                 . 	SCC: 0.240049, 	SAM: 0.062598
+860 - runway59                 . 	SCC: 0.259791, 	SAM: 0.063883
+861 - runway60                 . 	SCC: 0.386715, 	SAM: 0.102729
+862 - runway61                 . 	SCC: 0.332200, 	SAM: 0.060992
+863 - runway62                 . 	SCC: 0.320451, 	SAM: 0.104731
+864 - runway63                 . 	SCC: 0.241113, 	SAM: 0.098722
+865 - runway64                 . 	SCC: 0.211425, 	SAM: 0.085315
+866 - runway65                 . 	SCC: 0.342176, 	SAM: 0.046817
+867 - runway66                 . 	SCC: 0.239228, 	SAM: 0.069492
+868 - runway67                 . 	SCC: 0.237829, 	SAM: 0.105078
+869 - runway68                 . 	SCC: 0.240216, 	SAM: 0.098857
+870 - runway69                 . 	SCC: 0.217395, 	SAM: 0.066213
+871 - runway70                 . 	SCC: 0.242044, 	SAM: 0.068528
+872 - runway71                 . 	SCC: 0.186188, 	SAM: 0.063136
+873 - runway72                 . 	SCC: 0.226548, 	SAM: 0.058549
+874 - runway73                 . 	SCC: 0.208303, 	SAM: 0.072374
+875 - runway74                 . 	SCC: 0.337492, 	SAM: 0.061519
+876 - runway75                 . 	SCC: 0.214504, 	SAM: 0.063697
+877 - runway76                 . 	SCC: 0.286772, 	SAM: 0.060790
+878 - runway77                 . 	SCC: 0.221394, 	SAM: 0.069047
+879 - runway78                 . 	SCC: 0.167967, 	SAM: 0.069543
+880 - runway79                 . 	SCC: 0.282983, 	SAM: 0.079943
+881 - runway80                 . 	SCC: 0.244879, 	SAM: 0.081539
+882 - runway81                 . 	SCC: 0.249908, 	SAM: 0.077232
+883 - runway82                 . 	SCC: 0.268741, 	SAM: 0.075393
+884 - runway83                 . 	SCC: 0.304148, 	SAM: 0.085182
+885 - runway84                 . 	SCC: 0.304992, 	SAM: 0.095321
+886 - runway85                 . 	SCC: 0.181426, 	SAM: 0.102744
+887 - runway86                 . 	SCC: 0.216115, 	SAM: 0.101235
+888 - runway87                 . 	SCC: 0.227902, 	SAM: 0.085258
+889 - runway88                 . 	SCC: 0.279010, 	SAM: 0.081388
+890 - runway89                 . 	SCC: 0.269199, 	SAM: 0.083184
+891 - runway90                 . 	SCC: 0.293641, 	SAM: 0.081821
+892 - runway91                 . 	SCC: 0.277313, 	SAM: 0.076628
+893 - runway92                 . 	SCC: 0.284478, 	SAM: 0.038561
+894 - runway93                 . 	SCC: 0.204855, 	SAM: 0.045585
+895 - runway94                 . 	SCC: 0.244824, 	SAM: 0.038486
+896 - runway95                 . 	SCC: 0.251030, 	SAM: 0.039054
+897 - runway96                 . 	SCC: 0.207424, 	SAM: 0.039561
+898 - runway97                 . 	SCC: 0.231369, 	SAM: 0.037600
+899 - runway98                 . 	SCC: 0.180386, 	SAM: 0.050273
+900 - runway99                 . 	SCC: 0.236869, 	SAM: 0.048545
+901 - sparseresidential50      . 	SCC: 0.217478, 	SAM: 0.043073
+902 - sparseresidential51      . 	SCC: 0.258293, 	SAM: 0.044624
+903 - sparseresidential52      . 	SCC: 0.318029, 	SAM: 0.031019
+904 - sparseresidential53      . 	SCC: 0.287032, 	SAM: 0.038242
+905 - sparseresidential54      . 	SCC: 0.324773, 	SAM: 0.035975
+906 - sparseresidential55      . 	SCC: 0.322937, 	SAM: 0.031162
+907 - sparseresidential56      . 	SCC: 0.308494, 	SAM: 0.050309
+908 - sparseresidential57      . 	SCC: 0.309309, 	SAM: 0.044036
+909 - sparseresidential58      . 	SCC: 0.252699, 	SAM: 0.038349
+910 - sparseresidential59      . 	SCC: 0.247151, 	SAM: 0.033464
+911 - sparseresidential60      . 	SCC: 0.231441, 	SAM: 0.036225
+912 - sparseresidential61      . 	SCC: 0.277798, 	SAM: 0.134420
+913 - sparseresidential62      . 	SCC: 0.269149, 	SAM: 0.084531
+914 - sparseresidential63      . 	SCC: 0.309593, 	SAM: 0.115018
+915 - sparseresidential64      . 	SCC: 0.324441, 	SAM: 0.094426
+916 - sparseresidential65      . 	SCC: 0.341052, 	SAM: 0.091799
+917 - sparseresidential66      . 	SCC: 0.292716, 	SAM: 0.107974
+918 - sparseresidential67      . 	SCC: 0.378890, 	SAM: 0.098771
+919 - sparseresidential68      . 	SCC: 0.296356, 	SAM: 0.106071
+920 - sparseresidential69      . 	SCC: 0.258631, 	SAM: 0.105783
+921 - sparseresidential70      . 	SCC: 0.334633, 	SAM: 0.074686
+922 - sparseresidential71      . 	SCC: 0.344434, 	SAM: 0.102785
+923 - sparseresidential72      . 	SCC: 0.382007, 	SAM: 0.089932
+924 - sparseresidential73      . 	SCC: 0.353495, 	SAM: 0.086070
+925 - sparseresidential74      . 	SCC: 0.345030, 	SAM: 0.102533
+926 - sparseresidential75      . 	SCC: 0.334263, 	SAM: 0.080455
+927 - sparseresidential76      . 	SCC: 0.346666, 	SAM: 0.070982
+928 - sparseresidential77      . 	SCC: 0.302017, 	SAM: 0.061067
+929 - sparseresidential78      . 	SCC: 0.327561, 	SAM: 0.113434
+930 - sparseresidential79      . 	SCC: 0.377840, 	SAM: 0.084742
+931 - sparseresidential80      . 	SCC: 0.443293, 	SAM: 0.070634
+932 - sparseresidential81      . 	SCC: 0.400959, 	SAM: 0.049810
+933 - sparseresidential82      . 	SCC: 0.314795, 	SAM: 0.049869
+934 - sparseresidential83      . 	SCC: 0.365379, 	SAM: 0.064392
+935 - sparseresidential84      . 	SCC: 0.410759, 	SAM: 0.057088
+936 - sparseresidential85      . 	SCC: 0.217622, 	SAM: 0.093263
+937 - sparseresidential86      . 	SCC: 0.240577, 	SAM: 0.122272
+938 - sparseresidential87      . 	SCC: 0.238805, 	SAM: 0.131099
+939 - sparseresidential88      . 	SCC: 0.248822, 	SAM: 0.102873
+940 - sparseresidential89      . 	SCC: 0.237232, 	SAM: 0.112559
+941 - sparseresidential90      . 	SCC: 0.287302, 	SAM: 0.116542
+942 - sparseresidential91      . 	SCC: 0.271565, 	SAM: 0.119214
+943 - sparseresidential92      . 	SCC: 0.268891, 	SAM: 0.089700
+944 - sparseresidential93      . 	SCC: 0.261821, 	SAM: 0.116359
+945 - sparseresidential94      . 	SCC: 0.260088, 	SAM: 0.114264
+946 - sparseresidential95      . 	SCC: 0.421003, 	SAM: 0.069063
+947 - sparseresidential96      . 	SCC: 0.413704, 	SAM: 0.063036
+948 - sparseresidential97      . 	SCC: 0.218543, 	SAM: 0.216993
+949 - sparseresidential98      . 	SCC: 0.192888, 	SAM: 0.114777
+950 - sparseresidential99      . 	SCC: 0.200403, 	SAM: 0.125159
+951 - storagetanks50           . 	SCC: 0.320176, 	SAM: 0.048654
+952 - storagetanks51           . 	SCC: 0.204622, 	SAM: 0.058295
+953 - storagetanks52           . 	SCC: 0.264170, 	SAM: 0.044580
+954 - storagetanks53           . 	SCC: 0.249817, 	SAM: 0.044911
+955 - storagetanks54           . 	SCC: 0.276213, 	SAM: 0.040339
+956 - storagetanks55           . 	SCC: 0.246217, 	SAM: 0.060268
+957 - storagetanks56           . 	SCC: 0.246293, 	SAM: 0.036244
+958 - storagetanks57           . 	SCC: 0.261792, 	SAM: 0.039285
+959 - storagetanks58           . 	SCC: 0.375119, 	SAM: 0.059704
+960 - storagetanks59           . 	SCC: 0.319681, 	SAM: 0.066125
+961 - storagetanks60           . 	SCC: 0.430530, 	SAM: 0.072635
+962 - storagetanks61           . 	SCC: 0.312934, 	SAM: 0.034809
+963 - storagetanks62           . 	SCC: 0.323722, 	SAM: 0.029385
+964 - storagetanks63           . 	SCC: 0.287055, 	SAM: 0.047940
+965 - storagetanks64           . 	SCC: 0.319377, 	SAM: 0.056897
+966 - storagetanks65           . 	SCC: 0.323637, 	SAM: 0.071433
+967 - storagetanks66           . 	SCC: 0.300696, 	SAM: 0.065562
+968 - storagetanks67           . 	SCC: 0.281236, 	SAM: 0.030912
+969 - storagetanks68           . 	SCC: 0.327303, 	SAM: 0.052319
+970 - storagetanks69           . 	SCC: 0.312491, 	SAM: 0.052919
+971 - storagetanks70           . 	SCC: 0.358894, 	SAM: 0.050149
+972 - storagetanks71           . 	SCC: 0.307145, 	SAM: 0.061304
+973 - storagetanks72           . 	SCC: 0.431747, 	SAM: 0.047850
+974 - storagetanks73           . 	SCC: 0.280159, 	SAM: 0.024184
+975 - storagetanks74           . 	SCC: 0.303203, 	SAM: 0.026318
+976 - storagetanks75           . 	SCC: 0.375135, 	SAM: 0.037887
+977 - storagetanks76           . 	SCC: 0.276026, 	SAM: 0.027442
+978 - storagetanks77           . 	SCC: 0.330813, 	SAM: 0.038015
+979 - storagetanks78           . 	SCC: 0.284956, 	SAM: 0.018863
+980 - storagetanks79           . 	SCC: 0.298389, 	SAM: 0.021645
+981 - storagetanks80           . 	SCC: 0.338382, 	SAM: 0.020552
+982 - storagetanks81           . 	SCC: 0.300845, 	SAM: 0.016282
+983 - storagetanks82           . 	SCC: 0.221455, 	SAM: 0.070342
+984 - storagetanks83           . 	SCC: 0.211570, 	SAM: 0.075328
+985 - storagetanks84           . 	SCC: 0.158831, 	SAM: 0.068328
+986 - storagetanks85           . 	SCC: 0.174117, 	SAM: 0.045352
+987 - storagetanks86           . 	SCC: 0.117287, 	SAM: 0.097414
+988 - storagetanks87           . 	SCC: 0.193475, 	SAM: 0.036006
+989 - storagetanks88           . 	SCC: 0.293790, 	SAM: 0.065820
+990 - storagetanks89           . 	SCC: 0.182774, 	SAM: 0.127635
+991 - storagetanks90           . 	SCC: 0.265804, 	SAM: 0.082552
+992 - storagetanks91           . 	SCC: 0.321667, 	SAM: 0.093647
+993 - storagetanks92           . 	SCC: 0.203797, 	SAM: 0.090040
+994 - storagetanks93           . 	SCC: 0.238123, 	SAM: 0.087846
+995 - storagetanks94           . 	SCC: 0.311906, 	SAM: 0.094190
+996 - storagetanks95           . 	SCC: 0.282685, 	SAM: 0.083216
+997 - storagetanks96           . 	SCC: 0.282900, 	SAM: 0.099739
+998 - storagetanks97           . 	SCC: 0.257668, 	SAM: 0.124350
+999 - storagetanks98           . 	SCC: 0.241637, 	SAM: 0.101390
+1000 - storagetanks99           . 	SCC: 0.245448, 	SAM: 0.081484
+1001 - tenniscourt50            . 	SCC: 0.325375, 	SAM: 0.084741
+1002 - tenniscourt51            . 	SCC: 0.303670, 	SAM: 0.067111
+1003 - tenniscourt52            . 	SCC: 0.369079, 	SAM: 0.064859
+1004 - tenniscourt53            . 	SCC: 0.297963, 	SAM: 0.056970
+1005 - tenniscourt54            . 	SCC: 0.345455, 	SAM: 0.079402
+1006 - tenniscourt55            . 	SCC: 0.337761, 	SAM: 0.082578
+1007 - tenniscourt56            . 	SCC: 0.311916, 	SAM: 0.081463
+1008 - tenniscourt57            . 	SCC: 0.287111, 	SAM: 0.072759
+1009 - tenniscourt58            . 	SCC: 0.370153, 	SAM: 0.072622
+1010 - tenniscourt59            . 	SCC: 0.340950, 	SAM: 0.071147
+1011 - tenniscourt60            . 	SCC: 0.304551, 	SAM: 0.058336
+1012 - tenniscourt61            . 	SCC: 0.401778, 	SAM: 0.070054
+1013 - tenniscourt62            . 	SCC: 0.335871, 	SAM: 0.049558
+1014 - tenniscourt63            . 	SCC: 0.441240, 	SAM: 0.057343
+1015 - tenniscourt64            . 	SCC: 0.392285, 	SAM: 0.057109
+1016 - tenniscourt65            . 	SCC: 0.329824, 	SAM: 0.079539
+1017 - tenniscourt66            . 	SCC: 0.353336, 	SAM: 0.092925
+1018 - tenniscourt67            . 	SCC: 0.390107, 	SAM: 0.053271
+1019 - tenniscourt68            . 	SCC: 0.346216, 	SAM: 0.082273
+1020 - tenniscourt69            . 	SCC: 0.370044, 	SAM: 0.082422
+1021 - tenniscourt70            . 	SCC: 0.393913, 	SAM: 0.078442
+1022 - tenniscourt71            . 	SCC: 0.379546, 	SAM: 0.083360
+1023 - tenniscourt72            . 	SCC: 0.439469, 	SAM: 0.088676
+1024 - tenniscourt73            . 	SCC: 0.450394, 	SAM: 0.072056
+1025 - tenniscourt74            . 	SCC: 0.392166, 	SAM: 0.072434
+1026 - tenniscourt75            . 	SCC: 0.458102, 	SAM: 0.083388
+1027 - tenniscourt76            . 	SCC: 0.349946, 	SAM: 0.067134
+1028 - tenniscourt77            . 	SCC: 0.412638, 	SAM: 0.079727
+1029 - tenniscourt78            . 	SCC: 0.410295, 	SAM: 0.062917
+1030 - tenniscourt79            . 	SCC: 0.420324, 	SAM: 0.067031
+1031 - tenniscourt80            . 	SCC: 0.206835, 	SAM: 0.120254
+1032 - tenniscourt81            . 	SCC: 0.266650, 	SAM: 0.050686
+1033 - tenniscourt82            . 	SCC: 0.286197, 	SAM: 0.221653
+1034 - tenniscourt83            . 	SCC: 0.251699, 	SAM: 0.197709
+1035 - tenniscourt84            . 	SCC: 0.329994, 	SAM: 0.035650
+1036 - tenniscourt85            . 	SCC: 0.274874, 	SAM: 0.042818
+1037 - tenniscourt86            . 	SCC: 0.319369, 	SAM: 0.064088
+1038 - tenniscourt87            . 	SCC: 0.347862, 	SAM: 0.052926
+1039 - tenniscourt88            . 	SCC: 0.272004, 	SAM: 0.052967
+1040 - tenniscourt89            . 	SCC: 0.222456, 	SAM: 0.057879
+1041 - tenniscourt90            . 	SCC: 0.323934, 	SAM: 0.092783
+1042 - tenniscourt91            . 	SCC: 0.274416, 	SAM: 0.077832
+1043 - tenniscourt92            . 	SCC: 0.308662, 	SAM: 0.100505
+1044 - tenniscourt93            . 	SCC: 0.350943, 	SAM: 0.055513
+1045 - tenniscourt94            . 	SCC: 0.244720, 	SAM: 0.045027
+1046 - tenniscourt95            . 	SCC: 0.531457, 	SAM: 0.043854
+1047 - tenniscourt96            . 	SCC: 0.453207, 	SAM: 0.068026
+1048 - tenniscourt97            . 	SCC: 0.323633, 	SAM: 0.092091
+1049 - tenniscourt98            . 	SCC: 0.400171, 	SAM: 0.047282
+1050 - tenniscourt99            . 	SCC: 0.409516, 	SAM: 0.047780
+Average: SCC: 0.295162, SAM: 0.100604

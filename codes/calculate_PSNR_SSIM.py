@@ -9,12 +9,20 @@ import numpy as np
 import cv2
 import glob
 
+PNG_DATASETS = {'AID', 'WHU-RS19', 'RSSCN7'}
+DATASET_ROOTS = {
+    'AID': '/root/autodl-tmp/TransENet_base/datasets/AID-dataset',
+    'WHU-RS19': '/root/autodl-tmp/TransENet_base/datasets/WHU-RS19-dataset',
+    'RSSCN7': '/root/autodl-tmp/TransENet_base/datasets/RSSCN7-dataset',
+    'UCMerced': '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset',
+}
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--folder_Gen', type=str, required=True, help='Generated images folder')
     parser.add_argument('--folder_GT', type=str, default=None, help='Ground-truth images folder')
-    parser.add_argument('--dataset', type=str, default='UCMerced', choices=['UCMerced', 'AID'],
+    parser.add_argument('--dataset', type=str, default='UCMerced', choices=['UCMerced', 'AID', 'WHU-RS19', 'RSSCN7'],
                         help='Dataset name, used to infer default GT path and extension')
     parser.add_argument('--scale', type=int, default=4, help='Super-resolution scale')
     parser.add_argument('--img_ext', type=str, default=None, help='Image extension, e.g. .tif or .png')
@@ -29,14 +37,13 @@ def main():
     if args.folder_GT is not None:
         folder_GT = args.folder_GT
     else:
-        dataset_root = '/root/autodl-tmp/TransENet_base/datasets/AID-dataset' if args.dataset == 'AID' \
-            else '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset'
-        if args.dataset == 'AID':
+        dataset_root = DATASET_ROOTS[args.dataset]
+        if args.dataset in PNG_DATASETS:
             folder_GT = os.path.join(dataset_root, 'test', 'HR')
         else:
             folder_GT = os.path.join(dataset_root, 'test', f'HR_x{args.scale}')
     folder_Gen = args.folder_Gen
-    img_ext = args.img_ext or ('.png' if args.dataset == 'AID' else '.tif')
+    img_ext = args.img_ext or ('.png' if args.dataset in PNG_DATASETS else '.tif')
     crop_border = args.crop_border if args.crop_border is not None else args.scale
     suffix = ''
     test_Y = False
@@ -50,7 +57,7 @@ def main():
 
     # Support multiple extensions
     img_list = []
-    search_exts = ['.png'] if args.dataset == 'AID' else ['.tif']
+    search_exts = ['.png'] if args.dataset in PNG_DATASETS else ['.tif']
     for ext in search_exts:
         img_list.extend(glob.glob(os.path.join(folder_GT, f'*{ext}')))
     img_list = sorted(img_list)

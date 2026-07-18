@@ -4,7 +4,15 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"
+VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-3}"
+export CUDA_VISIBLE_DEVICES="${VISIBLE_DEVICES}"
+
+if [[ -n "${N_GPUS:-}" ]]; then
+    N_GPUS="${N_GPUS}"
+else
+    IFS=',' read -r -a GPU_LIST <<< "${VISIBLE_DEVICES}"
+    N_GPUS="${#GPU_LIST[@]}"
+fi
 
 DATASET="AID"
 MODEL_NAME="ham_paper"
@@ -33,6 +41,7 @@ python train_enhanced.py \
     --model "${MODEL_NAME}" \
     --dataset "${DATASET}" \
     --scale "${SCALE}" \
+    --n_GPUs "${N_GPUS}" \
     --epochs "${EPOCHS}" \
     --max_steps "${MAX_STEPS}" \
     --scheduler_unit epoch \

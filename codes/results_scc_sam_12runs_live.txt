@@ -1,0 +1,102 @@
+Recomputed SCC/SAM for 12 result folders
+Generated at: 2026-07-17T15:57:45Z UTC
+Python: /root/miniconda3/envs/transenet-pren/bin/python
+Workers per metric run: 1
+
+================================================================
+[aid_x2] dataset=AID scale=x2
+GT : datasets/AID-dataset/test/HR
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x2_w32_20260712_112935/x2
+LOG: codes/scc_sam_12runs_live_logs/aid_x2.log
+================================================================
+Average: SCC: 0.659736, SAM: 0.051926
+
+================================================================
+[aid_x3] dataset=AID scale=x3
+GT : datasets/AID-dataset/test/HR
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x3_w32_20260712_112758/x3
+LOG: codes/scc_sam_12runs_live_logs/aid_x3.log
+================================================================
+Average: SCC: 0.415741, SAM: 0.079664
+
+================================================================
+[aid_x4] dataset=AID scale=x4
+GT : datasets/AID-dataset/test/HR
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x4_w32_20260712_112858/x4
+LOG: codes/scc_sam_12runs_live_logs/aid_x4.log
+================================================================
+Average: SCC: 0.288236, SAM: 0.100089
+
+================================================================
+[rsscn7_x2] dataset=RSSCN7 scale=x2
+GT : datasets/RSSCN7-dataset/test/HR
+GEN: experiment/results/COMSNET_RSSCN7_x2_w32_20260717_035255/x2
+LOG: codes/scc_sam_12runs_live_logs/rsscn7_x2.log
+================================================================
+Average: SCC: 0.579316, SAM: 0.071405
+
+================================================================
+[rsscn7_x3] dataset=RSSCN7 scale=x3
+GT : datasets/RSSCN7-dataset/test/HR
+GEN: experiment/results/COMSNET_RSSCN7_x3_w32_20260717_035718/x3
+LOG: codes/scc_sam_12runs_live_logs/rsscn7_x3.log
+================================================================
+Average: SCC: 0.339512, SAM: 0.100650
+
+================================================================
+[rsscn7_x4] dataset=RSSCN7 scale=x4
+GT : datasets/RSSCN7-dataset/test/HR
+GEN: experiment/results/COMSNET_RSSCN7_x4_w32_20260717_035733/x4
+LOG: codes/scc_sam_12runs_live_logs/rsscn7_x4.log
+================================================================
+Average: SCC: 0.212220, SAM: 0.120477
+
+================================================================
+[whu_rs19_x2] dataset=WHU-RS19 scale=x2
+GT : datasets/WHU-RS19-test/test/HR
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x2_w32_20260712_112935_WHU_RS19/x2
+LOG: codes/scc_sam_12runs_live_logs/whu_rs19_x2.log
+================================================================
+Average: SCC: 0.701688, SAM: 0.044563
+
+================================================================
+[whu_rs19_x3] dataset=WHU-RS19 scale=x3
+GT : datasets/WHU-RS19-test/test/HR
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x3_w32_20260712_112758_WHU_RS19/x3
+LOG: codes/scc_sam_12runs_live_logs/whu_rs19_x3.log
+================================================================
+Average: SCC: 0.437492, SAM: 0.073536
+
+================================================================
+[whu_rs19_x4] dataset=WHU-RS19 scale=x4
+GT : datasets/WHU-RS19-test/test/HR
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x4_w32_20260712_112858_WHU_RS19/x4
+LOG: codes/scc_sam_12runs_live_logs/whu_rs19_x4.log
+================================================================
+Average: SCC: 0.310503, SAM: 0.095059
+
+================================================================
+[ucmerced_x2] dataset=UCMerced scale=x2
+GT : datasets/UCMerced-dataset/test/HR_x2
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_UCMerced_x2_w32_20260429_071942/x2
+LOG: codes/scc_sam_12runs_live_logs/ucmerced_x2.log
+================================================================
+Average: SCC: 0.645079, SAM: 0.048823
+
+================================================================
+[ucmerced_x3] dataset=UCMerced scale=x3
+GT : datasets/UCMerced-dataset/test/HR_x3
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_UCMerced_x3_w32_20260429_071942/x3
+LOG: codes/scc_sam_12runs_live_logs/ucmerced_x3.log
+================================================================
+Average: SCC: 0.429351, SAM: 0.078187
+
+================================================================
+[ucmerced_x4] dataset=UCMerced scale=x4
+GT : datasets/UCMerced-dataset/test/HR_x4
+GEN: experiment/results/s1_trans_strip_cam_parallel_add_dw5_pa_scale_UCMerced_x4_w32_20260520_190021/x4
+LOG: codes/scc_sam_12runs_live_logs/ucmerced_x4.log
+================================================================
+Average: SCC: 0.295162, SAM: 0.100604
+
+Done. Summary: codes/results_scc_sam_12runs_live.txt
