@@ -204,7 +204,7 @@ def compute_auto_roi(sr_image, hr_image, roi_size):
     return clamp_roi(best_xy[0], best_xy[1], roi_size, w, h)
 
 
-def draw_box(image_rgb, x, y, size, color=(255, 0, 0), thickness=2):
+def draw_box(image_rgb, x, y, size, color=(255, 0, 0), thickness=1):
     canvas = image_rgb.copy()
     cv2.rectangle(canvas, (x, y), (x + size, y + size), color, thickness)
     return canvas

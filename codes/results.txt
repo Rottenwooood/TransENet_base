@@ -140,3 +140,7 @@ ham x2
 Average: PSNR: 34.292771 dB, SSIM: 0.932681
 [ptflops] FLOPs (G): 41.88 G，[ptflops] 参数量 (M): 10.46 M
 Average: PSNR: 29.550998 dB, SSIM: 0.795533
+[ptflops] FLOPs (G): 40.16 G，[ptflops] 参数量 (M): 10.50 M
+Average: PSNR: 31.679161 dB, SSIM: 0.864233
+[ptflops] FLOPs (G): 39.37 G，[ptflops] 参数量 (M): 10.32 M
+Average: PSNR: 35.522076 dB, SSIM: 0.939999
