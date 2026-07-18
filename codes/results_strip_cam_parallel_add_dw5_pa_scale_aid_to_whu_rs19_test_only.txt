@@ -1,0 +1,15 @@
+=== train=AID eval=WHU-RS19 x2 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x2_w32_20260712_112935 | test_only ===
+=== train=AID eval=WHU-RS19 x3 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x3_w32_20260712_112758 | test_only ===
+=== train=AID eval=WHU-RS19 x4 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x4_w32_20260712_112858 | test_only ===
+[ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
+[ptflops] FLOPs (G): 28.89 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 32.212263 dB, SSIM: 0.880978
+Average: SCC: 0.972166, SAM: 0.968809
+
+[ptflops] FLOPs (G): 7.22 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 29.947830 dB, SSIM: 0.809943
+Average: SCC: 0.954396, SAM: 1.127904
+
+Average: PSNR: 36.543513 dB, SSIM: 0.955136
+Average: SCC: 0.989561, SAM: 0.666363
+

@@ -47,8 +47,14 @@ class Trainer():
             )
             self.current_epoch = len(ckp.log)
             if getattr(self.args, 'scheduler_unit', 'epoch') != 'step':
-                for _ in range(len(ckp.log)):
-                    self.scheduler.step()
+                # The optimizer checkpoint already contains the current LR.
+                # Do not replay scheduler.step() from that LR, or StepLR will
+                # apply past milestones a second time when resuming.
+                self.scheduler.last_epoch = self.current_epoch
+                if hasattr(self.scheduler, '_last_lr'):
+                    self.scheduler._last_lr = [
+                        group['lr'] for group in self.optimizer.param_groups
+                    ]
 
         self.error_last = 1e8
 

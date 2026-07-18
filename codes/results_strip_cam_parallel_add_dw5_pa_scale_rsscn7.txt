@@ -1,0 +1,30 @@
+=== RSSCN7 x2 | save=COMSNET_RSSCN7_x2_w32_20260717_035255 ===
+=== RSSCN7 x3 | save=COMSNET_RSSCN7_x3_w32_20260717_035718 ===
+[ptflops] FLOPs (G): 7.22 G，[ptflops] 参数量 (M): 1.44 M
+=== RSSCN7 x4 | save=COMSNET_RSSCN7_x4_w32_20260717_035733 ===
+Average: PSNR: 32.413309 dB, SSIM: 0.897683
+[ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
+Average: SCC: 0.964660, SAM: 0.594680
+
+Average: PSNR: 29.386714 dB, SSIM: 0.798282
+Average: SCC: 0.933692, SAM: 0.757436
+
+[ptflops] FLOPs (G): 28.89 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 27.848221 dB, SSIM: 0.721302
+Average: SCC: 0.908618, SAM: 0.865994
+
+=== RSSCN7 x2 | save=COMSNET_RSSCN7_x2_w32_20260717_035255 ===
+=== RSSCN7 x3 | save=COMSNET_RSSCN7_x3_w32_20260717_035718 ===
+=== RSSCN7 x4 | save=COMSNET_RSSCN7_x4_w32_20260717_035733 ===
+[ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
+[ptflops] FLOPs (G): 7.22 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 29.428102 dB, SSIM: 0.799493
+Average: PSNR: 32.478074 dB, SSIM: 0.898971
+Average: SCC: 0.934125, SAM: 0.756051
+
+[ptflops] FLOPs (G): 28.89 G，[ptflops] 参数量 (M): 1.44 M
+Average: SCC: 0.965135, SAM: 0.591953
+
+Average: PSNR: 27.860746 dB, SSIM: 0.722321
+Average: SCC: 0.908855, SAM: 0.863452
+

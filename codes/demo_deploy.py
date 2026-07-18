@@ -31,6 +31,18 @@ except (ImportError, AttributeError) as e:
 
 device = torch.device('cpu' if args.cpu else 'cuda')
 
+PNG_DATASETS = {'AID', 'WHU-RS19', 'RSSCN7'}
+
+
+def get_dataset_root(dataset):
+    dataset_roots = {
+        'AID': '/root/autodl-tmp/TransENet_base/datasets/AID-dataset',
+        'WHU-RS19': '/root/autodl-tmp/TransENet_base/datasets/WHU-RS19-dataset',
+        'RSSCN7': '/root/autodl-tmp/TransENet_base/datasets/RSSCN7-dataset',
+        'UCMerced': '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset',
+    }
+    return dataset_roots.get(dataset, '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset')
+
 
 def test_model_performance(args, sr_model, sample_input=None):
     """测试模型性能：参数量、FLOPs、内存占用、处理时间"""
@@ -247,7 +259,7 @@ def test_model_performance(args, sr_model, sample_input=None):
 
 def deploy(args, sr_model):
 
-    img_ext = '.png' if args.dataset == 'AID' else '.tif'
+    img_ext = '.png' if args.dataset in PNG_DATASETS else '.tif'
     img_lists = glob.glob(os.path.join(args.dir_data, '*'+img_ext))
 
     if len(img_lists) == 0:
@@ -381,8 +393,7 @@ def deploy(args, sr_model):
 if __name__ == '__main__':
 
     if args.dir_data == '.':
-        default_root = '/root/autodl-tmp/TransENet_base/datasets/AID-dataset' if args.dataset == 'AID' \
-            else '/root/autodl-tmp/TransENet_base/datasets/UCMerced-dataset'
+        default_root = get_dataset_root(args.dataset)
         args.dir_data = os.path.join(default_root, 'test', f'LR_x{args.scale[0]}')
 
     print("Configuration:")

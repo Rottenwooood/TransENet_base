@@ -1,0 +1,1191 @@
+🚀 Enhanced Training Configuration:
+Model: symunet_pretrain_strip_cam_parallel_add_dw5_pa_scale
+Dataset: AID
+Scale: [2]
+Epochs: 300
+Batch Size: 4
+Optimizer: ADAMW
+Scheduler: step
+Learning Rate: 0.0002
+Loss: 1*L1
+WandB Enabled: False
+AMP Enabled: True
+Validation Every: disabled (always validate every epoch)
+Save Every N Epochs: 100
+DataLoader Threads: 8
+
+📐 Model Architecture:
+Width: 32
+Encoder Blocks: [4, 6]
+Decoder Blocks: [6, 4]
+Restormer Heads: [1, 2, 4]
+Middle Heads: 8
+Read data from binary files
+Read data from binary files
+Making model...
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+[MAB] 使用 NeighborhoodAttention2D (num_head=2, kernel_sizes=[7, 11], dilations=[5, 3])
+SymUNet_Pretrain_Strip_CAM_Parallel_Add_DW5_PA_SCALE(
+  (pre_upsample): Upsample(scale_factor=2.0, mode='bicubic')
+  (intro): Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (ending): Conv2d(32, 3, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (encoders): ModuleList(
+    (0): Sequential(
+      (0): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(32, 8, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(8, 32, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=16, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=32, out_features=96, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=32, out_features=32, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+                (1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16)
+                (2): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16)
+                (3): Conv2d(16, 16, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=16)
+              )
+            )
+            (fc2): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (1): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(32, 8, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(8, 32, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=16, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=32, out_features=96, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=32, out_features=32, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+                (1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16)
+                (2): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16)
+                (3): Conv2d(16, 16, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=16)
+              )
+            )
+            (fc2): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (2): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(32, 8, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(8, 32, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=16, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=32, out_features=96, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=32, out_features=32, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+                (1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16)
+                (2): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16)
+                (3): Conv2d(16, 16, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=16)
+              )
+            )
+            (fc2): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (3): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(32, 8, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(8, 32, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=16, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=32, out_features=96, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=32, out_features=32, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+                (1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16)
+                (2): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16)
+                (3): Conv2d(16, 16, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=16)
+              )
+            )
+            (fc2): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+    )
+    (1): Sequential(
+      (0): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (1): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (2): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (3): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (4): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (5): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+    )
+  )
+  (decoders): ModuleList(
+    (0): Sequential(
+      (0): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (1): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (2): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (3): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (4): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (5): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(64, 16, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(16, 64, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=32, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=64, out_features=192, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=64, out_features=64, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1), groups=32)
+                (1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+                (2): Conv2d(32, 32, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=32)
+                (3): Conv2d(32, 32, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=32)
+              )
+            )
+            (fc2): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+    )
+    (1): Sequential(
+      (0): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(32, 8, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(8, 32, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=16, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=32, out_features=96, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=32, out_features=32, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+                (1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16)
+                (2): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16)
+                (3): Conv2d(16, 16, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=16)
+              )
+            )
+            (fc2): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (1): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(32, 8, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(8, 32, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=16, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=32, out_features=96, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=32, out_features=32, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+                (1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16)
+                (2): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16)
+                (3): Conv2d(16, 16, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=16)
+              )
+            )
+            (fc2): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (2): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(32, 8, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(8, 32, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=16, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=32, out_features=96, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=32, out_features=32, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+                (1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16)
+                (2): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16)
+                (3): Conv2d(16, 16, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=16)
+              )
+            )
+            (fc2): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+      (3): S1_TransBlock_NoMAB1(
+        (lab): LAB(
+          (net): Sequential(
+            (0): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (1): GELU(approximate='none')
+            (2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32)
+            (3): GELU(approximate='none')
+            (4): ChannelAttention(
+              (attention): Sequential(
+                (0): AdaptiveAvgPool2d(output_size=1)
+                (1): Conv2d(32, 8, kernel_size=(1, 1), stride=(1, 1))
+                (2): SiLU()
+                (3): Conv2d(8, 32, kernel_size=(1, 1), stride=(1, 1))
+                (4): Sigmoid()
+              )
+            )
+            (5): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          )
+        )
+        (pa): PA(
+          (conv): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+          (sigmoid): Sigmoid()
+        )
+        (mab2): MAB(
+          (norm1): LayerNorm2d()
+          (attn): NeighborhoodAttention2D(
+            head_dim=16, num_head=2, kernel_sizes=((7, 7), (11, 11)), dilations=((5, 5), (3, 3)), is_causal=[False, False], has_bias=True
+            (qkv): Linear(in_features=32, out_features=96, bias=True)
+            (rpb): ParameterList(
+                (0): Parameter containing: [torch.float32 of size 1x13x13 (cuda:0)]
+                (1): Parameter containing: [torch.float32 of size 1x21x21 (cuda:0)]
+            )
+            (attn_drop): Dropout(p=0.0, inplace=False)
+            (proj): Linear(in_features=32, out_features=32, bias=True)
+            (proj_drop): Dropout(p=0.0, inplace=False)
+          )
+          (norm2): LayerNorm2d()
+          (ffn): MSConvStar(
+            (fc1): Conv2d(32, 64, kernel_size=(1, 1), stride=(1, 1))
+            (dwconv): MSDWConv(
+              (proj): ModuleList(
+                (0): Conv2d(16, 16, kernel_size=(1, 1), stride=(1, 1), groups=16)
+                (1): Conv2d(16, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=16)
+                (2): Conv2d(16, 16, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=16)
+                (3): Conv2d(16, 16, kernel_size=(7, 7), stride=(1, 1), padding=(3, 3), groups=16)
+              )
+            )
+            (fc2): Conv2d(32, 32, kernel_size=(1, 1), stride=(1, 1))
+            (act): GELU(approximate='none')
+          )
+        )
+        (conv): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      )
+    )
+  )
+  (ups): ModuleList(
+    (0): UpsampleDW(
+      (body): Sequential(
+        (0): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=128, bias=False)
+        (1): Conv2d(128, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (2): PixelShuffle(upscale_factor=2)
+      )
+    )
+    (1): UpsampleDW(
+      (body): Sequential(
+        (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64, bias=False)
+        (1): Conv2d(64, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (2): PixelShuffle(upscale_factor=2)
+      )
+    )
+  )
+  (downs): ModuleList(
+    (0): DownsampleDW(
+      (body): Sequential(
+        (0): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=32, bias=False)
+        (1): Conv2d(32, 16, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (2): PixelUnshuffle(downscale_factor=2)
+      )
+    )
+    (1): DownsampleDW(
+      (body): Sequential(
+        (0): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=64, bias=False)
+        (1): Conv2d(64, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)
+        (2): PixelUnshuffle(downscale_factor=2)
+      )
+    )
+  )
+  (middle_blks): Sequential(
+    (0): StripCAMParallelAddDW5MiddleBlock(
+      (norm1): LayerNorm2d()
+      (parallel_attn): StripCAMParallelAddDW5Attention(
+        (proj_1): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1))
+        (activation): GELU(approximate='none')
+        (strip_branch): StripModule(
+          (conv0): Conv2d(64, 64, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=64)
+          (conv_spatial1): Conv2d(64, 64, kernel_size=(1, 19), stride=(1, 1), padding=(0, 9), groups=64)
+          (conv_spatial2): Conv2d(64, 64, kernel_size=(19, 1), stride=(1, 1), padding=(9, 0), groups=64)
+          (conv1): Conv2d(64, 64, kernel_size=(1, 1), stride=(1, 1))
+        )
+        (dw5_branch): DWConv5x5Branch(
+          (dwconv): Conv2d(64, 64, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2), groups=64)
+        )
+        (cam_branch): ChannelAttention(
+          (attention): Sequential(
+            (0): AdaptiveAvgPool2d(output_size=1)
+            (1): Conv2d(128, 32, kernel_size=(1, 1), stride=(1, 1))
+            (2): SiLU()
+            (3): Conv2d(32, 128, kernel_size=(1, 1), stride=(1, 1))
+            (4): Sigmoid()
+          )
+        )
+        (proj_2): Conv2d(128, 128, kernel_size=(1, 1), stride=(1, 1))
+      )
+      (norm2): LayerNorm2d()
+      (project_in): Conv2d(128, 680, kernel_size=(1, 1), stride=(1, 1), bias=False)
+      (dwconv): Conv2d(680, 680, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), groups=680, bias=False)
+      (project_out): Conv2d(340, 128, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    )
+  )
+)
+Preparing loss function:
+1.000 * L1
+
+🏃 Starting training...
+[Epoch 1]	Learning rate: 2.00e-4

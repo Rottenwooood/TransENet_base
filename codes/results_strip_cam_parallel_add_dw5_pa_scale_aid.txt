@@ -1,0 +1,13 @@
+=== AID x3 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x3_w32_20260712_112758 ===
+[ptflops] FLOPs (G): 16.25 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 31.543781 dB, SSIM: 0.861485
+Average: SCC: 0.969380, SAM: 0.950427
+=== AID x2 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x2_w32_20260712_112935 ===
+[ptflops] FLOPs (G): 7.22 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 35.418528 dB, SSIM: 0.938947
+Average: SCC: 0.986732, SAM: 0.713604
+=== AID x4 | save=s1_trans_strip_cam_parallel_add_dw5_pa_scale_AID_x4_w32_20260712_112858 ===
+[ptflops] FLOPs (G): 28.89 G，[ptflops] 参数量 (M): 1.44 M
+Average: PSNR: 29.423974 dB, SSIM: 0.791358
+Average: SCC: 0.952329, SAM: 1.089962
+
