@@ -1,0 +1,38 @@
+Summary generated at: 2026-07-22T11:57:12Z UTC
+RUN_TAG=paper_resume_followup_parallel_20260721_174643
+FOLLOWUP_RUN_TS=20260721_174643
+
+Missing result file: batch_results/paper_resume_followup_parallel_20260721_174643/cga_rsscn7_x2_resume.txt
+
+Missing result file: batch_results/paper_resume_followup_parallel_20260721_174643/mt_rsscn7_x4_resume.txt
+
+=== stage=primary train=RSSCN7 eval=RSSCN7 model=cga_paper x3 | save=paper_cga_RSSCN7_x3_20260721_015523 ===
+[ptflops] FLOPs (G): 40.16 G，[ptflops] 参数量 (M): 10.50 M
+Average: PSNR: 29.450380 dB, SSIM: 0.800534
+Average: SCC: 0.340480, SAM: 0.100381
+
+
+=== stage=primary train=RSSCN7 eval=RSSCN7 model=cga_paper x4 | save=paper_cga_RSSCN7_x4_20260721_174643 ===
+[ptflops] FLOPs (G): 41.88 G，[ptflops] 参数量 (M): 10.46 M
+Average: PSNR: 27.869127 dB, SSIM: 0.723219
+Average: SCC: 0.211670, SAM: 0.120385
+
+
+=== stage=primary train=AID eval=WHU-RS19 model=cga_paper x2 | save=paper_cga_aid_x2_20260514_043252 ===
+[ptflops] FLOPs (G): 39.37 G，[ptflops] 参数量 (M): 10.32 M
+Average: PSNR: 36.655695 dB, SSIM: 0.956080
+Average: SCC: 0.708553, SAM: 0.043962
+
+
+=== stage=primary train=AID eval=WHU-RS19 model=cga_paper x3 | save=paper_cga_aid_x3_20260514_032416 ===
+[ptflops] FLOPs (G): 40.16 G，[ptflops] 参数量 (M): 10.50 M
+Average: PSNR: 32.348943 dB, SSIM: 0.883480
+Average: SCC: 0.444131, SAM: 0.072318
+
+
+=== stage=primary train=AID eval=WHU-RS19 model=cga_paper x4 | save=paper_cga_aid_x4_20260512_155448 ===
+[ptflops] FLOPs (G): 41.88 G，[ptflops] 参数量 (M): 10.46 M
+Average: PSNR: 30.101700 dB, SSIM: 0.814554
+Average: SCC: 0.317851, SAM: 0.093380
+
+

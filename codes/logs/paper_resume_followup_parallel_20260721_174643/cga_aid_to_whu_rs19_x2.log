@@ -1,0 +1,23 @@
+
+libgomp: Invalid value for environment variable OMP_NUM_THREADS: 0
+/root/miniconda3/envs/transenet-pren/lib/python3.8/site-packages/torch/functional.py:504: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at /opt/conda/conda-bld/pytorch_1695392020195/work/aten/src/ATen/native/TensorShape.cpp:3526.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+Unsupported operator aten::sub encountered 1 time(s)
+Unsupported operator aten::mul encountered 427 time(s)
+Unsupported operator aten::mul_ encountered 7 time(s)
+Unsupported operator aten::rsub encountered 90 time(s)
+Unsupported operator aten::pad encountered 18 time(s)
+Unsupported operator aten::add encountered 368 time(s)
+Unsupported operator aten::mean encountered 54 time(s)
+Unsupported operator aten::softmax encountered 108 time(s)
+Unsupported operator aten::gelu encountered 54 time(s)
+Unsupported operator aten::sigmoid encountered 18 time(s)
+Unsupported operator aten::abs encountered 18 time(s)
+Unsupported operator aten::div encountered 19 time(s)
+Unsupported operator aten::topk encountered 18 time(s)
+Unsupported operator aten::leaky_relu_ encountered 1 time(s)
+Unsupported operator aten::pixel_shuffle encountered 1 time(s)
+The following submodules of the model were never called during the trace of the graph. They may be unused, or they were accessed by direct calls to .forward() or via other python methods. In the latter case they will have zeros for statistics, though their statistics will still contribute to their parent calling module.
+model.layers.0.blocks.1.drop_path, model.layers.0.blocks.2.drop_path, model.layers.0.blocks.3.drop_path, model.layers.0.blocks.4.drop_path, model.layers.0.blocks.5.drop_path, model.layers.1.blocks.0.drop_path, model.layers.1.blocks.1.drop_path, model.layers.1.blocks.2.drop_path, model.layers.1.blocks.3.drop_path, model.layers.1.blocks.4.drop_path, model.layers.1.blocks.5.drop_path, model.layers.2.blocks.0.drop_path, model.layers.2.blocks.1.drop_path, model.layers.2.blocks.2.drop_path, model.layers.2.blocks.3.drop_path, model.layers.2.blocks.4.drop_path, model.layers.2.blocks.5.drop_path, model.layers.3.blocks.0.drop_path, model.layers.3.blocks.1.drop_path, model.layers.3.blocks.2.drop_path, model.layers.3.blocks.3.drop_path, model.layers.3.blocks.4.drop_path, model.layers.3.blocks.5.drop_path, model.layers.4.blocks.0.drop_path, model.layers.4.blocks.1.drop_path, model.layers.4.blocks.2.drop_path, model.layers.4.blocks.3.drop_path, model.layers.4.blocks.4.drop_path, model.layers.4.blocks.5.drop_path, model.layers.5.blocks.0.drop_path, model.layers.5.blocks.1.drop_path, model.layers.5.blocks.2.drop_path, model.layers.5.blocks.3.drop_path, model.layers.5.blocks.4.drop_path, model.layers.5.blocks.5.drop_path
+OMP: Warning #80: OMP_NUM_THREADS="0": value too small.
+OMP: Info #104: OMP_NUM_THREADS value "1" will be used.

@@ -1,0 +1,5 @@
+=== stage=primary train=RSSCN7 eval=RSSCN7 model=cga_paper x3 | save=paper_cga_RSSCN7_x3_20260721_015523 ===
+[ptflops] FLOPs (G): 40.16 G，[ptflops] 参数量 (M): 10.50 M
+Average: PSNR: 29.450380 dB, SSIM: 0.800534
+Average: SCC: 0.340480, SAM: 0.100381
+

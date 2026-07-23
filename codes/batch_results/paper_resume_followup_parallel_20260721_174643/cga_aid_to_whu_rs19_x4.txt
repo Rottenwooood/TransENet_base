@@ -1,0 +1,5 @@
+=== stage=primary train=AID eval=WHU-RS19 model=cga_paper x4 | save=paper_cga_aid_x4_20260512_155448 ===
+[ptflops] FLOPs (G): 41.88 G，[ptflops] 参数量 (M): 10.46 M
+Average: PSNR: 30.101700 dB, SSIM: 0.814554
+Average: SCC: 0.317851, SAM: 0.093380
+
